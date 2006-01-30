@@ -1,0 +1,65 @@
+#!/bin/sh
+
+OBJS=$(
+for i in *.c
+do
+   echo -n `basename $i .c`.o" "
+done
+echo
+)
+LIBS=$(
+{
+for i in *.c
+do
+   grep "^//#link " $i | cut -d" " -f2- | tr " " "\n"
+done
+} | sort -u | while read i
+do
+   echo -n "-l$i "
+done
+)
+echo
+echo "prefix=@prefix@"
+echo 'exec_prefix=@exec_prefix@'
+echo 'bindir=@bindir@'
+echo "OBJS=$OBJS"
+echo "HEADERS=Prototypes.h Structures.h"
+echo "LIBS=$LIBS"
+echo "MYCFLAGS=-pedantic -Wall -Werror -std=c99"
+echo ".PHONY=clean debug"
+echo
+echo 'debug: MYCFLAGS += -g -DDEBUG'
+#echo 'debug: LIBS += libefence.a -lpthread'
+echo 'debug: '$1
+echo
+echo 'gcov: MYCFLAGS += -fprofile-arcs -ftest-coverage'
+echo 'gcov: '$1
+echo
+echo 'all: MYCFLAGS += -O3'
+echo 'all: '$1
+echo '	strip '$1
+echo
+echo $1': $(OBJS)'
+#echo $1': debug.h $(OBJS)'
+echo '	gcc $(MYCFLAGS) -o '$1' $(OBJS) $(LIBS)'
+echo
+#echo 'debug.h: debug.h.in DebugMemory.h'
+#echo '	cp debug.h.in debug.h'
+echo
+echo 'profile: MYCFLAGS += -pg'
+echo 'profile: '$1
+echo
+echo 'clean:'
+echo '	rm -f core* '$1' $(OBJS) $(HEADERS) *.gcov *.bb *.bbg *.da order.txt'
+echo
+echo 'install:'
+echo '	mkdir -p $(bindir)'
+echo '	cp '$1' $(bindir)'
+echo
+for i in *.c
+do
+   b=`basename $i .c`
+   echo $b'.o: '$i' $(HEADERS)'
+   echo '	gcc $(MYCFLAGS) -c '$i
+   echo
+done

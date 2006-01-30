@@ -1,0 +1,115 @@
+#!/bin/sh
+
+################################
+echo -n "Function prototypes..."
+################################
+
+echo "#ifndef Prototypes_HEADER" > Prototypes.h
+echo "#define Prototypes_HEADER" >> Prototypes.h
+echo >> Prototypes.h
+echo '#define _GNU_SOURCE' >> Prototypes.h
+echo '#include <stdbool.h>' >> Prototypes.h
+echo '#include <stdio.h>' >> Prototypes.h
+echo '#include <curses.h>' >> Prototypes.h
+echo >> Prototypes.h
+echo '#include "Structures.h"' >> Prototypes.h
+echo >> Prototypes.h
+
+proto() {
+   cat "$1" | grep --text -v "^static" | grep '^[^ ].*) {$' | sed 's,) {$,);,' >> Prototypes.h
+}
+
+process() {
+   for proc in "${processed[@]}"
+   do [ "$proc" == "$1" ] && return
+   done
+   for need in `cat "$1" | grep --text '//#needs ' | sed 's,//#needs ,,'`
+   do process $need.c "$2"
+   done
+   "$2" "$1"
+   processed=("${processed[@]}" "$1")
+   echo "$1" >> order.txt
+}
+
+do_all() {
+if [ -e order.txt ]
+then
+   for i in `cat order.txt`
+   do "$1" "$i"
+   done
+else
+   processed=( )
+   for i in *.c
+   do process "$i" "$1"
+   done
+fi
+}
+
+{
+if [ `ls *.c | wc -l` != `cat order.txt | wc -l` ]
+then rm -f order.txt
+fi
+} &> /dev/null
+
+do_all proto
+
+echo >> Prototypes.h
+echo '#include <stdlib.h>' >> Prototypes.h
+echo '#include "debug.h"' >> Prototypes.h
+echo '#include <assert.h>' >> Prototypes.h
+echo >> Prototypes.h
+echo "#endif" >> Prototypes.h
+
+#######################
+echo
+echo -n "Structures..."
+#######################
+
+echo "#ifndef Structures_HEADER" > Structures.h
+echo "#define Structures_HEADER" >> Structures.h
+echo >> Structures.h
+
+cat *.c | awk '
+   BEGIN {
+      reading=0
+   }
+   /\/*{/ {
+      reading=1
+   }
+   /}*\// {
+      reading=0
+   }
+   /^struct .* {$/ {
+      if (reading)
+         print "typedef struct " $2 " " substr($2, 1, length($2)-1) ";"
+   }
+' >> Structures.h
+
+struct() {
+cat "$1" | awk '
+   BEGIN {
+      writing=0
+   }
+   /\/\*{/ {
+      writing=1
+   }
+   /}\*\// {
+      writing=0
+   }
+   {
+      if (writing==1)
+         writing=2
+      else if (writing == 2)
+         print
+   }
+' >> Structures.h
+}
+
+do_all struct
+
+echo "#endif" >> Structures.h
+
+####
+echo
+####
+
