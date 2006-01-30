@@ -8,7 +8,7 @@
 
 /*{
 
-typedef int(*Method_PatternMatcher_match)(PatternMatcher*, unsigned char*, int*);
+typedef int(*Method_PatternMatcher_match)(GraphNode*, unsigned char*, int*);
 
 struct GraphNode_ {
    unsigned char min;
@@ -30,6 +30,7 @@ struct GraphNode_ {
 
 struct PatternMatcher_ {
    GraphNode* start;
+   GraphNode* lineStart;
 };
 
 }*/
@@ -45,11 +46,14 @@ struct PatternMatcher_ {
 PatternMatcher* PatternMatcher_new() {
    PatternMatcher* this = malloc(sizeof(PatternMatcher));
    this->start = GraphNode_new();
+   this->lineStart = NULL;
    return this;
 }
 
 void PatternMatcher_delete(PatternMatcher* this) {
    GraphNode_delete(this->start, NULL);
+   if (this->lineStart)
+      GraphNode_delete(this->lineStart, NULL);
    free(this);
 }
 
@@ -137,13 +141,20 @@ void PatternMatcher_add(PatternMatcher* this, unsigned char* pattern, int value)
       i++;
    }
    input[i] = '\0';
-   GraphNode_build(this->start, input, special, value);
+   GraphNode* start = this->start;
+   if (*special && *input == '^') {
+      if (!this->lineStart)
+         start = GraphNode_new();
+      this->lineStart = start;
+      GraphNode_build(start, input+1, special+1, value);
+   } else {
+      GraphNode_build(start, input, special, value);
+   }
    free(input);
    free(special);
 }
 
-int PatternMatcher_match(PatternMatcher* this, unsigned char* input, int* value) {
-   GraphNode* node = this->start;
+int PatternMatcher_match(GraphNode* node, unsigned char* input, int* value) {
    int i = 0;
    int match = 0;
    *value = 0;
@@ -180,8 +191,7 @@ int PatternMatcher_match(PatternMatcher* this, unsigned char* input, int* value)
    return match;
 }
 
-int PatternMatcher_match_toLower(PatternMatcher* this, unsigned char* input, int* value) {
-   GraphNode* node = this->start;
+int PatternMatcher_match_toLower(GraphNode* node, unsigned char* input, int* value) {
    int i = 0;
    int match = 0;
    *value = 0;

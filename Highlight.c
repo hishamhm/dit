@@ -239,7 +239,7 @@ Highlight* Highlight_new(const char* fileName, const char* firstLine) {
             // Read RULES section
             if (String_eq(tokens[0], "context") && (ntokens == 4 || ntokens == 6)) {
                char* open = tokens[1];
-               char* close = (String_eq(tokens[2], "end-of-line") ? NULL : tokens[2]);
+               char* close = (String_eq(tokens[2], "`$") ? NULL : tokens[2]);
                HighlightColor color;
                if (ntokens == 6) {
                   HighlightContext_addRule(context, open, Highlight_translateColor(tokens[3]));
@@ -330,28 +330,42 @@ void Highlight_setAttrs(Highlight* this, unsigned char* buffer, int* attrs, int 
       match = PatternMatcher_match_toLower;
    else
       match = PatternMatcher_match;
+   if (ctx->rules->lineStart) {
+      int intColor;
+      int matchlen = match(ctx->rules->lineStart, buffer, (int*) &intColor);
+      HighlightColor color = (HighlightColor) intColor;
+      int attr = this->colors[color];
+      int word = isword(*buffer);
+      if (matchlen && !(word && isword(buffer[matchlen]))) {
+         for (; at < matchlen; at++)
+            attrs[at] = attr;
+         if (ctx->follows->lineStart) {
+            int nextCtx = 0;
+            if (match(ctx->follows->lineStart, buffer, &nextCtx) == matchlen)
+               ctx = (HighlightContext*) nextCtx;
+         }
+      }
+   }
    while (at < len) {
       attrs[at] = this->colors[ctx->defaultColor];
       unsigned char* here = buffer+at;
       int intColor;
-      int matchlen = match(ctx->rules, here, (int*) &intColor);
+      int matchlen = match(ctx->rules->start, here, (int*) &intColor);
       HighlightColor color = (HighlightColor) intColor;
       assert(color >= 0 && color < HighlightColors);
       int attr = this->colors[color];
       int word = isword(*here);
 
       if (matchlen && !(word && isword(here[matchlen]))) {
-         int i;
-         for (i = at; i < at+matchlen; i++) {
+         for (int i = at; i < at+matchlen; i++)
             attrs[i] = attr;
-         }
          int nextCtx = 0;
-         int followMatchlen = match(ctx->follows, here, &nextCtx);
+         int followMatchlen = match(ctx->follows->start, here, &nextCtx);
          if (followMatchlen == matchlen) {
             assert(nextCtx);
             ctx = (HighlightContext*) nextCtx;
          }
-         at = i;
+         at += matchlen;
       } else {
          int defaultAttr = this->colors[ctx->defaultColor];
          if (word) {
