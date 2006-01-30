@@ -1,0 +1,218 @@
+FILES
+name suffix .html
+name suffix .htm
+RULES
+
+insensitive
+
+rule &#`[0`-8`]`+; brightdiff
+rule &`[A`-Za`-z`]`+; brightdiff
+
+context <!doctype > brightspecial
+/context
+
+context <!-- --> dim
+/context
+
+context <a > alt alt normal
+   context " " diff
+   /context
+   rule = bright
+   rule href brightalt
+   rule name brightalt
+/context
+rule </a> alt
+
+rule <b> alt
+rule </b> alt
+
+context <body > alt alt normal
+   context " " diff
+   /context
+   rule = bright
+   rule bgcolor brightalt
+   rule text brightalt
+   rule link brightalt
+   rule vlink brightalt
+   rule alink brightalt
+   rule leftmargin brightalt
+   rule rightmargin brightalt
+   rule topmargin brightalt
+   rule marginwidth brightalt
+   rule marginheight brightalt
+/context
+rule </body> alt
+
+rule <br/`?> alt
+
+rule <center> alt
+rule </center> alt
+
+rule <code> alt
+rule </code> alt
+
+context <div > alt alt normal
+   context " " diff
+   /context
+   rule = bright
+   rule style brightalt
+/context
+rule </div> alt
+
+rule <em> alt
+rule </em> alt
+
+context <font > alt alt normal
+   context " " diff
+   /context
+   rule = bright
+   rule color brightalt
+   rule size brightaltoper
+/context
+rule </font> alt
+
+context <h`[123456`] > alt alt normal
+   context " " diff
+   /context
+   rule = bright
+   rule class brightalt
+   rule style brightalt
+/context
+rule </h`[123456`]> alt
+
+rule <head> alt
+rule </head> alt
+
+rule <hr/`?> alt
+
+rule <html> alt
+rule </html> alt
+
+rule <i> alt
+rule </i> alt
+
+context <img > alt alt normal
+   context " " diff
+   /context
+   rule = bright
+   rule src brightalt
+   rule width brightalt
+   rule height brightalt
+   rule border brightalt
+   rule alt brightalt
+   rule title brightalt
+   rule / alt
+/context
+
+context <li > alt alt normal
+   context " " diff
+   /context
+   rule = bright
+   rule style brightalt
+   rule class brightalt
+/context
+rule </li> alt
+
+context <link > alt alt normal
+   context " " diff
+   /context
+   rule = bright
+   rule rel brightalt
+   rule href brightalt
+/context
+
+context <meta > alt alt normal
+   context " " diff
+   /context
+   rule = bright
+   rule http-equiv brightalt
+   rule name brightalt
+   rule content brightalt
+   rule / alt
+/context
+
+context <ol > alt alt normal
+   context " " diff
+   /context
+   rule = bright
+   rule style brightalt
+   rule class brightalt
+/context
+rule </ol> altse
+
+context <pre> </pre> alt alt diff
+/context
+
+context <p > alt alt normal
+   context " " diff
+   /context
+   rule = bright
+   rule style brightalt
+/context
+rule </p> alt
+
+context <script > alt alt normal
+   context " " diff
+   /context
+   rule = bright
+   rule type brightalt
+/context
+rule </script> alt
+
+rule <small> alt
+rule </small> alt
+
+context <style> </style> alt alt diff
+/context
+
+context <table > alt alt normal
+   context " " diff
+   /context
+   rule = bright
+   rule cellspacing brightalt
+   rule cellpadding brightalt
+   rule border brightalt
+   rule width brightalt
+/context
+rule </table> alt
+
+rule <title> alt
+rule </title> alt
+
+context <td > alt alt normal
+   context " " diff
+   /context
+   rule = bright
+   rule colspan brightalt
+   rule width brightalt
+   rule align brightalt
+   rule valign brightalt
+   rule bgcolor brightalt
+/context
+rule </td> alt
+
+context <th > alt alt normal
+   context " " diff
+   /context
+   rule = bright
+   rule colspan brightalt
+   rule width brightalt
+   rule align brightalt
+   rule valign brightalt
+   rule bgcolor brightalt
+/context
+rule </th> alt
+
+context <tr > alt alt normal
+/context
+rule </tr> alt
+
+context <ul > alt alt normal
+   context " " diff
+   /context
+   rule = bright
+   rule style brightalt
+   rule class brightalt
+/context
+rule </ul> alt
+

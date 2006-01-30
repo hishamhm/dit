@@ -1,0 +1,363 @@
+FILES
+name suffix .pl
+firstline regex ^#!.*/[a-z]*/perl($|[:blank:])
+RULES
+
+rule $_ brightdiff
+rule $. brightdiff
+rule $/ brightdiff
+rule $, brightdiff
+rule $" brightdiff
+rule $\ brightdiff
+rule $# brightdiff
+rule $* brightdiff
+rule $? brightdiff
+rule $] brightdiff
+rule $[ brightdiff
+rule $; brightdiff
+rule $! brightdiff
+rule $@ brightdiff
+rule $: brightdiff
+rule $0 brightdiff
+rule $$ brightdiff
+rule $< brightdiff
+rule $> brightdiff
+rule $( brightdiff
+rule $) brightdiff
+
+rule $% brightdiff
+rule $= brightdiff
+rule $- brightdiff
+rule $~ brightdiff
+rule $| brightdiff
+rule $& brightdiff
+rule $`` brightdiff
+rule $' brightdiff
+rule $+ brightdiff
+rule $`[0`-9`]`[0`-9`]`? brightdiff
+
+rule $^A brightdiff
+rule $^D brightdiff
+rule $^E brightdiff
+rule $^I brightdiff
+rule $^L brightdiff
+rule $^P brightdiff
+rule $^T brightdiff
+rule $^W brightdiff
+rule $^X brightdiff
+rule $^A brightdiff
+
+rule @EXPORT brightdiff
+rule @EXPORT_OK brightdiff
+rule @INC brightdiff
+rule @ISA brightdiff
+rule @_ brightdiff
+rule @ENV brightdiff
+rule @OVERLOAD brightdiff
+rule @SIG brightdiff
+
+
+rule <+> brightsymbol
+rule -> brightsymbol
+rule => brightsymbol
+rule > brightsymbol
+rule < brightsymbol
+rule \+ brightsymbol
+rule - brightsymbol
+rule \* brightsymbol
+rule / brightsymbol
+rule % brightsymbol
+rule = brightsymbol
+rule != brightsymbol
+rule == brightsymbol
+rule && brightsymbol
+rule || brightsymbol
+rule ! brightsymbol
+rule ge brightsymbol
+rule le brightsymbol
+rule gt brightsymbol
+rule lt brightsymbol
+rule eq brightsymbol
+rule ne brightsymbol
+rule cmp brightsymbol
+rule ~ brightsymbol
+rule { symbol
+rule } symbol
+rule ( symbol
+rule ) symbol
+rule [ symbol
+rule ] symbol
+rule , symbol
+rule .. symbol
+rule : symbol
+rule ; brightdiff
+
+rule sub bright
+rule STDIN special
+rule STDOUT special
+rule STDERR special
+rule STDARGV special
+rule DATA special
+
+rule & brightdiff
+rule $`[A`-Z`|a`-z`|_`]`[A`-Z`|a`-z`|_`|0`-9`]`* brightalt
+rule %`[A`-Z`|a`-z`|_`]`[A`-Z`|a`-z`|_`|0`-9`]`* brightalt
+rule @`[A`-Z`|a`-z`|_`]`[A`-Z`|a`-z`|_`|0`-9`]`* brightalt
+rule \" brightdiff
+rule \' brightdiff
+
+rule and bright
+rule or bright
+rule not bright
+rule do bright
+rule if bright
+rule until bright
+rule elsif bright
+rule else bright
+rule unless bright
+rule while bright
+rule foreach bright
+rule for bright
+rule goto bright
+rule last bright
+rule next bright
+rule bless bright
+rule caller bright
+rule import bright
+rule package bright
+rule require bright
+rule return bright
+rule untie bright
+rule use bright
+rule diagnostics brightdiff
+rule integer brightdiff
+rule less brightdiff
+rule lib brightdiff
+rule ops brightdiff
+rule overload brightdiff
+rule sigtrap brightdiff
+rule strict brightdiff
+rule vars brightdiff
+
+rule abs bright
+rule atan2 bright
+rule cos bright
+rule exp bright
+rule int bright
+rule log bright
+rule rand bright
+rule sin bright
+rule sqrt bright
+rule srand bright
+rule time bright
+rule chr bright
+rule gmtime bright
+rule hex bright
+rule localtime bright
+rule oct bright
+rule ord bright
+rule vec bright
+rule pack bright
+rule unpack bright
+
+rule chomp bright
+rule chop bright
+rule crypt bright
+rule eval bright
+rule index bright
+rule length bright
+rule lc bright
+rule lcfirst bright
+rule quotemeta bright
+rule rindex bright
+rule substr bright
+rule uc bright
+rule ucfirst bright
+
+rule delete bright
+rule each bright
+rule exists bright
+rule grep bright
+rule join bright
+rule keys bright
+rule map bright
+rule pop bright
+rule push bright
+rule reverse bright
+rule scalar bright
+rule shift bright
+rule sort bright
+rule splice bright
+rule split bright
+rule unshift bright
+rule values bright
+
+rule chmod bright
+rule chown bright
+rule truncate bright
+rule link bright
+rule lstat bright
+rule mkdir bright
+rule readlink bright
+rule rename bright
+rule rmdir bright
+rule stat bright
+rule symlink bright
+rule unlink bright
+rule utime bright
+
+rule binmade bright
+rule close bright
+rule dbmclose bright
+rule dbmopen bright
+rule binmade bright
+rule eof bright
+rule fcntl bright
+rule fileno bright
+rule flock bright
+rule getc bright
+rule ioctl bright
+rule open bright
+rule pipe bright
+rule print bright
+rule printf bright
+rule read bright
+rule seek bright
+rule select bright
+rule sprintf bright
+rule sysopen bright
+rule sysread bright
+rule syswrite bright
+rule tell bright
+
+rule formline bright
+rule write bright
+
+rule closedir bright
+rule opendir bright
+rule readdir bright
+rule rewinddir bright
+rule seekdir bright
+rule telldir bright
+
+rule alarm bright
+rule chdir bright
+rule chroot bright
+rule die bright
+rule exec bright
+rule exit bright
+rule fork bright
+rule getlogin bright
+rule getpgrp bright
+rule getppid bright
+rule getpriority bright
+rule glob bright
+rule kill bright
+rule setpgrp bright
+rule setpriority bright
+rule sleep bright
+rule syscall bright
+rule system bright
+rule times bright
+rule umask bright
+rule wait bright
+rule waitpid bright
+rule warn bright
+
+rule accept bright
+rule bind bright
+rule connect bright
+rule getpeername bright
+rule getsockname bright
+rule getsockopt bright
+rule listen bright
+rule recv bright
+rule send bright
+rule setsockopt bright
+rule shutdown bright
+rule socket bright
+rule socketpair bright
+
+rule msgctl bright
+rule msgget bright
+rule msgsnd bright
+rule msgrcv bright
+rule semctl bright
+rule semget bright
+rule semop bright
+rule shmctl bright
+rule shmget bright
+rule shmread bright
+rule shmwrite bright
+
+rule defined bright
+rule dump bright
+rule eval bright
+rule local bright
+rule my bright
+rule ref bright
+rule reset bright
+rule scalar bright
+rule undef bright
+rule wantarray bright
+
+rule endpwent bright
+rule getpwent bright
+rule getpwnam bright
+rule getpwuid bright
+rule setpwent bright
+rule endgrent bright
+rule getgrgid bright
+rule getgrnam bright
+rule getgrent bright
+rule setgrent bright
+
+rule endhostent bright
+rule gethostbyaddr bright
+rule gethostbyname bright
+rule gethostent bright
+rule sethostent bright
+
+rule endnetent bright
+rule getnetbyaddr bright
+rule getnetbyname bright
+rule getnetent bright
+rule setnetent bright
+rule endservent bright
+rule getservbyname bright
+rule getservbyport bright
+rule getservent bright
+rule serservent bright
+rule endprotoent bright
+rule getprotobyname bright
+rule getprotobynumber bright
+rule getprotoent bright
+rule setprotoent bright
+
+rule sub brightdiff
+
+context <EOF EOF bright bright diff
+/context
+
+context # `$ dim
+/context
+
+context " " alt
+   rule $`[A`-Z`|a`-z`|_`]`[A`-Z`|a`-z`|_`|0`-9`]`* brightalt
+   rule %`[A`-Z`|a`-z`|_`]`[A`-Z`|a`-z`|_`|0`-9`]`* brightalt
+   rule @`[A`-Z`|a`-z`|_`]`[A`-Z`|a`-z`|_`|0`-9`]`* brightalt
+   rule \" brightalt
+   rule \\ brightalt
+/context
+
+context ' ' alt
+   rule \' brightalt
+   rule \\ brightalt
+/context
+
+context ` ` brightspecial brightspecial special
+/context
+
+context __END__ guacamole_pudding dim
+/context
+

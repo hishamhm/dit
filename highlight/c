@@ -1,0 +1,100 @@
+FILES
+name suffix .c
+name suffix .cpp
+name suffix .h
+name suffix .hpp
+name suffix .h.in
+name suffix .c.in
+RULES
+rule auto bright
+rule char bright
+rule void bright
+rule if bright
+rule else bright
+rule default bright
+rule while bright
+rule switch bright
+rule case bright
+rule break bright
+rule bool bright
+rule continue bright
+rule return bright
+rule inline bright
+rule for bright
+rule unsigned bright
+rule const bright
+rule do bright
+rule double bright
+rule enum bright
+rule extern bright
+rule float bright
+rule goto bright
+rule int bright
+rule long bright
+rule register bright
+rule short bright
+rule signed bright
+rule sizeof bright
+rule static bright
+rule struct bright
+rule typedef bright
+rule union bright
+rule volatile bright
+rule class bright
+rule private bright
+rule protected bright
+rule public bright
+rule -> bright
+rule ! brightsymbol
+rule < brightsymbol
+rule > brightsymbol
+rule = brightsymbol
+rule + brightsymbol
+rule - brightsymbol
+rule * brightsymbol
+rule / brightsymbol
+rule % brightsymbol
+rule [ symbol
+rule ] symbol
+rule { symbol
+rule } symbol
+rule ( symbol
+rule ) symbol
+rule : symbol
+rule , symbol
+rule ; brightdiff
+rule /* dim
+context /* */ dim
+   rule */ dim
+/context
+rule // dim
+context // `$ dim
+/context
+rule " alt
+context " " alt
+   rule \\ brightalt
+   rule \" brightalt
+   rule \n brightalt
+   rule \t brightalt
+   rule " alt
+/context
+rule ' brightalt
+context ' ' brightalt
+   rule \\ brightalt
+   rule \' brightalt
+   rule ' brightalt
+/context
+rule # brightspecial
+context # `$ brightspecial
+/context
+rule #include brightspecial
+context #include `$ brightspecial
+   rule " special
+   context " " special
+      rule " special
+   /context
+   rule < special
+   context < > special
+      rule > special
+   /context
+/context

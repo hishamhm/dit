@@ -1,0 +1,37 @@
+FILES
+firstline prefix FILES
+RULES
+context FILES RULES veryspecial veryspecial normal
+   context name `$ normal
+      rule prefix bright
+      rule suffix bright
+      rule regex bright
+   /context
+   context firstline `$ normal
+      rule prefix bright
+      rule suffix bright
+      rule regex bright
+   /context
+   rule name bright
+   rule firstline bright
+/context
+rule rule bright
+rule context bright
+rule insensitive bright
+
+rule normal normal
+rule bright bright
+rule symbol symbol
+rule brightsymbol brightsymbol
+rule alt alt
+rule brightalt brightalt
+rule diff diff
+rule brightdiff brightdiff
+rule special special
+rule brightspecial brightspecial
+rule veryspecial veryspecial
+rule dim dim
+
+rule ``^ veryspecial
+rule ``$ veryspecial
+rule ```[``[-]+*?|ts`] brightdiff

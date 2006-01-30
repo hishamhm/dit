@@ -1,0 +1,91 @@
+FILES
+name suffix .lua
+RULES   
+rule and      bright
+rule break    bright
+rule do       bright
+rule else     bright
+rule elseif   bright
+rule end      bright
+rule false    bright
+rule for      bright
+rule function bright
+rule if       bright
+rule in       bright
+rule local    bright
+rule nil      bright
+rule not      bright
+rule or       bright
+rule repeat   bright
+rule return   bright
+rule then     bright
+rule true     bright
+rule until    bright
+rule while    bright
+rule ...      bright
+
+rule [ symbol
+rule ] symbol
+rule { symbol
+rule } symbol
+rule ( symbol
+rule ) symbol
+rule : symbol
+rule , symbol
+
+rule # brightsymbol
+rule ..  brightsymbol
+rule ^  brightsymbol
+rule <  brightsymbol
+rule >  brightsymbol
+rule =  brightsymbol
+rule +  brightsymbol
+rule -  brightsymbol
+rule *  brightsymbol
+rule /  brightsymbol
+rule %%  brightsymbol
+rule ~= brightsymbol
+
+rule ; brightalt
+
+rule --[[ dim
+rule -- dim
+rule \" alt
+rule ' alt
+rule [[ alt
+
+context --[[ ]] dim
+/context
+
+context --[=[ ]=] dim
+/context
+
+context --[==[ ]==] dim
+/context
+
+context --[===[ ]===] dim
+/context
+
+context -- `$ dim
+/context
+
+context " " alt
+   rule \" brightalt
+   rule \n brightalt
+   rule \t brightalt
+   rule " alt
+/context
+
+context ' ' alt
+   rule \' brightalt
+   rule \n brightalt
+   rule \t brightalt
+   rule ' alt
+/context
+
+context [[ ]] alt
+   rule \n brightalt
+   rule \t brightalt
+   rule ]] alt
+/context
+

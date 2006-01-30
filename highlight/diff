@@ -1,0 +1,21 @@
+FILES
+firstline prefix diff
+RULES
+
+context diff `$ veryspecial
+/context
+
+context @@ @@ special
+/context
+
+context --- `$ brightalt
+/context
+
+context +++ `$ brightdiff
+/context
+
+context `^- `$ alt
+/context
+
+context + `$ diff
+/context
