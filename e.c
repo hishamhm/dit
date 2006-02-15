@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
       
       attrset(CRT_color(Black, Cyan));
       mvhline(LINES - 1, 0, ' ', COLS);
-      mvprintw(LINES - 1, 0, "Lin=%d Col=%d [%c] %.20s", buffer->y + 1, buffer->x + 1, (buffer->modified ? '*' : ' '), buffer->fileName);
+      mvprintw(LINES - 1, 0, "Lin=%d Col=%d [%c] %.40s", buffer->y + 1, buffer->x + 1, (buffer->modified ? '*' : ' '), buffer->fileName);
       attrset(A_NORMAL);
       Buffer_draw(buffer);
       ch = CRT_getCharacter();
@@ -423,8 +423,22 @@ int main(int argc, char** argv) {
          buffer->selecting = false;
          break;
       case '\t':
+      {
          Buffer_indent(buffer);
+         /*
+         char word[100];
+         int at = Buffer_currentWord(buffer, word, 100);
+         if (*word && at == strlen(word)) {
+            char rest[100];
+            if (PatternMatcher_partialMatch(buffer->hl->words->start, (unsigned char*) word, at, rest, 100)) {
+               Buffer_pasteBlock(buffer, rest, strlen(rest));
+            }
+         } else {
+            Buffer_indent(buffer);
+         }
+         */
          break;
+      }
       case KEY_BTAB:
          Buffer_unindent(buffer);
          break;
@@ -491,6 +505,14 @@ int main(int argc, char** argv) {
       case KEY_CS_END:
       case KEY_S_END:
          Buffer_select(buffer, Buffer_endOfLine);
+         break;
+      case KEY_CS_PPAGE:
+      case KEY_S_PPAGE:
+         Buffer_select(buffer, Buffer_previousPage);
+         break;
+      case KEY_CS_NPAGE:
+      case KEY_S_NPAGE:
+         Buffer_select(buffer, Buffer_nextPage);
          break;
       case KEY_CTRL('A'):
       case KEY_HOME:
