@@ -1,5 +1,6 @@
 FILES
 firstline prefix diff
+name suffix .diff
 RULES
 
 context diff `$ veryspecial
