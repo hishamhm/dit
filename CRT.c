@@ -30,22 +30,26 @@
 #define KEY_S_END     KEY_F(35)
 #define KEY_S_INSERT  KEY_F(36)
 #define KEY_S_DELETE  KEY_F(37)
-#define KEY_C_UP      KEY_F(38)
-#define KEY_C_DOWN    KEY_F(39)
-#define KEY_C_RIGHT   KEY_F(40)
-#define KEY_C_LEFT    KEY_F(41)
-#define KEY_C_HOME    KEY_F(42)
-#define KEY_C_END     KEY_F(43)
-#define KEY_C_INSERT  KEY_F(44)
-#define KEY_C_DELETE  KEY_F(45)
-#define KEY_CS_UP     KEY_F(46)
-#define KEY_CS_DOWN   KEY_F(47)
-#define KEY_CS_RIGHT  KEY_F(48)
-#define KEY_CS_LEFT   KEY_F(49)
-#define KEY_CS_HOME   KEY_F(50)
-#define KEY_CS_END    KEY_F(51)
-#define KEY_CS_INSERT KEY_F(52)
-#define KEY_CS_DELETE KEY_F(53)
+#define KEY_S_NPAGE   KEY_F(38)
+#define KEY_S_PPAGE   KEY_F(39)
+#define KEY_C_UP      KEY_F(40)
+#define KEY_C_DOWN    KEY_F(41)
+#define KEY_C_RIGHT   KEY_F(42)
+#define KEY_C_LEFT    KEY_F(43)
+#define KEY_C_HOME    KEY_F(44)
+#define KEY_C_END     KEY_F(45)
+#define KEY_C_INSERT  KEY_F(46)
+#define KEY_C_DELETE  KEY_F(47)
+#define KEY_CS_UP     KEY_F(48)
+#define KEY_CS_DOWN   KEY_F(49)
+#define KEY_CS_RIGHT  KEY_F(50)
+#define KEY_CS_LEFT   KEY_F(51)
+#define KEY_CS_HOME   KEY_F(52)
+#define KEY_CS_END    KEY_F(53)
+#define KEY_CS_INSERT KEY_F(54)
+#define KEY_CS_DELETE KEY_F(55)
+#define KEY_CS_PPAGE  KEY_F(56)
+#define KEY_CS_NPAGE  KEY_F(57)
 
 #define KEY_CTRL(x)  (x - 'A' + 1)
 
@@ -97,6 +101,11 @@ void CRT_init() {
    if (has_colors()) {
       start_color();
       CRT_hasColors = true;
+      use_default_colors();
+      for (int i = 0; i < 8; i++)
+         for (int j = 0; j < 8; j++)
+            init_pair(i*8+j, i==7?-1:i, j==0?-1:j);
+      init_pair(White*8+Black, Black, -1);
    } else {
       CRT_hasColors = false;
    }
@@ -157,11 +166,16 @@ void CRT_init() {
       define_key("\033[2;2~", KEY_S_INSERT);
       define_key("\033[3;2~", KEY_S_DELETE);
 
+      define_key("\033[5;2", KEY_S_PPAGE);
+      define_key("\033[6;2", KEY_S_NPAGE);
+
       // Konsole on KDE 3.4
       define_key("\033[H", KEY_S_HOME);
       define_key("\033[F", KEY_S_END);
       define_key("\033O2H", KEY_S_HOME);
       define_key("\033O2F", KEY_S_END);
+      // Actually simple insert
+      define_key("\033[2~", KEY_C_INSERT);
 
       define_key("\033[1;6A", KEY_CS_UP);
       define_key("\033[1;6B", KEY_CS_DOWN);
@@ -178,12 +192,6 @@ void CRT_init() {
 //   signal(11, CRT_handleSIGSEGV);
 #endif
    signal(SIGTERM, CRT_handleSIGTERM);
-   use_default_colors();
-
-   for (int i = 0; i < 8; i++)
-      for (int j = 0; j < 8; j++)
-         init_pair(i*8+j, i, j == 0 ? -1 : j);
-   init_pair(White*8+Black, Black, -1);
 
    mousemask(BUTTON1_PRESSED, NULL);
 }
@@ -232,6 +240,8 @@ int CRT_getCharacter() {
          case KEY_END: return KEY_S_END;
          case KEY_IC: return KEY_S_INSERT;
          case KEY_DC: return KEY_S_DELETE;
+         case KEY_NPAGE: return KEY_S_NPAGE;
+         case KEY_PPAGE: return KEY_S_PPAGE;
          case '\t': return KEY_BTAB;
          }
       case SHIFT_MASK | CTRL_MASK:
