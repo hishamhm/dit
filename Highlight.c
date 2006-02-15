@@ -48,10 +48,13 @@ struct Highlight_ {
    int colors[HighlightColors];
    HighlightContext* mainContext;
    HighlightContext* currentContext;
+   // PatternMatcher* words;
    bool toLower;
 };
 
+#ifndef isword
 #define isword(x) (isalpha(x) || x == '_')
+#endif
 
 //#define ANTARCTIC_THEME
 //#define CLASSIC_TURBO_THEME
@@ -133,6 +136,7 @@ static HighlightColor Highlight_translateColor(char* color) {
 
 Highlight* Highlight_new(const char* fileName, const char* firstLine) {
    Highlight* this = (Highlight*) malloc(sizeof(Highlight));
+   // this->words = PatternMatcher_new();
    this->colors[NormalColor] = (A_NORMAL);
    this->colors[SelectionColor] = (A_REVERSE | CRT_color(Blue, White));
    this->colors[BracketColor] = (A_REVERSE | CRT_color(Cyan, Black));
@@ -345,11 +349,24 @@ void Highlight_setAttrs(Highlight* this, unsigned char* buffer, int* attrs, int 
                ctx = (HighlightContext*) nextCtx;
          }
       }
-   }
+   } 
    while (at < len) {
       attrs[at] = this->colors[ctx->defaultColor];
       unsigned char* here = buffer+at;
       int intColor;
+      
+      /* {
+         unsigned char* word = here;
+         while (isword(*word))
+            word++;
+         if (word > here) {
+            char save = *word;
+            *word = '\0';
+            PatternMatcher_add(this->words, here, 1);
+            *word = save;
+         }
+      } */
+      
       int matchlen = match(ctx->rules->start, here, (int*) &intColor);
       HighlightColor color = (HighlightColor) intColor;
       assert(color >= 0 && color < HighlightColors);
