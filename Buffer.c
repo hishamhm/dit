@@ -12,6 +12,10 @@
 
 /*{
 
+#ifndef isword
+#define isword(x) (isalpha(x) || x == '_')
+#endif
+
 struct Buffer_ {
    char* fileName;
    bool modified;
@@ -458,6 +462,14 @@ void Buffer_endOfFile(Buffer* this) {
    Buffer_endOfLine(this);
 }
 
+void Buffer_previousPage(Buffer* this) {
+   Buffer_goto(this, this->x, this->y - this->panel->h);
+}
+
+void Buffer_nextPage(Buffer* this) {
+   Buffer_goto(this, this->x, this->y + this->panel->h);
+}
+
 void Buffer_deleteBlock(Buffer* this) {
    int yFrom = this->selectYfrom;
    int yTo = this->selectYto;
@@ -712,6 +724,7 @@ void Buffer_unindent(Buffer* this) {
       this->y = MAX(0, this->y - INDENT_WIDTH);
    this->panel->needsRedraw = true;
    this->modified = true;
+   this->lastKey = 0;
 }
 
 void Buffer_indent(Buffer* this) {
@@ -725,6 +738,7 @@ void Buffer_indent(Buffer* this) {
       this->x += INDENT_WIDTH;
    this->panel->needsRedraw = true;
    this->modified = true;
+   this->lastKey = 0;
 }
       
 void Buffer_defaultKeyHandler(Buffer* this, int ch) {
@@ -756,6 +770,29 @@ char Buffer_currentChar(Buffer* this) {
    } else {
       return '\0';
    }
+}
+
+int Buffer_currentWord(Buffer* this, char* result, int resultLen) {
+
+   assert(this->line);
+   char* text = this->line->text;
+   int len = this->line->len;
+   int offset = MIN(this->x, len);
+   int at = 0;
+   int saveOffset = offset;
+   if (this->x <= len) {
+      while (offset > 0 && isword(text[offset-1]))
+         offset--;
+      for(int i = 0; i < resultLen && isword(text[offset]); i++) {
+         *result = text[offset];
+         result++;
+         offset++;
+         if (offset == saveOffset)
+            at = i+1;
+      }
+   }
+   *result = '\0';
+   return at;
 }
 
 bool Buffer_find(Buffer* this, char* needle, bool findNext, bool caseSensitive, bool forward) {
