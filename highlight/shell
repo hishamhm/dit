@@ -20,6 +20,7 @@ rule declare         bright
 rule dirs            bright
 rule disown          bright
 rule echo            bright
+rule esac            bright
 rule enable          bright
 rule eval            bright
 rule exec            bright
@@ -112,17 +113,17 @@ context ' ' alt
 
 context `` `` brightspecial brightspecial special
    rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightspecial
-   rule ${`[a`-z`|A`-Z`|0`-9`|_[]%#*@ `]`+} brightspecial
+   rule ${`[a`-z`|A`-Z`|0`-9`|_[]%#*@`s`]`+} brightspecial
 /context
 
 context $( ) brightspecial brightspecial special
    rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightspecial
-   rule ${`[a`-z`|A`-Z`|0`-9`|_[]%#*@ `]`+} brightspecial
+   rule ${`[a`-z`|A`-Z`|0`-9`|_[]%#*@`s`]`+} brightspecial
 /context
 
 context " " alt
    rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightalt
-   rule ${`[a`-z`|A`-Z`|0`-9`|_[]%#*@ `]`+} brightalt
+   rule ${`[a`-z`|A`-Z`|0`-9`|_[]%#*@`s`]`+} brightalt
    rule $`[0`-9`] brightdiff
    rule \" brightalt
    rule \n brightalt
