@@ -46,7 +46,7 @@ void DebugMemory_new() {
    singleton->allocations = 0;
    singleton->deallocations = 0;
    singleton->size = 0;
-   singleton->file = fopen("alloc.txt", "w");
+   singleton->file = fopen("/tmp/alloc.txt", "w");
 }
 
 void* DebugMemory_malloc(int size, char* file, int line, char* str) {
