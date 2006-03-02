@@ -7,6 +7,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "Prototypes.h"
 
@@ -19,6 +20,7 @@
 struct Buffer_ {
    char* fileName;
    bool modified;
+   bool readOnly;
    // logical position of the cursor in the line
    // (character of the line where cursor is.
    int x;
@@ -80,6 +82,8 @@ Buffer* Buffer_new(char* fileName, bool command) {
    this->bracketY = -1;
    this->lastKey = 0;
    this->modified = false;
+
+   this->readOnly = (access(fileName, W_OK) != 0);
    
    this->panel = ListBox_new(0, 0, COLS, LINES - 1, NormalColor, LINE_CLASS, true);
    this->undo = Undo_new(this->panel->items);
@@ -891,6 +895,7 @@ bool Buffer_save(Buffer* this) {
    fclose(fd);
    Undo_store(this->undo, this->fileName);
    this->modified = false;
+   this->readOnly = false;
    return true;
 }
 
