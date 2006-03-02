@@ -61,8 +61,14 @@ int main(int argc, char** argv) {
       fprintf(stderr, "e: %s is a directory.\n", argv[1]);
       exit(0);
    }
+   if (access(argv[1], R_OK) == 0 && access(argv[1], W_OK) != 0) {
+      fprintf(stderr, "e: %s is not writable.\n", argv[1]);
+      exit(0);
+   }
    CRT_init();
+   
    Buffer* buffer = Buffer_new(argv[1], false);
+
    Clipboard* clip = Clipboard_new();
    char bookmarkX[256];
    char bookmarkY[256];
@@ -83,7 +89,7 @@ int main(int argc, char** argv) {
       
       attrset(CRT_color(Black, Cyan));
       mvhline(LINES - 1, 0, ' ', COLS);
-      mvprintw(LINES - 1, 0, "Lin=%d Col=%d [%c] %.40s", buffer->y + 1, buffer->x + 1, (buffer->modified ? '*' : ' '), buffer->fileName);
+      mvprintw(LINES - 1, 0, "Lin=%d Col=%d %s %.40s", buffer->y + 1, buffer->x + 1, (buffer->readOnly ? "R-O" : (buffer->modified ? "[*]" : "[ ]")), buffer->fileName);
       attrset(A_NORMAL);
       Buffer_draw(buffer);
       ch = CRT_getCharacter();
