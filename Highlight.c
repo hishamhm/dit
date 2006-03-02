@@ -336,7 +336,7 @@ void Highlight_setAttrs(Highlight* this, unsigned char* buffer, int* attrs, int 
       match = PatternMatcher_match;
    if (ctx->rules->lineStart) {
       int intColor;
-      int matchlen = match(ctx->rules->lineStart, buffer, (int*) &intColor);
+      int matchlen = match(ctx->rules->lineStart, buffer, &intColor);
       HighlightColor color = (HighlightColor) intColor;
       int attr = this->colors[color];
       int word = isword(*buffer);
@@ -355,19 +355,7 @@ void Highlight_setAttrs(Highlight* this, unsigned char* buffer, int* attrs, int 
       unsigned char* here = buffer+at;
       int intColor;
       
-      /* {
-         unsigned char* word = here;
-         while (isword(*word))
-            word++;
-         if (word > here) {
-            char save = *word;
-            *word = '\0';
-            PatternMatcher_add(this->words, here, 1);
-            *word = save;
-         }
-      } */
-      
-      int matchlen = match(ctx->rules->start, here, (int*) &intColor);
+      int matchlen = match(ctx->rules->start, here, &intColor);
       HighlightColor color = (HighlightColor) intColor;
       assert(color >= 0 && color < HighlightColors);
       int attr = this->colors[color];
