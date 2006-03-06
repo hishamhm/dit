@@ -83,7 +83,7 @@ Buffer* Buffer_new(char* fileName, bool command) {
    this->lastKey = 0;
    this->modified = false;
 
-   this->readOnly = (access(fileName, W_OK) != 0);
+   this->readOnly = (access(fileName, R_OK) == 0 && access(fileName, W_OK) != 0);
    
    this->panel = ListBox_new(0, 0, COLS, LINES - 1, NormalColor, LINE_CLASS, true);
    this->undo = Undo_new(this->panel->items);
