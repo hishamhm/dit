@@ -122,6 +122,7 @@ context $( ) brightspecial brightspecial special
 /context
 
 context " " alt
+   rule \$ brightalt
    rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightalt
    rule ${`[a`-z`|A`-Z`|0`-9`|_[]%#*@`s`]`+} brightalt
    rule $`[0`-9`] brightdiff
@@ -131,4 +132,7 @@ context " " alt
 /context
 
 context # `$ dim
+/context
+
+context EOF EOF bright bright diff
 /context
