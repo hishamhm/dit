@@ -52,6 +52,8 @@ struct Buffer_ {
    Undo* undo;
    // previous key for compound actions
    int lastKey;
+   // document uses tab characters
+   int tabCharacters;
 };
 
 struct FilePosition_ {
@@ -82,6 +84,7 @@ Buffer* Buffer_new(char* fileName, bool command) {
    this->bracketY = -1;
    this->lastKey = 0;
    this->modified = false;
+   this->tabCharacters = false;
 
    this->readOnly = (access(fileName, R_OK) == 0 && access(fileName, W_OK) != 0);
    
@@ -95,11 +98,13 @@ Buffer* Buffer_new(char* fileName, bool command) {
       int len = 0;
       char* text = FileReader_readLine(file, &len);
       this->hl = Highlight_new(fileName, text);
+      if (strchr(text, '\t')) this->tabCharacters = true;
       Line* line = Line_new(text, len, this);
       ListBox_set(this->panel, i, (ListItem*) line);
       while (!FileReader_eof(file)) {
          i++;
          char* text = FileReader_readLine(file, &len);
+         if (!this->tabCharacters && strchr(text, '\t')) this->tabCharacters = true;
          Line* line = Line_new(text, len, this);
          ListBox_set(this->panel, i, (ListItem*) line);
       }

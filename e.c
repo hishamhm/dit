@@ -42,6 +42,27 @@ void statusMessage(char* message) {
    move(cursorY, cursorX);
 }
 
+bool attemptSave(Buffer* buffer) {
+   Field* saveAsField = Field_new("Save failed. Save as:", 0, LINES-1, COLS-2, CRT_color(Black, Cyan), CRT_color(White, Blue));
+   bool saved = false;
+   while (true) {
+      saved = Buffer_save(buffer);
+      if (!saved) {
+         Field_setValue(saveAsField, buffer->fileName);
+         bool quitMask[255] = {0};
+         int ch = Field_quickRun(saveAsField, quitMask);
+         if (ch == 13) {
+            free(buffer->fileName);
+            buffer->fileName = Field_getValue(saveAsField);
+         } else
+            break;
+      } else
+         break;
+   }
+   Field_delete(saveAsField);
+   return saved;
+}
+
 int main(int argc, char** argv) {
 
    if (argc > 1) {
@@ -62,8 +83,11 @@ int main(int argc, char** argv) {
       exit(0);
    }
    if (access(argv[1], R_OK) == 0 && access(argv[1], W_OK) != 0) {
-      fprintf(stderr, "e: %s is not writable.\n", argv[1]);
-      exit(0);
+      char buffer[4096];
+      snprintf(buffer, 4095, "sudo e %s", argv[1]);
+      int ret = system(buffer);
+      if (ret == 0)
+         exit(0);
    }
    CRT_init();
    
@@ -87,9 +111,16 @@ int main(int argc, char** argv) {
    int ch = 0;
    while (!quit) {
       
-      attrset(CRT_color(Black, Cyan));
+      if (buffer->readOnly)
+         attrset(CRT_color(White, Red));
+      else
+         attrset(CRT_color(Black, Cyan));
       mvhline(LINES - 1, 0, ' ', COLS);
-      mvprintw(LINES - 1, 0, "Lin=%d Col=%d %s %.40s", buffer->y + 1, buffer->x + 1, (buffer->readOnly ? "R-O" : (buffer->modified ? "[*]" : "[ ]")), buffer->fileName);
+      mvprintw(LINES - 1, 0, "Lin=%d Col=%d %s%s %.40s",
+                             buffer->y + 1, buffer->x + 1,
+                             (buffer->readOnly ? "R-O" : (buffer->modified ? "[*]" : "[ ]")),
+                             (buffer->tabCharacters ? " TABS" : ""),
+                             buffer->fileName);
       attrset(A_NORMAL);
       Buffer_draw(buffer);
       ch = CRT_getCharacter();
@@ -211,6 +242,7 @@ int main(int argc, char** argv) {
          }
          break;
       }
+      case KEY_F(3):
       case KEY_CTRL('F'):
       {
          clearStatusBar();
@@ -252,6 +284,7 @@ int main(int argc, char** argv) {
                   {
                      caseSensitive = !caseSensitive;
                   }
+                  case KEY_F(3):
                   case KEY_CTRL('F'):
                   {
                      found = Buffer_find(buffer, findField->current->text, true, caseSensitive, true);
@@ -346,22 +379,7 @@ int main(int argc, char** argv) {
       }
       case KEY_CTRL('S'):
       {
-         Field* saveAsField = Field_new("Save failed. Save as:", 0, LINES-1, COLS-2, CRT_color(Black, Cyan), CRT_color(White, Blue));
-         while (true) {
-            bool saved = Buffer_save(buffer);
-            if (!saved) {
-               Field_setValue(saveAsField, buffer->fileName);
-               bool quitMask[255] = {0};
-               int ch = Field_quickRun(saveAsField, quitMask);
-               if (ch == 13) {
-                  free(buffer->fileName);
-                  buffer->fileName = Field_getValue(saveAsField);
-               } else
-                  break;
-            } else
-               break;
-         }
-         Field_delete(saveAsField);
+         attemptSave(buffer);
          break;
       }
       case KEY_CTRL('L'):
@@ -417,7 +435,8 @@ int main(int argc, char** argv) {
                opt = getch();
             } while (opt != 'y' && opt != 'n' && opt != 'c');
             if (opt == 'y')
-               Buffer_save(buffer);
+               if (!attemptSave(buffer))
+                  continue;
             if (opt == 'c')
                continue;
          }
@@ -430,7 +449,10 @@ int main(int argc, char** argv) {
          break;
       case '\t':
       {
-         Buffer_indent(buffer);
+         if (buffer->tabCharacters)
+            Buffer_defaultKeyHandler(buffer, '\t');
+         else
+            Buffer_indent(buffer);
          /*
          char word[100];
          int at = Buffer_currentWord(buffer, word, 100);
