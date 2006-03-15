@@ -261,7 +261,7 @@ int main(int argc, char** argv) {
             Field_printfLabel(findField, "Lin=%d Col=%d (%c)Case %sFind:", buffer->y + 1, buffer->x + 1, caseSensitive ? '*' : ' ', wrapped ? "Wrapped " : "");
             int ch = Field_run(findField, false, &handled);
             if (!handled) {
-               if (ch >= 32 && ch <= 255) {
+               if (ch == 9 || (ch >= 32 && ch <= 255)) {
                   Field_insertChar(findField, ch);
                   wrapped = false;                  
                   firstX = -1;
@@ -570,7 +570,7 @@ int main(int argc, char** argv) {
          buffer->selecting = false;
          break;
       case KEY_CTRL('T'):
-         Buffer_defaultKeyHandler(buffer, '\t');
+         buffer->tabCharacters = !buffer->tabCharacters;
          break;
       case KEY_CTRL('J'):
          Buffer_defaultKeyHandler(buffer, KEY_PPAGE);
