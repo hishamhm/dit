@@ -62,17 +62,29 @@ void Line_display(Object* cast, RichString* str) {
    Buffer* buffer = this->buffer;
    int scrollH = buffer->panel->scrollH;
    int y = buffer->panel->displaying;
-   int outSize = this->len;
+   int len = this->len;
    int outIndex = 0;
    int textIndex = 0;
    Highlight* hl = buffer->hl;
-   unsigned char out[(outSize+1) * TAB_WIDTH];
+   int outSize = (len+1) * TAB_WIDTH;
+   unsigned char out[outSize];
+   int inAttrs[len];
+   int attrs[outSize];
+
+   HighlightContext* context = this->super.prev
+                             ? ((Line*)this->super.prev)->context
+                             : hl->mainContext;
+   Highlight_setContext(hl, context);
+
+   Highlight_setAttrs(hl, (unsigned char*) this->text, inAttrs, len);
   
    while (textIndex < this->len) {
-      unsigned char curr = this->text[textIndex++];
+      unsigned char curr = this->text[textIndex];
+      attrs[outIndex] = inAttrs[textIndex];
       if (curr == '\t') {
          int tabSize = TAB_WIDTH - (outIndex % TAB_WIDTH);
          for (int i = 0; i < tabSize; i++) {
+            attrs[outIndex] = inAttrs[textIndex];
             out[outIndex++] = ' ';
          }
       } else if (curr < 32) {
@@ -80,16 +92,9 @@ void Line_display(Object* cast, RichString* str) {
       } else {
          out[outIndex++] = curr;
       }
+      textIndex++;
    }
    out[outIndex] = '\0';
-
-   int attrs[outIndex + 1];
-   HighlightContext* context = this->super.prev
-                             ? ((Line*)this->super.prev)->context
-                             : hl->mainContext;
-   Highlight_setContext(hl, context);
-
-   Highlight_setAttrs(hl, out, attrs, outIndex);
 
    if (buffer->bracketY == y && buffer->bracketX < outIndex) {
       attrs[buffer->bracketX] = hl->colors[BracketColor];
