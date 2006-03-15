@@ -326,6 +326,37 @@ HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close,
    return ctx;
 }
 
+/* private */
+static inline int Highlight_tryMatch(Highlight* this, unsigned char* buffer, int* attrs, int at, GraphNode* rules, GraphNode* follows, Method_PatternMatcher_match match, HighlightContext** ctx, bool paintUnmatched) {
+   unsigned char* here = buffer+at;
+   int intColor;
+   int matchlen = match(rules, here, &intColor);
+   HighlightColor color = (HighlightColor) intColor;
+   assert(color >= 0 && color < HighlightColors);
+   int attr = this->colors[color];
+   int word = isword(*here);
+   if (matchlen && !(word && isword(here[matchlen]))) {
+      for (int i = at; i < at+matchlen; i++)
+         attrs[i] = attr;
+      int nextCtx = 0;
+      int followMatchlen = match(follows, here, &nextCtx);
+      if (followMatchlen == matchlen) {
+         assert(nextCtx);
+         *ctx = (HighlightContext*) nextCtx;
+      }
+      at += matchlen;
+   } else if (paintUnmatched) {
+      int defaultAttr = this->colors[(*ctx)->defaultColor];
+      if (word) {
+         while (isword(buffer[at]))
+            attrs[at++] = defaultAttr;
+      } else {
+         attrs[at++] = defaultAttr;
+      }
+   }
+   return at;
+}
+
 void Highlight_setAttrs(Highlight* this, unsigned char* buffer, int* attrs, int len) {
    HighlightContext* ctx = this->currentContext;
    int at = 0;
@@ -334,53 +365,9 @@ void Highlight_setAttrs(Highlight* this, unsigned char* buffer, int* attrs, int 
       match = PatternMatcher_match_toLower;
    else
       match = PatternMatcher_match;
-   if (ctx->rules->lineStart) {
-      int intColor;
-      int matchlen = match(ctx->rules->lineStart, buffer, &intColor);
-      HighlightColor color = (HighlightColor) intColor;
-      int attr = this->colors[color];
-      int word = isword(*buffer);
-      if (matchlen && !(word && isword(buffer[matchlen]))) {
-         for (; at < matchlen; at++)
-            attrs[at] = attr;
-         if (ctx->follows->lineStart) {
-            int nextCtx = 0;
-            if (match(ctx->follows->lineStart, buffer, &nextCtx) == matchlen)
-               ctx = (HighlightContext*) nextCtx;
-         }
-      }
-   } 
+   //at = Highlight_tryMatch(this, buffer, attrs, at, ctx->rules->lineStart, ctx->follows->lineStart, match, &ctx, false);
    while (at < len) {
-      attrs[at] = this->colors[ctx->defaultColor];
-      unsigned char* here = buffer+at;
-      int intColor;
-      
-      int matchlen = match(ctx->rules->start, here, &intColor);
-      HighlightColor color = (HighlightColor) intColor;
-      assert(color >= 0 && color < HighlightColors);
-      int attr = this->colors[color];
-      int word = isword(*here);
-
-      if (matchlen && !(word && isword(here[matchlen]))) {
-         for (int i = at; i < at+matchlen; i++)
-            attrs[i] = attr;
-         int nextCtx = 0;
-         int followMatchlen = match(ctx->follows->start, here, &nextCtx);
-         if (followMatchlen == matchlen) {
-            assert(nextCtx);
-            ctx = (HighlightContext*) nextCtx;
-         }
-         at += matchlen;
-      } else {
-         int defaultAttr = this->colors[ctx->defaultColor];
-         if (word) {
-            while (isword(buffer[at])) {
-               attrs[at++] = defaultAttr;
-            }
-         } else {
-            attrs[at++] = defaultAttr;
-         }
-      }
+      at = Highlight_tryMatch(this, buffer, attrs, at, ctx->rules->start, ctx->follows->start, match, &ctx, true);
    }
    this->currentContext = ctx->nextLine;
 }
