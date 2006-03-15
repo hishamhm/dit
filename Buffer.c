@@ -31,7 +31,7 @@ struct Buffer_ {
    int savedX;
    int savedY;
    Highlight* hl;
-   // save context between calls to Buffer_Draw
+   // save context between calls to Buffer_draw
    // to detect highlight changes that demand
    // a redraw
    HighlightContext* savedContext;
@@ -88,7 +88,7 @@ Buffer* Buffer_new(char* fileName, bool command) {
 
    this->readOnly = (access(fileName, R_OK) == 0 && access(fileName, W_OK) != 0);
    
-   this->panel = ListBox_new(0, 0, COLS, LINES - 1, NormalColor, LINE_CLASS, true);
+   this->panel = ListBox_new(0, 0, COLS - 1, LINES - 1, NormalColor, LINE_CLASS, true);
    this->undo = Undo_new(this->panel->items);
    this->fileName = String_copy(fileName);
    
@@ -469,6 +469,10 @@ void Buffer_beginningOfFile(Buffer* this) {
 void Buffer_endOfFile(Buffer* this) {
    Buffer_goto(this, 0, ListBox_size(this->panel) - 1);
    Buffer_endOfLine(this);
+}
+
+int Buffer_size(Buffer* this) {
+   return ListBox_size(this->panel);
 }
 
 void Buffer_previousPage(Buffer* this) {
@@ -905,5 +909,5 @@ bool Buffer_save(Buffer* this) {
 }
 
 void Buffer_resize(Buffer* this) {
-   ListBox_resize(this->panel, COLS, LINES - 1);
+   ListBox_resize(this->panel, COLS - 1, LINES - 1);
 }

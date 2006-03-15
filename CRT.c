@@ -67,6 +67,10 @@
 
 extern int CRT_delay;
 
+extern char CRT_scrollHandle;
+
+extern char CRT_scrollBar;
+
 int putenv(char*);
 
 }*/
@@ -79,6 +83,12 @@ bool CRT_hasColors;
 int CRT_delay;
 
 /* private property */
+char CRT_scrollHandle;
+
+/* private property */
+char CRT_scrollBar;
+
+/* private property */
 static SCREEN* CRT_term;
 
 void CRT_init() {
@@ -88,16 +98,15 @@ void CRT_init() {
    }
 
    CRT_delay = 0;
-   //initscr();
+   
    CRT_term = newterm(getenv("TERM"), stdout, stdin);
    raw();
    noecho();
    if (CRT_delay)
-   halfdelay(CRT_delay);
+      halfdelay(CRT_delay);
    nonl();
    intrflush(stdscr, false);
    keypad(stdscr, true);
-   //curs_set(0);
    if (has_colors()) {
       start_color();
       CRT_hasColors = true;
@@ -106,10 +115,13 @@ void CRT_init() {
          for (int j = 0; j < 8; j++)
             init_pair(i*8+j, i==7?-1:i, j==0?-1:j);
       init_pair(White*8+Black, Black, -1);
+      CRT_scrollHandle = ' ';
+      CRT_scrollBar = ' ';
    } else {
       CRT_hasColors = false;
+      CRT_scrollHandle = '*';
+      CRT_scrollBar = '|';
    }
-//   char* termType = getenv("TERM");
 
 //   #define teq(t) String_eq(termType, t)
    // if (teq("xterm") || teq("xterm-color") || teq("vt220"))
@@ -223,6 +235,7 @@ void CRT_handleSIGTERM(int signal) {
 }
 
 int CRT_getCharacter() {
+   refresh();
    int ch = getch();
    if (ch == KEY_LEFT || ch == KEY_RIGHT || ch == KEY_UP || ch == KEY_DOWN
        || ch == KEY_HOME || ch == KEY_END || ch == KEY_IC || ch == KEY_DC || ch == '\t') {

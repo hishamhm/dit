@@ -202,12 +202,13 @@ void ListBox_draw(ListBox* this, bool focus) {
    int itemCount = List_size(this->items);
    int scrollH = this->scrollH;
    int y = this->y; int x = this->x;
+   int w = this->w; int h = this->h;
    first = this->scrollV;
 
-   if (this->h > itemCount) {
+   if (h > itemCount) {
       last = itemCount;
    } else {
-      last = MIN(itemCount, this->scrollV + this->h);
+      last = MIN(itemCount, this->scrollV + h);
    }
    if (this->selected < first) {
       first = this->selected;
@@ -216,7 +217,7 @@ void ListBox_draw(ListBox* this, bool focus) {
    }
    if (this->selected >= last) {
       last = MIN(itemCount, this->selected + 1);
-      first = MAX(0, last - this->h);
+      first = MAX(0, last - h);
       this->scrollV = first;
       this->needsRedraw = true;
    }
@@ -226,12 +227,12 @@ void ListBox_draw(ListBox* this, bool focus) {
    if (this->header.len > 0) {
       int attr = HEADER_PAIR;
       attron(attr);
-      mvhline(y, x, ' ', this->w);
+      mvhline(y, x, ' ', w);
       attroff(attr);
       if (scrollH < this->header.len) {
          assert(this->header.len > 0);
          mvaddchnstr(y, x, this->header.chstr + scrollH,
-                     MIN(this->header.len - scrollH, this->w));
+                     MIN(this->header.len - scrollH, w));
       }
       y++;
    }
@@ -247,32 +248,56 @@ void ListBox_draw(ListBox* this, bool focus) {
 
    attrset(this->color);
    if (this->needsRedraw) {
-      for(int i = first, j = 0; j < this->h && i < last; i++, j++) {
+
+      for(int i = first, j = 0; j < h && i < last; i++, j++) {
          Object* itemObj = (Object*) List_get(this->items, i);
          assert(itemObj);
          RichString itemRef; RichString_init(&itemRef);
          this->displaying = i;
          itemObj->display(itemObj, &itemRef);
-         int amt = MIN(itemRef.len - scrollH, this->w);
+         int amt = MIN(itemRef.len - scrollH, w);
          if (i == this->selected) {
             if (this->highlightBar) {
                attron(highlight);
                RichString_setAttr(&itemRef, highlight);
             }
             cursorY = y + j;
-            mvhline(cursorY, x+amt, ' ', this->w-amt);
+            mvhline(cursorY, x+amt, ' ', w-amt);
             if (amt > 0)
                mvaddchnstr(y+j, x+0, itemRef.chstr + scrollH, amt);
             if (this->highlightBar)
                attroff(highlight);
          } else {
-            mvhline(y+j, x+amt, ' ', this->w-amt);
+            mvhline(y+j, x+amt, ' ', w-amt);
+
             if (amt > 0)
                mvaddchnstr(y+j, x+0, itemRef.chstr + scrollH, amt);
          }
       }
-      for (int i = y + (last - first); i < y + this->h; i++)
-         mvhline(i, x+0, ' ', this->w);
+      for (int i = y + (last - first); i < y + h; i++)
+         mvhline(i, x+0, ' ', w);
+
+      /* paint scrollbar */
+      {
+         int from = this->scrollV;
+         int to = this->scrollV + h;
+         float step = (float)itemCount / (float)h;
+         float at = 0.0;
+         for (int i = 0; i < h; i++) {
+            char ch;
+            if (at >= from && at <= to) {
+               attrset(CRT_color(White, Cyan));
+               ch = CRT_scrollHandle;
+            } else {
+               attrset(CRT_color(White, Blue));
+               ch = CRT_scrollBar;
+            }
+            mvaddch(x + i, w, ch);
+            at += step;
+         }
+         attrset(this->color);
+      }
+
       this->needsRedraw = false;
 
    } else {
@@ -284,22 +309,22 @@ void ListBox_draw(ListBox* this, bool focus) {
       RichString newRef; RichString_init(&newRef);
       this->displaying = this->selected;
       newObj->display(newObj, &newRef);
-      mvhline(y+ this->oldSelected - this->scrollV, x+0, ' ', this->w);
+      mvhline(y+ this->oldSelected - this->scrollV, x+0, ' ', w);
       if (scrollH < oldRef.len)
-         mvaddchnstr(y+ this->oldSelected - this->scrollV, x+0, oldRef.chstr + scrollH, MIN(oldRef.len - scrollH, this->w));
+         mvaddchnstr(y+ this->oldSelected - this->scrollV, x+0, oldRef.chstr + scrollH, MIN(oldRef.len - scrollH, w));
       if (this->highlightBar)
          attron(highlight);
       cursorY = y+this->selected - this->scrollV;
-      mvhline(cursorY, x+0, ' ', this->w);
+      mvhline(cursorY, x+0, ' ', w);
       if (this->highlightBar)
          RichString_setAttr(&newRef, highlight);
       if (scrollH < newRef.len)
-         mvaddchnstr(y+this->selected - this->scrollV, x+0, newRef.chstr + scrollH, MIN(newRef.len - scrollH, this->w));
+         mvaddchnstr(y+this->selected - this->scrollV, x+0, newRef.chstr + scrollH, MIN(newRef.len - scrollH, w));
       if (this->highlightBar)
          attroff(highlight);
    }
- //   attroff(this->color);
    this->oldSelected = this->selected;
+
    move(cursorY, this->cursorX);
 }
 
