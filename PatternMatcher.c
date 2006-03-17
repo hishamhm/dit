@@ -131,7 +131,7 @@ void PatternMatcher_add(PatternMatcher* this, unsigned char* pattern, int value)
          walk++;
          if (*walk == 't')
             *walk = '\t';
-         if (*walk == 's')
+         else if (*walk == 's')
             *walk = ' ';
          else if (*walk != '`')
             special[i] = 1;
@@ -144,8 +144,8 @@ void PatternMatcher_add(PatternMatcher* this, unsigned char* pattern, int value)
    GraphNode* start = this->start;
    if (*special && *input == '^') {
       if (!this->lineStart)
-         start = GraphNode_new();
-      this->lineStart = start;
+         this->lineStart = GraphNode_new();
+      start = this->lineStart;
       GraphNode_build(start, input+1, special+1, value);
    } else {
       GraphNode_build(start, input, special, value);
@@ -267,15 +267,7 @@ int PatternMatcher_match_toLower(GraphNode* node, unsigned char* input, int* val
 }
 
 GraphNode* GraphNode_new() {
-   GraphNode* this = malloc(sizeof(GraphNode));
-   this->min = 0;
-   this->max = 0;
-   this->value = 0;
-   this->endNode = false;
-   this->u.simple = NULL;
-   this->u.l.links = NULL;
-   this->u.l.nptrs = 0;
-   this->u.l.p.single = NULL;
+   GraphNode* this = calloc(sizeof(GraphNode), 1);
    return this;
 }
 

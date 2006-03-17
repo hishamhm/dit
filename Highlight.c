@@ -365,7 +365,11 @@ void Highlight_setAttrs(Highlight* this, unsigned char* buffer, int* attrs, int 
       match = PatternMatcher_match_toLower;
    else
       match = PatternMatcher_match;
-   //at = Highlight_tryMatch(this, buffer, attrs, at, ctx->rules->lineStart, ctx->follows->lineStart, match, &ctx, false);
+   if (ctx->rules->lineStart) {
+      if (!ctx->follows->lineStart)
+         ctx->follows->lineStart = GraphNode_new();
+      at = Highlight_tryMatch(this, buffer, attrs, at, ctx->rules->lineStart, ctx->follows->lineStart, match, &ctx, false);
+   }
    while (at < len) {
       at = Highlight_tryMatch(this, buffer, attrs, at, ctx->rules->start, ctx->follows->start, match, &ctx, true);
    }
