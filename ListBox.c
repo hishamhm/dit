@@ -279,21 +279,20 @@ void ListBox_draw(ListBox* this, bool focus) {
 
       /* paint scrollbar */
       {
-         int from = this->scrollV;
-         int to = this->scrollV + h;
-         float step = (float)itemCount / (float)h;
-         float at = 0.0;
+         float step = (float)h / (float) itemCount ;
+         int handleHeight = ceil(step * (float)h);
+         int startAt = step * (float)this->scrollV;
          for (int i = 0; i < h; i++) {
             char ch;
-            if (at >= from && at <= to) {
+            if (i >= startAt && handleHeight) {
                attrset(CRT_color(White, Cyan));
                ch = CRT_scrollHandle;
+               handleHeight--;
             } else {
                attrset(CRT_color(White, Blue));
                ch = CRT_scrollBar;
             }
             mvaddch(x + i, w, ch);
-            at += step;
          }
          attrset(this->color);
       }
