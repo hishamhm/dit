@@ -220,17 +220,18 @@ int main(int argc, char** argv) {
          bool quit = false;
          int saveX = buffer->x;
          int saveY = buffer->y;
-         int lastY = buffer->y;
+         int lastY = 0;
          while (!quit) {
             bool handled;
             int ch = Field_run(gotoField, false, &handled);
             if (!handled) {
                if (ch >= '0' && ch <= '9')
                   Field_insertChar(gotoField, ch);
-               else {
+               else if (ch == 13) {
+                  quit = true; 
+               } else if (ch == 27) {
                   quit = true;
-                  if (ch == 27)
-                     Buffer_goto(buffer, saveX, saveY);
+                  Buffer_goto(buffer, saveX, saveY);
                }
             }
             int y = atoi(gotoField->current->text) - 1;
