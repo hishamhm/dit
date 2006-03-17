@@ -351,6 +351,24 @@ void Buffer_delete(Buffer* this) {
    free(this);
 }
 
+void Buffer_refreshHighlight(Buffer* this) {
+   Highlight_delete(this->hl);
+   Line* firstLine = (Line*) ListBox_get(this->panel, 0);
+   char* firstText;
+   if (firstLine)
+      firstText = firstLine->text;
+   else
+      firstText = "";
+   Highlight* hl = Highlight_new(this->fileName, firstText);
+   this->hl = hl;
+   int size = ListBox_size(this->panel);
+   for (int i = 0; i < size; i++) {
+      Line* line = (Line*) ListBox_get(this->panel, i);
+      line->context = hl->mainContext;
+   }
+   this->panel->needsRedraw = true;
+}
+
 void Buffer_select(Buffer* this, void(*motion)(Buffer*)) {
    if (!this->selecting) {
       this->selectXfrom = this->x;

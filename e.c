@@ -387,7 +387,7 @@ int main(int argc, char** argv) {
       {
          attrset(NormalColor);
          clear();
-         buffer->panel->needsRedraw = true;
+         Buffer_refreshHighlight(buffer);
          break;
       }
       case KEY_CTRL('U'):
