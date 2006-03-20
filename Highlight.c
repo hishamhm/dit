@@ -334,8 +334,7 @@ static inline int Highlight_tryMatch(Highlight* this, unsigned char* buffer, int
    HighlightColor color = (HighlightColor) intColor;
    assert(color >= 0 && color < HighlightColors);
    int attr = this->colors[color];
-   int word = isword(*here);
-   if (matchlen && !(word && isword(here[matchlen]))) {
+   if (matchlen && !(isword(here[matchlen-1]) && isword(here[matchlen]))) {
       for (int i = at; i < at+matchlen; i++)
          attrs[i] = attr;
       int nextCtx = 0;
@@ -347,6 +346,7 @@ static inline int Highlight_tryMatch(Highlight* this, unsigned char* buffer, int
       at += matchlen;
    } else if (paintUnmatched) {
       int defaultAttr = this->colors[(*ctx)->defaultColor];
+      int word = isword(*here);
       if (word) {
          while (isword(buffer[at]))
             attrs[at++] = defaultAttr;
