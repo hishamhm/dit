@@ -1,7 +1,7 @@
 #!/bin/sh
 
 clear
-reset
+reset -w
 
 PROGRAM=e
 

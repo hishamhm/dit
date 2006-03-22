@@ -35,6 +35,8 @@ typedef struct DebugMemory_ {
 
 }*/
 
+#ifdef DEBUG
+
 /* private property */
 static DebugMemory* singleton = NULL;
 
@@ -130,9 +132,7 @@ void DebugMemory_registerAllocation(void* data, char* file, int line) {
    item->file = file;
    item->line = line;
    item->next = NULL;
-   #if DEBUG
    int val = DebugMemory_getBlockCount();
-   #endif
    if (singleton->first == NULL) {
       assert (val == 0);
       singleton->first = item;
@@ -147,9 +147,7 @@ void DebugMemory_registerAllocation(void* data, char* file, int line) {
          walk = walk->next;
       }
    }
-   #if DEBUG
    int nval = DebugMemory_getBlockCount();
-   #endif
    assert(nval == val + 1);
    singleton->allocations++;
    singleton->size++;
@@ -161,9 +159,7 @@ void DebugMemory_registerDeallocation(void* data, char* file, int line) {
    assert(singleton->first);
    DebugMemoryItem* walk = singleton->first;
    DebugMemoryItem* prev = NULL;
-   #if DEBUG
    int val = DebugMemory_getBlockCount();
-   #endif
    while (walk != NULL) {
       assert(walk->magic == 11061980);
       if (walk->data == data) {
@@ -206,3 +202,5 @@ void DebugMemory_report() {
    if (singleton->file)
       fclose(singleton->file);
 }
+
+#endif
