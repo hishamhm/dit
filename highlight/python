@@ -1,0 +1,220 @@
+FILES
+name suffix .py
+firstline regex ^#!.*/python($|[[:blank:]].*)
+RULES
+context # `$ dim
+/context
+context #! `$ veryspecial
+/context
+
+rule : brightdiff
+rule . symbol
+rule > bright
+rule < bright
+rule + bright
+rule - bright
+rule * bright
+rule / bright
+rule % bright
+rule = bright
+rule != bright
+rule == bright
+rule { symbol
+rule } symbol
+rule ( symbol
+rule ) symbol
+rule [ symbol
+rule ] symbol
+rule , symbol
+rule ; brightalt
+rule self brightdiff
+rule access bright
+rule and bright
+rule break bright
+rule class bright
+rule continue bright
+rule def bright
+rule del bright
+rule elif bright
+rule else bright
+rule except bright
+rule exec bright
+rule finally bright
+rule for bright
+rule from bright
+rule global bright
+rule if bright
+rule import bright
+rule in bright
+rule is bright
+rule lambda bright
+rule not bright
+rule or bright
+rule pass bright
+rule print bright
+rule raise bright
+rule return bright
+rule try bright
+rule while bright
+
+rule abs diff
+rule apply diff
+rule callable diff
+rule chr diff
+rule cmp diff
+rule coerce diff
+rule compile diff
+rule delattr diff
+rule dir diff
+rule divmod diff
+rule eval diff
+rule exec diff
+rule execfile diff
+rule filter diff
+rule float diff
+rule getattr diff
+rule globals diff
+rule hasattr diff
+rule hash diff
+rule hex diff
+rule id diff
+rule input diff
+rule int diff
+rule len diff
+rule locals diff
+rule long diff
+rule map diff
+rule max diff
+rule min diff
+rule oct diff
+rule open diff
+rule ord diff
+rule pow diff
+rule range diff
+rule raw_input diff
+rule reduce diff
+rule reload diff
+rule repr diff
+rule round diff
+rule setattr diff
+rule str diff
+rule tuple diff
+rule type diff
+rule vars diff
+rule xrange diff
+
+rule __init__ brightdiff
+rule __del__ brightdiff
+rule __repr__ brightdiff
+rule __str__ brightdiff
+rule __cmp__ brightdiff
+rule __hash__ brightdiff
+rule __call__ brightdiff
+rule __getattr__ brightdiff
+rule __setattr__ brightdiff
+rule __delattr__ brightdiff
+rule __len__ brightdiff
+rule __getitem__ brightdiff
+rule __setitem__ brightdiff
+rule __delitem__ brightdiff
+rule __getslice__ brightdiff
+rule __setslice__ brightdiff
+rule __delslice__ brightdiff
+rule __add__ brightdiff
+rule __sub__ brightdiff
+rule __mul__ brightdiff
+rule __div__ brightdiff
+rule __mod__ brightdiff
+rule __divmod__ brightdiff
+rule __pow__ brightdiff
+rule __lshift__ brightdiff
+rule __rshift__ brightdiff
+rule __and__ brightdiff
+rule __xor__ brightdiff
+rule __or__ brightdiff
+rule __neg__ brightdiff
+rule __pos__ brightdiff
+rule __abs__ brightdiff
+rule __invert__ brightdiff
+rule __nonzero__ brightdiff
+rule __coerce__ brightdiff
+rule __int__ brightdiff
+rule __long__ brightdiff
+rule __float__ brightdiff
+rule __oct__ brightdiff
+rule __hex__ brightdiff
+
+rule __init__ brightdiff
+rule __del__ brightdiff
+rule __repr__ brightdiff
+rule __str__ brightdiff
+rule __cmp__ brightdiff
+rule __hash__ brightdiff
+rule __call__ brightdiff
+rule __getattr__ brightdiff
+rule __setattr__ brightdiff
+rule __delattr__ brightdiff
+rule __len__ brightdiff
+rule __getitem__ brightdiff
+rule __setitem__ brightdiff
+rule __delitem__ brightdiff
+rule __getslice__ brightdiff
+rule __setslice__ brightdiff
+rule __delslice__ brightdiff
+rule __add__ brightdiff
+rule __sub__ brightdiff
+rule __mul__ brightdiff
+rule __div__ brightdiff
+rule __mod__ brightdiff
+rule __divmod__ brightdiff
+rule __pow__ brightdiff
+rule __lshift__ brightdiff
+rule __rshift__ brightdiff
+rule __and__ brightdiff
+rule __xor__ brightdiff
+rule __or__ brightdiff
+rule __neg__ brightdiff
+rule __pos__ brightdiff
+rule __abs__ brightdiff
+rule __invert__ brightdiff
+rule __nonzero__ brightdiff
+rule __coerce__ brightdiff
+rule __int__ brightdiff
+rule __long__ brightdiff
+rule __float__ brightdiff
+rule __oct__ brightdiff
+rule __hex__ brightdiff
+
+rule __radd__ brightdiff
+rule __rsub__ brightdiff
+rule __rmul__ brightdiff
+rule __rdiv__ brightdiff
+rule __rmod__ brightdiff
+rule __rdivmod__ brightdiff
+rule __rpow__ brightdiff
+rule __rlshift__ brightdiff
+rule __rrshift__ brightdiff
+rule __rand__ brightdiff
+rule __rxor__ brightdiff
+rule __ror__ brightdiff
+
+rule __+__ brightdiff
+
+context """ """ alt
+/context
+
+context " " alt
+    rule \" brightalt
+    rule \`[0`-3`]`[0`-7`]`[0`-7`] brightalt
+    rule \\ brightalt
+    rule \' brightalt
+    rule \`[abtnvfr`] brightalt
+/context
+
+context ' ' alt
+    rule \" brightalt
+    rule \`[0`-3`]`[0`-7`]`[0`-7`] brightalt
+    rule \\ brightalt
+    rule \' brightalt
+    rule \`[abtnvfr`] brightalt
+/context

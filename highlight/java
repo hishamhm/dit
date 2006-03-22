@@ -1,0 +1,74 @@
+FILES
+name suffix .java
+RULES
+rule char bright
+rule void bright
+rule if bright
+rule else bright
+rule default bright
+rule while bright
+rule switch bright
+rule case bright
+rule break bright
+rule bool bright
+rule continue bright
+rule return bright
+rule inline bright
+rule for bright
+rule do bright
+rule double bright
+rule float bright
+rule int bright
+rule long bright
+rule short bright
+rule static bright
+rule class bright
+rule private bright
+rule protected bright
+rule public bright
+
+rule import bright
+rule instanceof bright
+rule true bright
+rule false bright
+
+rule ! brightsymbol
+rule < brightsymbol
+rule > brightsymbol
+rule = brightsymbol
+rule + brightsymbol
+rule - brightsymbol
+rule * brightsymbol
+rule / brightsymbol
+rule % brightsymbol
+rule [ symbol
+rule ] symbol
+rule { symbol
+rule } symbol
+rule ( symbol
+rule ) symbol
+rule : symbol
+rule , symbol
+rule ; brightdiff
+rule /* dim
+context /* */ dim
+   rule */ dim
+/context
+rule // dim
+context // `$ dim
+/context
+rule " alt
+context " " alt
+   rule \\ brightalt
+   rule \" brightalt
+   rule \n brightalt
+   rule \t brightalt
+   rule \`[0`-3`]`[0`-7`]`[0`-7`] brightalt
+   rule " alt
+/context
+rule ' brightalt
+context ' ' brightalt
+   rule \\ brightalt
+   rule \' brightalt
+   rule ' brightalt
+/context

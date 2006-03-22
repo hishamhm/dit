@@ -1,7 +1,22 @@
 FILES
 name suffix .html
 name suffix .htm
+name suffix .php
 RULES
+
+context <?`[a`-z`]`* ?> veryspecial veryspecial special
+   rule if  brightspecial
+   rule else brightspecial
+   rule include brightspecial
+   rule function brightspecial
+   rule global brightspecial
+   rule echo brightspecial
+   rule isset brightspecial
+   rule { brightspecial
+   rule } brightspecial   
+   rule ( brightspecial
+   rule ) brightspecial   
+/context
 
 insensitive
 
@@ -85,7 +100,14 @@ rule </head> alt
 
 rule <hr/`?> alt
 
-rule <html> alt
+context <html > alt alt normal
+   context " " diff
+   /context
+   rule = bright
+   rule xmlns brightalt
+   rule xml:lang brightalt
+   rule lang brightalt
+/context
 rule </html> alt
 
 rule <i> alt
@@ -95,6 +117,7 @@ context <img > alt alt normal
    context " " diff
    /context
    rule = bright
+   rule class brightalt
    rule src brightalt
    rule width brightalt
    rule height brightalt
@@ -207,6 +230,10 @@ context <tr > alt alt normal
 /context
 rule </tr> alt
 
+context <tt > alt alt normal
+/context
+rule </tt> alt
+
 context <ul > alt alt normal
    context " " diff
    /context
@@ -215,4 +242,3 @@ context <ul > alt alt normal
    rule class brightalt
 /context
 rule </ul> alt
-
