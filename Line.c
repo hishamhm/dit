@@ -35,6 +35,7 @@ Line* Line_new(char* text, int len, Buffer* buffer) {
    ((Object*)this)->equals = Line_equals;
    ((Object*)this)->delete = Line_delete;
    ListItem_init((ListItem*)this);
+   assert(len == strlen(text));
    this->text = text;
    this->textSize = len + 1;
    this->len = len;
@@ -171,12 +172,11 @@ bool Line_equals(const Object* o1, const Object* o2) {
 
 void Line_insertCharAt(Line* this, char ch, int at) {
    assert(at >= 0 && at <= this->len);
+   assert(this->text);
+   assert(this->len < this->textSize);
    if (this->len+1 == this->textSize) {
-      int newSize = this->textSize + MIN(this->textSize + 1, 512);
-      assert(this->text);
-      this->text = realloc(this->text, sizeof(char) * (newSize + 1));
-      assert(newSize > this->textSize);
-      this->textSize = newSize;
+      this->textSize += MIN(this->textSize + 1, 256);
+      this->text = realloc(this->text, sizeof(char) * this->textSize);
    }
    assert(this->textSize > this->len + 1);
    for (int i = this->len; i >= at; i--)
@@ -225,11 +225,11 @@ void Line_breakAt(Line* this, int at, int indent) {
 void Line_joinNext(Line* this) {
    assert(this->super.next);
    Line* next = (Line*) this->super.next;
-   int newSize = this->len + next->len;
+   int newSize = this->len + next->len + 1;
    if (this->textSize < newSize) {
-      this->text = realloc(this->text, newSize + 1);
+      this->text = realloc(this->text, newSize);
       this->textSize = newSize;
-      this->text[newSize] = '\0';
+      this->text[newSize-1] = '\0';
    }
    memcpy(this->text + this->len, next->text, next->len);
    this->len += next->len;

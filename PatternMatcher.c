@@ -121,23 +121,25 @@ void GraphNode_build(GraphNode* current, unsigned char* input, unsigned char* sp
 
 void PatternMatcher_add(PatternMatcher* this, unsigned char* pattern, int value) {
    assert(this); assert(pattern);
-   unsigned char* input = (unsigned char*) strdup((char*)pattern);
-   unsigned char* special = (unsigned char*) strdup((char*)pattern);
-   unsigned char* walk = pattern;
+   int len = strlen((char*)pattern) + 1;
+   unsigned char input[len];
+   unsigned char special[len];
    int i = 0;
-   while (*walk) {
+   while (*pattern) {
+      unsigned char ch = *pattern;
       special[i] = 0;
-      if (*walk == '`') {
-         walk++;
-         if (*walk == 't')
-            *walk = '\t';
-         else if (*walk == 's')
-            *walk = ' ';
-         else if (*walk != '`')
-            special[i] = 1;
+      if (ch == '`') {
+         pattern++;
+         ch = *pattern;
+         switch (ch) {
+         case 't': ch = '\t'; break;
+         case 's': ch = ' '; break;
+         case '`': break;
+         default: special[i] = 1;
+         }
       }
-      input[i] = *walk;
-      walk++;
+      input[i] = ch;
+      pattern++;
       i++;
    }
    input[i] = '\0';
@@ -150,8 +152,6 @@ void PatternMatcher_add(PatternMatcher* this, unsigned char* pattern, int value)
    } else {
       GraphNode_build(start, input, special, value);
    }
-   free(input);
-   free(special);
 }
 
 bool PatternMatcher_partialMatch(GraphNode* node, unsigned char* input, int inputLen, char* rest, int restLen) {
@@ -344,13 +344,14 @@ void GraphNode_link(GraphNode* this, unsigned char* mask, GraphNode* next) {
    assert(maskmax >= maskmin);
    int newmin = this->min ? MIN(maskmin, this->min) : maskmin;
    int newmax = MAX(maskmax, this->max);
+   assert(newmin && newmax);
    // If node should be/stay simple
    if (newmin == newmax) {
       this->min = newmin;
       this->max = newmax;
       this->u.simple = next;
       return;
-   }   
+   }
 
    int id = 0;
    // If node is simple, "de-simplify" it

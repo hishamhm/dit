@@ -104,9 +104,11 @@ Buffer* Buffer_new(char* fileName, bool command) {
       while (!FileReader_eof(file)) {
          i++;
          char* text = FileReader_readLine(file, &len);
-         if (!this->tabCharacters && strchr(text, '\t')) this->tabCharacters = true;
-         Line* line = Line_new(text, len, this);
-         ListBox_set(this->panel, i, (ListItem*) line);
+         if (text) {
+            if (!this->tabCharacters && strchr(text, '\t')) this->tabCharacters = true;
+            Line* line = Line_new(text, len, this);
+            ListBox_set(this->panel, i, (ListItem*) line);
+         }
       }
    } else {
       this->hl = Highlight_new(fileName, "");
