@@ -164,6 +164,8 @@ context <ol > alt alt normal
 rule </ol> altse
 
 context <pre> </pre> alt alt diff
+   context < > alt
+   /context
 /context
 
 context <p > alt alt normal
@@ -233,6 +235,15 @@ rule </tr> alt
 context <tt > alt alt normal
 /context
 rule </tt> alt
+
+context <span > alt alt normal
+   context " " diff
+   /context
+   rule = bright
+   rule style brightalt
+   rule class brightalt
+/context
+rule </span> alt
 
 context <ul > alt alt normal
    context " " diff
