@@ -754,7 +754,7 @@ void Buffer_unindent(Buffer* this) {
    int* unindented = Line_unindent(firstLine, lines);
    Undo_unindent(this->undo, this->x, yStart, unindented, lines);
    if (this->y >= yStart && this->y <= (yStart + lines - 1))
-      this->y = MAX(0, this->y - INDENT_WIDTH);
+      this->x = MAX(0, this->x - INDENT_WIDTH);
    this->panel->needsRedraw = true;
    this->modified = true;
    this->lastKey = 0;
