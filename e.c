@@ -151,6 +151,7 @@ int main(int argc, char** argv) {
       case KEY_RESIZE:
          // TODO: support multiple buffers
          Buffer_resize(buffer);
+         findField->y = LINES - 1;
          break;
       case KEY_CTRL('Y'):
       {
