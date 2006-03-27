@@ -41,6 +41,7 @@ Line* Line_new(char* text, int len, Buffer* buffer) {
    this->len = len;
    this->context = buffer->hl->mainContext;
    this->buffer = buffer;
+   assert(this->text[this->len] == '\0');
    return this;
 }
 
@@ -183,6 +184,7 @@ void Line_insertCharAt(Line* this, char ch, int at) {
       this->text[i+1] = this->text[i];
    this->text[at] = ch;
    this->len++;
+   assert(this->text[this->len] == '\0');
 }
 
 void Line_deleteChars(Line* this, int at, int n) {
@@ -220,6 +222,7 @@ void Line_breakAt(Line* this, int at, int indent) {
    this->len = at;
    Line* newLine = Line_new(rest, restLen + indent, this->buffer);
    ListItem_addAfter((ListItem*) this, (ListItem*) newLine);
+   assert(this->text[this->len] == '\0');
 }
 
 void Line_joinNext(Line* this) {
@@ -233,6 +236,7 @@ void Line_joinNext(Line* this) {
    }
    memcpy(this->text + this->len, next->text, next->len);
    this->len += next->len;
+   this->text[this->len] = '\0';
    ListItem_remove((ListItem*) next);
 }
 
@@ -243,7 +247,7 @@ StringBuffer* Line_deleteBlock(Line* this, int lines, int xFrom, int xTo) {
    Line* first = this;
    if (lines == 1) {
       StringBuffer_addN(str, l->text + xFrom, xTo - xFrom);
-      for (int i = xTo; i < l->len; i++)
+      for (int i = xTo; i <= l->len; i++)
          l->text[xFrom + (i - xTo)] = l->text[i];
       l->len -= xTo - xFrom;
    } else {
@@ -275,6 +279,7 @@ StringBuffer* Line_deleteBlock(Line* this, int lines, int xFrom, int xTo) {
       }
       Line_joinNext(first);
    }
+   assert(this->text[this->len] == '\0');
    return str;
 }
 
@@ -303,6 +308,7 @@ StringBuffer* Line_copyBlock(Line* this, int lines, int xFrom, int xTo) {
       else
          StringBuffer_addN(str, l->text, l->len);
    }
+   assert(this->text[this->len] == '\0');
    return str;
 }
 
@@ -318,6 +324,7 @@ void Line_insertStringAt(Line* this, int at, char* text, int len) {
       this->text[i+len] = this->text[i];
    memcpy(this->text + at, text, len);
    this->len += len;
+   assert(this->text[this->len] == '\0');
 }
 
 // TODO: optionally indent with tab
@@ -333,6 +340,7 @@ void Line_indent(Line* this, int lines) {
       Line* next = (Line*) this->super.next;
       Line_indent(next, lines - 1);
    }
+   assert(this->text[this->len] == '\0');
 }
 
 // TODO: optionally indent with tab
@@ -352,6 +360,7 @@ int* Line_unindent(Line* this, int lines) {
       Line_deleteChars(l, 0, n);
       l = (Line*) l->super.next;
    }
+   assert(this->text[this->len] == '\0');
    return result;
 }
 
@@ -388,4 +397,5 @@ void Line_insertBlock(Line* this, int x, char* block, int len, int* newX, int* n
          *newX = 0;
       }
    }
+   assert(this->text[this->len] == '\0');
 }

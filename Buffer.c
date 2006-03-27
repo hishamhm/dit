@@ -736,7 +736,7 @@ inline void Buffer_blockOperation(Buffer* this, Line** firstLine, int* yStart, i
       if (yFrom > yTo) {
          int tmp = yFrom; yFrom = yTo; yTo = tmp;
       }
-      *lines = yTo - yFrom;
+      *lines = yTo - yFrom + (this->selectXto > 0 ? 1 : 0);
       *yStart = yFrom;
       *firstLine = (Line*) ListBox_get(this->panel, *yStart);
    } else {
@@ -838,6 +838,7 @@ bool Buffer_find(Buffer* this, char* needle, bool findNext, bool caseSensitive, 
    int y = this->y;
    char* haystack = line->text;
    int haystackLen = line->len;
+   assert(line->text[line->len] == '\0');
    int offset = 0;
    if (forward) {
       offset = MIN(this->x, strlen(line->text));
