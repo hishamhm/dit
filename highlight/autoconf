@@ -1,8 +1,420 @@
 FILES
 name suffix configure.ac
 name suffix configure.in
+name suffix .m4
 RULES
-context dnl `$ dim
+
+context dnl `$ special
 /context
+rule `[A`-Z`]`[A`-Z0`-9_`]`+ alt
+rule define brightalt
+
+context [ ] brightdiff brightdiff diff
+   context [ ] brightdiff brightdiff diff
+      context [ ] brightdiff brightdiff diff
+         context [ ] brightdiff brightdiff diff
+            context [ ] brightdiff brightdiff diff
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+            context ( ) brightalt brightalt alt
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+         /context
+         context ( ) brightalt brightalt alt
+            context [ ] brightdiff brightdiff diff
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+            context ( ) brightalt brightalt alt
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+         /context
+      /context
+      context ( ) brightalt brightalt alt
+         context [ ] brightdiff brightdiff diff
+            context [ ] brightdiff brightdiff diff
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+            context ( ) brightalt brightalt alt
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+         /context
+         context ( ) brightalt brightalt alt
+            context [ ] brightdiff brightdiff diff
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+            context ( ) brightalt brightalt alt
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+         /context
+      /context
+   /context
+   context ( ) brightalt brightalt alt
+      context [ ] brightdiff brightdiff diff
+         context [ ] brightdiff brightdiff diff
+            context [ ] brightdiff brightdiff diff
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+            context ( ) brightalt brightalt alt
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+         /context
+         context ( ) brightalt brightalt alt
+            context [ ] brightdiff brightdiff diff
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+            context ( ) brightalt brightalt alt
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+         /context
+      /context
+      context ( ) brightalt brightalt alt
+         context [ ] brightdiff brightdiff diff
+            context [ ] brightdiff brightdiff diff
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+            context ( ) brightalt brightalt alt
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+         /context
+         context ( ) brightalt brightalt alt
+            context [ ] brightdiff brightdiff diff
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+            context ( ) brightalt brightalt alt
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+         /context
+      /context
+   /context
+/context
+context ( ) brightalt brightalt alt
+   context [ ] brightdiff brightdiff diff
+      context [ ] brightdiff brightdiff diff
+         context [ ] brightdiff brightdiff diff
+            context [ ] brightdiff brightdiff diff
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+            context ( ) brightalt brightalt alt
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+         /context
+         context ( ) brightalt brightalt alt
+            context [ ] brightdiff brightdiff diff
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+            context ( ) brightalt brightalt alt
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+         /context
+      /context
+      context ( ) brightalt brightalt alt
+         context [ ] brightdiff brightdiff diff
+            context [ ] brightdiff brightdiff diff
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+            context ( ) brightalt brightalt alt
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+         /context
+         context ( ) brightalt brightalt alt
+            context [ ] brightdiff brightdiff diff
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+            context ( ) brightalt brightalt alt
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+         /context
+      /context
+   /context
+   context ( ) brightalt brightalt alt
+      context [ ] brightdiff brightdiff diff
+         context [ ] brightdiff brightdiff diff
+            context [ ] brightdiff brightdiff diff
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+            context ( ) brightalt brightalt alt
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+         /context
+         context ( ) brightalt brightalt alt
+            context [ ] brightdiff brightdiff diff
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+            context ( ) brightalt brightalt alt
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+         /context
+      /context
+      context ( ) brightalt brightalt alt
+         context [ ] brightdiff brightdiff diff
+            context [ ] brightdiff brightdiff diff
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+            context ( ) brightalt brightalt alt
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+         /context
+         context ( ) brightalt brightalt alt
+            context [ ] brightdiff brightdiff diff
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+            context ( ) brightalt brightalt alt
+               context [ ] brightdiff brightdiff diff
+               /context
+               context ( ) brightalt brightalt alt
+               /context
+            /context
+         /context
+      /context
+   /context
+/context
+
+rule alias           bright
+rule bg              bright
+rule bind            bright
+rule break           bright
+rule builtin         bright
+rule caller          bright
+rule case            bright
+rule in              bright
+rule cd              bright
+rule command         bright
+rule compgen         bright
+rule complete        bright
+rule continue        bright
+rule declare         bright
+rule dirs            bright
+rule disown          bright
+rule echo            bright
+rule esac            bright
+rule enable          bright
+rule eval            bright
+rule exec            bright
+rule exit            bright
+rule export          bright
+rule false           bright
+rule fc              bright
+rule fg              bright
+rule for             bright
+rule do              bright
+rule done            bright
+rule function        brightdiff
+rule getopts         bright
+rule hash            bright
+rule help            bright
+rule history         bright
+rule if              bright
+rule then            bright
+rule else            bright
+rule elif            bright
+rule fi              bright
+rule jobs            bright
+rule kill            bright
+rule let             bright
+rule local           bright
+rule logout          bright
+rule popd            bright
+rule pushd           bright
+rule pwd             bright
+rule read            bright
+rule readonly        bright
+rule select          bright
+rule set             bright
+rule shift           bright
+rule shopt           bright
+rule source          bright
+rule suspend         bright
+rule test            bright
+rule time            bright
+rule times           bright
+rule trap            bright
+rule true            bright
+rule type            bright
+rule typeset         bright
+rule ulimit          bright
+rule umask           bright
+rule unalias         bright
+rule unset           bright
+rule until           bright
+rule while           bright
+
+rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightalt
+### rule ${`[a`-z`|A`-Z`|0`-9`|_[]%#-:/*@`]`+} brightalt
+
+context ${ } brightalt
+   rule :- symbol
+   rule `[[]%@#/*`] symbol
+/context
+
+context $[ ] brightdiff brightdiff diff
+/context
+
+rule ! brightalt
+
+rule { brightdiff
+rule } brightdiff
+rule : brightdiff
+rule > brightdiff
+rule < brightdiff
+rule | brightdiff
+rule & brightdiff
+
+rule ;; brightspecial
+
+rule ; brightspecial
+
+rule &> brightdiff
+rule 2> brightdiff
+
+rule &1 brightdiff
+rule &2 brightdiff
+
+rule $`[!@#$*?_`] brightdiff
+rule $`[0`-9`] brightdiff
+rule \' brightdiff
+
+context #! `$ veryspecial
+/context
+
+context ' ' alt
+/context
+
+context `` `` brightspecial brightspecial special
+   rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightspecial
+   rule ${`[a`-z`|A`-Z`|0`-9`|_[]%!@#-$*?_`s`]`+} brightspecial
+   rule ${`[!@#$*?_`]} brightspecial
+   rule $`[!@#$*?_`] brightspecial
+/context
+
+context $( ) brightspecial brightspecial special
+   rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightspecial
+   rule ${`[a`-z`|A`-Z`|0`-9`|_[]%#*-@?`s`]`+} brightspecial
+   rule ${`[!@#$*?_`]} brightspecial
+   rule $`[!@#$*?_`] brightspecial
+/context
+
+context " " alt
+   context `` `` brightspecial brightspecial special
+      rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightspecial
+      rule ${`[a`-z`|A`-Z`|0`-9`|_[]%!@#-$*?_`s`]`+} brightspecial
+      rule ${`[!@#$*?_`]} brightspecial
+      rule $`[!@#$*?_`] brightspecial
+   /context
+   context $( ) brightspecial brightspecial special
+      rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightspecial
+      rule ${`[a`-z`|A`-Z`|0`-9`|_[]%#*-@?`s`]`+} brightspecial
+      rule ${`[!@#$*?_`]} brightspecial
+      rule $`[!@#$*?_`] brightspecial
+   /context
+   rule \$ brightalt
+   rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightalt
+###   rule ${`[a`-z`|A`-Z`|0`-9`|_[]%#-*@?`s`]`+} brightalt
+   context ${ } brightalt
+      rule :- symbol
+      rule `[[]%@#/*`] symbol
+   /context
+
+   context $[ ] brightdiff brightdiff diff
+   /context
+
+   rule $`[!@#$*?_`] brightdiff
+   rule \" brightalt
+   rule \n brightalt
+   rule \t brightalt
+/context
+
 context # `$ dim
 /context
