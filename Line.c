@@ -357,7 +357,8 @@ int* Line_unindent(Line* this, int lines) {
             break;
          }
       result[c] = n;
-      Line_deleteChars(l, 0, n);
+      if (n)
+         Line_deleteChars(l, 0, n);
       l = (Line*) l->super.next;
    }
    assert(this->text[this->len] == '\0');
