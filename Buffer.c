@@ -401,7 +401,7 @@ void Buffer_breakLine(Buffer* this) {
       Buffer_deleteBlock(this);
    }
 
-   int indent = MIN(Line_getIndentWidth(this->line), this->x);
+   int indent = MIN(Line_getIndentChars(this->line), this->x);
    Undo_breakAt(this->undo, this->x, this->y, indent);
    Line_breakAt(this->line, this->x, indent);
    ListBox_onKey(this->panel, KEY_DOWN);
@@ -518,6 +518,7 @@ void Buffer_deleteBlock(Buffer* this) {
    this->line = (Line*) ListBox_getSelected(this->panel);
    StringBuffer* str = Line_deleteBlock(this->line, yTo - yFrom + 1, xFrom, xTo);
    int len = StringBuffer_len(str);
+   assert (len > 0);
    char* block = StringBuffer_deleteGet(str);
    Undo_deleteBlock(this->undo, this->x, this->y, block, len);
    this->savedX = Line_widthUntil(this->line, this->x);

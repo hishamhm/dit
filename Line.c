@@ -196,11 +196,16 @@ void Line_deleteChars(Line* this, int at, int n) {
    this->text[this->len] = '\0';
 }
 
+inline int Line_getIndentChars(Line* this) {
+   int count = 0;
+   for (count = 0; count < this->len && isblank(this->text[count]); count++);
+   return count;
+}
+
 inline int Line_getIndentWidth(Line* this) {
    int indentWidth = 0;
    for (int i = 0; i < this->len && isblank(this->text[i]); i++) {
-      char curr = this->text[i];
-      if (curr == '\t')
+      if (this->text[i] == '\t')
          indentWidth += TAB_WIDTH - (indentWidth % TAB_WIDTH);
       else
          indentWidth++;
@@ -214,7 +219,7 @@ void Line_breakAt(Line* this, int at, int indent) {
    int restLen = this->len - at;
    char* rest = malloc(sizeof(char) * (restLen + indent + 1));
    for (int i = 0; i < indent; i++) {
-      rest[i] = ' ';
+      rest[i] = this->text[i];
    }
    memcpy(rest + indent, this->text + at, restLen);
    rest[restLen + indent] = '\0';
