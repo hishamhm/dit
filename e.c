@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include <string.h>
+#include <libgen.h>
 
 #include "Prototypes.h"
 
@@ -82,13 +83,19 @@ int main(int argc, char** argv) {
       fprintf(stderr, "e: %s is a directory.\n", argv[1]);
       exit(0);
    }
-   if (access(argv[1], R_OK) == 0 && access(argv[1], W_OK) != 0) {
+   char* dir = strdup(argv[1]);
+   dirname(dir);
+   bool exists = (access(argv[1], F_OK) == 0);
+   bool canWriteDir = (access(dir, W_OK) == 0);
+   bool canWrite = (access(argv[1], W_OK) == 0);
+   if ((exists && !canWrite) || (!exists && !canWriteDir)) {
       char buffer[4096];
       snprintf(buffer, 4095, "sudo e %s", argv[1]);
       int ret = system(buffer);
       if (ret == 0)
          exit(0);
    }
+   free(dir);
    CRT_init();
    
    Buffer* buffer = Buffer_new(argv[1], false);
@@ -123,6 +130,7 @@ int main(int argc, char** argv) {
                              buffer->fileName);
       attrset(A_NORMAL);
       Buffer_draw(buffer);
+      buffer->lastKey = ch;
       ch = CRT_getCharacter();
       
       //TODO: mouse

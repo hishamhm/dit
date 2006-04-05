@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 #include "Prototypes.h"
 
@@ -54,6 +55,8 @@ struct Buffer_ {
    int lastKey;
    // document uses tab characters
    int tabCharacters;
+   // time tracker to disable auto-indent when pasting;
+   double lastTime;
 };
 
 struct FilePosition_ {
@@ -85,6 +88,7 @@ Buffer* Buffer_new(char* fileName, bool command) {
    this->lastKey = 0;
    this->modified = false;
    this->tabCharacters = false;
+   this->lastTime = 0;
 
    this->readOnly = (access(fileName, R_OK) == 0 && access(fileName, W_OK) != 0);
    
@@ -402,6 +406,15 @@ void Buffer_breakLine(Buffer* this) {
    }
 
    int indent = MIN(Line_getIndentChars(this->line), this->x);
+
+   /* Hack to disable auto-indent when pasting through X11 */
+   struct timeval tv;
+   gettimeofday(&tv, NULL);
+   double now = tv.tv_sec * 1000000 + tv.tv_usec;
+   if (now - this->lastTime < 10000)
+      indent = 0;
+   this->lastTime = now;
+
    Undo_breakAt(this->undo, this->x, this->y, indent);
    Line_breakAt(this->line, this->x, indent);
    ListBox_onKey(this->panel, KEY_DOWN);
@@ -412,10 +425,12 @@ void Buffer_breakLine(Buffer* this) {
    this->modified = true;
    
    if (this->lastKey == '{') {
+      this->lastKey = 0;
       Buffer_defaultKeyHandler(this, '}');
       Buffer_backwardChar(this);
-      Buffer_breakLine(this);
-      Buffer_upLine(this);
+      int indent = MIN(Line_getIndentChars(this->line), this->x);
+      Undo_breakAt(this->undo, this->x, this->y, indent);
+      Line_breakAt(this->line, this->x, indent);
       Buffer_indent(this);
    }
 }
@@ -726,7 +741,6 @@ void Buffer_correctPosition(Buffer* this) {
       while (this->x < this->line->len && Line_widthUntil(this->line, this->x) < this->savedX)
          this->x++;
    }
-   this->lastKey = 0;
    this->y = ListBox_getSelectedIndex(this->panel);
 }
 
@@ -758,7 +772,6 @@ void Buffer_unindent(Buffer* this) {
       this->x = MAX(0, this->x - INDENT_WIDTH);
    this->panel->needsRedraw = true;
    this->modified = true;
-   this->lastKey = 0;
 }
 
 void Buffer_indent(Buffer* this) {
@@ -772,13 +785,11 @@ void Buffer_indent(Buffer* this) {
       this->x += INDENT_WIDTH;
    this->panel->needsRedraw = true;
    this->modified = true;
-   this->lastKey = 0;
 }
       
 void Buffer_defaultKeyHandler(Buffer* this, int ch) {
    bool handled = ListBox_onKey(this->panel, ch);
 
-   this->lastKey = ch;
    if (!handled && ((ch >= 32 && ch <= 255) || ch == '\t')) {
       if (this->selecting) {
          Buffer_deleteBlock(this);
