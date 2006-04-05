@@ -5,6 +5,7 @@ name suffix .h
 name suffix .hpp
 name suffix .h.in
 name suffix .c.in
+name suffix .xs
 RULES
 rule auto bright
 rule char bright

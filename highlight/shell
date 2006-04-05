@@ -105,8 +105,7 @@ rule 2> brightdiff
 rule &1 brightdiff
 rule &2 brightdiff
 
-rule $`[!@#$*?_`] brightdiff
-rule $`[0`-9`] brightdiff
+rule $`[0`-9!@#$*?_`] brightdiff
 rule \' brightdiff
 
 context #! `$ veryspecial
@@ -153,7 +152,7 @@ context " " alt
    context $[ ] brightdiff brightdiff diff
    /context
 
-   rule $`[!@#$*?_`] brightdiff
+   rule $`[0`-9!@#$*?_`] brightdiff
    rule \" brightalt
    rule \n brightalt
    rule \t brightalt
@@ -167,7 +166,7 @@ context EOF`[`s`-~`]`* EOF normal bright diff
    rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightdiff
    rule ${`[a`-z`|A`-Z`|0`-9`|_[]%#-*@?`s`]`+} brightdiff
    rule ${`[a`-z`|A`-Z`|0`-9`|_[]%#-*@?`s`]`+} brightdiff
-   rule $`[!@#$*?_`] brightdiff
+   rule $`[0`-9!@#$*?_`] brightdiff
    rule \" brightalt
    rule \n brightalt
    rule \t brightalt

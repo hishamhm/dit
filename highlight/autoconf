@@ -6,255 +6,129 @@ RULES
 
 context dnl `$ special
 /context
-rule `[A`-Z`]`[A`-Z0`-9_`]`+ alt
-rule define brightalt
+rule define brightspecial
 
-context [ ] brightdiff brightdiff diff
+context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
+   rule , symbol
    context [ ] brightdiff brightdiff diff
       context [ ] brightdiff brightdiff diff
          context [ ] brightdiff brightdiff diff
             context [ ] brightdiff brightdiff diff
                context [ ] brightdiff brightdiff diff
                /context
-               context ( ) brightalt brightalt alt
+               context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                /context
             /context
-            context ( ) brightalt brightalt alt
+            context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                context [ ] brightdiff brightdiff diff
                /context
-               context ( ) brightalt brightalt alt
-               /context
-            /context
-         /context
-         context ( ) brightalt brightalt alt
-            context [ ] brightdiff brightdiff diff
-               context [ ] brightdiff brightdiff diff
-               /context
-               context ( ) brightalt brightalt alt
-               /context
-            /context
-            context ( ) brightalt brightalt alt
-               context [ ] brightdiff brightdiff diff
-               /context
-               context ( ) brightalt brightalt alt
+               context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                /context
             /context
          /context
-      /context
-      context ( ) brightalt brightalt alt
-         context [ ] brightdiff brightdiff diff
+         context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
             context [ ] brightdiff brightdiff diff
                context [ ] brightdiff brightdiff diff
                /context
-               context ( ) brightalt brightalt alt
+               context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                /context
             /context
-            context ( ) brightalt brightalt alt
+            context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                context [ ] brightdiff brightdiff diff
                /context
-               context ( ) brightalt brightalt alt
-               /context
-            /context
-         /context
-         context ( ) brightalt brightalt alt
-            context [ ] brightdiff brightdiff diff
-               context [ ] brightdiff brightdiff diff
-               /context
-               context ( ) brightalt brightalt alt
-               /context
-            /context
-            context ( ) brightalt brightalt alt
-               context [ ] brightdiff brightdiff diff
-               /context
-               context ( ) brightalt brightalt alt
+               context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                /context
             /context
          /context
       /context
-   /context
-   context ( ) brightalt brightalt alt
-      context [ ] brightdiff brightdiff diff
+      context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
          context [ ] brightdiff brightdiff diff
             context [ ] brightdiff brightdiff diff
                context [ ] brightdiff brightdiff diff
                /context
-               context ( ) brightalt brightalt alt
+               context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                /context
             /context
-            context ( ) brightalt brightalt alt
+            context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                context [ ] brightdiff brightdiff diff
                /context
-               context ( ) brightalt brightalt alt
-               /context
-            /context
-         /context
-         context ( ) brightalt brightalt alt
-            context [ ] brightdiff brightdiff diff
-               context [ ] brightdiff brightdiff diff
-               /context
-               context ( ) brightalt brightalt alt
-               /context
-            /context
-            context ( ) brightalt brightalt alt
-               context [ ] brightdiff brightdiff diff
-               /context
-               context ( ) brightalt brightalt alt
+               context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                /context
             /context
          /context
-      /context
-      context ( ) brightalt brightalt alt
-         context [ ] brightdiff brightdiff diff
+         context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
             context [ ] brightdiff brightdiff diff
                context [ ] brightdiff brightdiff diff
                /context
-               context ( ) brightalt brightalt alt
+               context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                /context
             /context
-            context ( ) brightalt brightalt alt
+            context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                context [ ] brightdiff brightdiff diff
                /context
-               context ( ) brightalt brightalt alt
-               /context
-            /context
-         /context
-         context ( ) brightalt brightalt alt
-            context [ ] brightdiff brightdiff diff
-               context [ ] brightdiff brightdiff diff
-               /context
-               context ( ) brightalt brightalt alt
-               /context
-            /context
-            context ( ) brightalt brightalt alt
-               context [ ] brightdiff brightdiff diff
-               /context
-               context ( ) brightalt brightalt alt
+               context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                /context
             /context
          /context
       /context
    /context
-/context
-context ( ) brightalt brightalt alt
-   context [ ] brightdiff brightdiff diff
+   context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
       context [ ] brightdiff brightdiff diff
          context [ ] brightdiff brightdiff diff
             context [ ] brightdiff brightdiff diff
                context [ ] brightdiff brightdiff diff
                /context
-               context ( ) brightalt brightalt alt
+               context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                /context
             /context
-            context ( ) brightalt brightalt alt
+            context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                context [ ] brightdiff brightdiff diff
                /context
-               context ( ) brightalt brightalt alt
-               /context
-            /context
-         /context
-         context ( ) brightalt brightalt alt
-            context [ ] brightdiff brightdiff diff
-               context [ ] brightdiff brightdiff diff
-               /context
-               context ( ) brightalt brightalt alt
-               /context
-            /context
-            context ( ) brightalt brightalt alt
-               context [ ] brightdiff brightdiff diff
-               /context
-               context ( ) brightalt brightalt alt
+               context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                /context
             /context
          /context
-      /context
-      context ( ) brightalt brightalt alt
-         context [ ] brightdiff brightdiff diff
+         context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
             context [ ] brightdiff brightdiff diff
                context [ ] brightdiff brightdiff diff
                /context
-               context ( ) brightalt brightalt alt
+               context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                /context
             /context
-            context ( ) brightalt brightalt alt
+            context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                context [ ] brightdiff brightdiff diff
                /context
-               context ( ) brightalt brightalt alt
-               /context
-            /context
-         /context
-         context ( ) brightalt brightalt alt
-            context [ ] brightdiff brightdiff diff
-               context [ ] brightdiff brightdiff diff
-               /context
-               context ( ) brightalt brightalt alt
-               /context
-            /context
-            context ( ) brightalt brightalt alt
-               context [ ] brightdiff brightdiff diff
-               /context
-               context ( ) brightalt brightalt alt
+               context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                /context
             /context
          /context
       /context
-   /context
-   context ( ) brightalt brightalt alt
-      context [ ] brightdiff brightdiff diff
+      context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
          context [ ] brightdiff brightdiff diff
             context [ ] brightdiff brightdiff diff
                context [ ] brightdiff brightdiff diff
                /context
-               context ( ) brightalt brightalt alt
+               context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                /context
             /context
-            context ( ) brightalt brightalt alt
+            context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                context [ ] brightdiff brightdiff diff
                /context
-               context ( ) brightalt brightalt alt
-               /context
-            /context
-         /context
-         context ( ) brightalt brightalt alt
-            context [ ] brightdiff brightdiff diff
-               context [ ] brightdiff brightdiff diff
-               /context
-               context ( ) brightalt brightalt alt
-               /context
-            /context
-            context ( ) brightalt brightalt alt
-               context [ ] brightdiff brightdiff diff
-               /context
-               context ( ) brightalt brightalt alt
+               context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                /context
             /context
          /context
-      /context
-      context ( ) brightalt brightalt alt
-         context [ ] brightdiff brightdiff diff
+         context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
             context [ ] brightdiff brightdiff diff
                context [ ] brightdiff brightdiff diff
                /context
-               context ( ) brightalt brightalt alt
+               context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                /context
             /context
-            context ( ) brightalt brightalt alt
+            context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                context [ ] brightdiff brightdiff diff
                /context
-               context ( ) brightalt brightalt alt
-               /context
-            /context
-         /context
-         context ( ) brightalt brightalt alt
-            context [ ] brightdiff brightdiff diff
-               context [ ] brightdiff brightdiff diff
-               /context
-               context ( ) brightalt brightalt alt
-               /context
-            /context
-            context ( ) brightalt brightalt alt
-               context [ ] brightdiff brightdiff diff
-               /context
-               context ( ) brightalt brightalt alt
+               context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
                /context
             /context
          /context
