@@ -106,6 +106,16 @@ void Undo_deleteCharAt(Undo* this, int x, int y, char c) {
 }
 
 void Undo_insertCharAt(Undo* this, int x, int y, char c) {
+   UndoAction* top = (UndoAction*) Stack_peek(this->actions, NULL);
+   if (top) {
+      if ((top->type == UndoInsertChar && top->y == y && top->x == x-1)
+       || (top->type == UndoInsertBlock && top->data.coord.yTo == y && top->data.coord.xTo == x)) {
+         top->type = UndoInsertBlock;
+         top->data.coord.xTo = x+1;
+         top->data.coord.yTo = y;
+         return;
+      }
+   }
    Undo_char(this, UndoInsertChar, x, y, c);
 }
 
