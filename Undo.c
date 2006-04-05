@@ -56,6 +56,10 @@ struct Undo_ {
 
 }*/
 
+#ifndef MIN
+#define MIN(a,b) ((a)<(b)?(a):(b))
+#endif
+
 /* private property */
 char* UNDOACTION_CLASS = "UndoAction";
 
@@ -117,6 +121,7 @@ void Undo_joinNext(Undo* this, int x, int y) {
 }
 
 void Undo_deleteBlock(Undo* this, int x, int y, char* block, int len) {
+   assert(len > 0);
    UndoAction* action = UndoAction_new(UndoDeleteBlock, x, y);
    action->data.str.buf = block;
    action->data.str.len = len;
@@ -205,6 +210,7 @@ void Undo_undo(Undo* this, int* x, int* y) {
    case UndoDeleteBlock:
    {
       int newX, newY;
+      assert(action->data.str.len > 0);
       Line_insertBlock(line, action->x, action->data.str.buf, action->data.str.len, &newX, &newY);
       break;
    }
@@ -255,6 +261,7 @@ void Undo_store(Undo* this, char* fileName) {
       return;
    fwrite(md5buf, 16, 1, ufd);
    int items = this->actions->size;
+   items = MIN(items, 1000);
    fwrite(&items, sizeof(int), 1, ufd);
    for (int i = items - 1; i >= 0; i--) {
       UndoAction* action = (UndoAction*) Stack_peekAt(this->actions, i, NULL);
@@ -273,6 +280,7 @@ void Undo_store(Undo* this, char* fileName) {
          fwrite(&action->data.c, sizeof(char), 1, ufd);
          break;
       case UndoDeleteBlock:
+         assert(action->data.str.len > 0);
          fwrite(&action->data.str.len, sizeof(int), 1, ufd);
          fwrite(action->data.str.buf, sizeof(char), action->data.str.len, ufd);
          break;
