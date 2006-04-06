@@ -519,19 +519,33 @@ void Buffer_nextPage(Buffer* this) {
 }
 
 void Buffer_wordWrap(Buffer* this, int wrap) {
-   while (this->line->len > wrap) {
-      Line* oldLine = this->line;
-      for(int i = wrap; i > 0; i--) {
-         if (this->line->text[i] == ' ') {
-            this->x = i;
-            Buffer_deleteChar(this);
-            Buffer_breakLine(this);
-            break;
+   Undo_beginGroup(this->undo, this->x, this->y);
+   if (this->line->len > wrap) {
+      while (this->line->len > wrap) {
+         Line* oldLine = this->line;
+         for(int i = wrap; i > 0; i--) {
+            if (this->line->text[i] == ' ') {
+               this->x = i;
+               Buffer_deleteChar(this);
+               Buffer_breakLine(this);
+               break;
+            }
          }
+         if (this->line == oldLine)
+            break;
       }
-      if (this->line == oldLine)
-         break;
+   } else {
+      if (this->line->super.next) {
+         this->x = this->line->len;
+         Buffer_defaultKeyHandler(this, ' ');
+         Undo_joinNext(this->undo, this->x, this->y);
+         Line_joinNext(this->line);
+         this->line = (Line*) ListBox_getSelected(this->panel);
+         //this->y--;
+         Buffer_wordWrap(this, wrap);
+      }
    }
+   Undo_endGroup(this->undo, this->x, this->y);
 }
 
 void Buffer_deleteBlock(Buffer* this) {

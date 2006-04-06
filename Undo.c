@@ -21,7 +21,9 @@ typedef enum UndoActionType_ {
    UndoDeleteBlock,
    UndoInsertBlock,
    UndoIndent,
-   UndoUnindent
+   UndoUnindent,
+   UndoBeginGroup,
+   UndoEndGroup
 } UndoActionType;
 
 struct UndoAction_ {
@@ -52,6 +54,7 @@ extern char* UNDOACTION_CLASS;
 struct Undo_ {
    List* list;
    Stack* actions;
+   int group;
 };
 
 }*/
@@ -87,6 +90,7 @@ Undo* Undo_new(List* list) {
    Undo* this = (Undo*) malloc(sizeof(Undo));
    this->list = list;
    this->actions = Stack_new(UNDOACTION_CLASS, true);
+   this->group = 0;
    return this;
 }
 
@@ -151,6 +155,16 @@ void Undo_unindent(Undo* this, int x, int y, int* counts, int lines) {
    Stack_push(this->actions, action, 0);
 }
 
+void Undo_beginGroup(Undo* this, int x, int y) {
+   UndoAction* action = UndoAction_new(UndoBeginGroup, x, y);
+   Stack_push(this->actions, action, 0);
+}
+
+void Undo_endGroup(Undo* this, int x, int y) {
+   UndoAction* action = UndoAction_new(UndoEndGroup, x, y);
+   Stack_push(this->actions, action, 0);
+}
+
 void Undo_insertBlock(Undo* this, int x, int y, char* block, int len) {
    UndoAction* action = UndoAction_new(UndoInsertBlock, x, y);
    // Don't keep block in undo structure. Just calculate its size.
@@ -188,6 +202,16 @@ void Undo_undo(Undo* this, int* x, int* y) {
    *y = action->y;
    Line* line = (Line*) List_get(this->list, action->y);
    switch (action->type) {
+   case UndoBeginGroup:
+   {
+      this->group++;
+      break;
+   }
+   case UndoEndGroup:
+   {
+      this->group--;
+      break;
+   }
    case UndoBreak:
    {
       Line_joinNext(line);
@@ -241,6 +265,8 @@ void Undo_undo(Undo* this, int* x, int* y) {
    }
    }
    UndoAction_delete((Object*)action);
+   if (this->group)
+      Undo_undo(this, x, y);
 }
 
 static void Undo_makeFileName(Undo* this, char* fileName, char* undoFileName) {
@@ -279,6 +305,9 @@ void Undo_store(Undo* this, char* fileName) {
       fwrite(&action->x, sizeof(int), 1, ufd);
       fwrite(&action->y, sizeof(int), 1, ufd);
       switch(action->type) {
+      case UndoBeginGroup:
+      case UndoEndGroup:
+         break;
       case UndoIndent:
       case UndoBreak:
          fwrite(&action->data.size, sizeof(int), 1, ufd);
@@ -339,6 +368,9 @@ void Undo_restore(Undo* this, char* fileName) {
       if (read < 1) { fclose(ufd); return; }
       UndoAction* action = UndoAction_new(type, x, y);
       switch(action->type) {
+      case UndoBeginGroup:
+      case UndoEndGroup:
+         break;
       case UndoIndent:
       case UndoBreak:
          read = fread(&action->data.size, sizeof(int), 1, ufd);
