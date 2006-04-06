@@ -518,11 +518,29 @@ void Buffer_nextPage(Buffer* this) {
    Buffer_goto(this, this->x, this->y + this->panel->h);
 }
 
+void Buffer_wordWrap(Buffer* this, int wrap) {
+   while (this->line->len > wrap) {
+      Line* oldLine = this->line;
+      for(int i = wrap; i > 0; i--) {
+         if (this->line->text[i] == ' ') {
+            this->x = i;
+            Buffer_deleteChar(this);
+            Buffer_breakLine(this);
+            break;
+         }
+      }
+      if (this->line == oldLine)
+         break;
+   }
+}
+
 void Buffer_deleteBlock(Buffer* this) {
    int yFrom = this->selectYfrom;
    int yTo = this->selectYto;
    int xFrom = this->selectXfrom;
    int xTo = this->selectXto;
+   if (xFrom == xTo && yFrom == yTo)
+      return;
    if (yFrom > yTo || (yFrom == yTo && xFrom > xTo)) {
       int tmp = yFrom; yFrom = yTo; yTo = tmp;
       tmp = xFrom; xFrom = xTo; xTo = tmp;

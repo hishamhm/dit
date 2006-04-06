@@ -83,7 +83,8 @@ int main(int argc, char** argv) {
       fprintf(stderr, "e: %s is a directory.\n", argv[1]);
       exit(0);
    }
-   char* dir = strdup(argv[1]);
+   char dir[1000];
+   realpath(argv[1], dir);
    dirname(dir);
    bool exists = (access(argv[1], F_OK) == 0);
    bool canWriteDir = (access(dir, W_OK) == 0);
@@ -95,7 +96,6 @@ int main(int argc, char** argv) {
       if (ret == 0)
          exit(0);
    }
-   free(dir);
    CRT_init();
    
    Buffer* buffer = Buffer_new(argv[1], false);
@@ -416,6 +416,12 @@ int main(int argc, char** argv) {
          }
          free(block);
          buffer->selecting = false;
+         break;
+      }
+      case KEY_CTRL('W'):
+      {
+         buffer->selecting = false;
+         Buffer_wordWrap(buffer, 80);
          break;
       }
       case KEY_SDC:
