@@ -27,7 +27,7 @@ rule [ symbol
 rule ] symbol
 rule , symbol
 rule ; brightalt
-rule self brightdiff
+rule self bright
 rule access bright
 rule and bright
 rule break bright

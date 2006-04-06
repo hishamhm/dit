@@ -72,6 +72,7 @@ context <div > alt
    /context
    rule = bright
    rule style brightalt
+   rule class brightalt
 /context
 rule </div> alt
 
