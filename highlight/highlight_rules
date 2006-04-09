@@ -29,6 +29,8 @@ rule diff diff
 rule brightdiff brightdiff
 rule special special
 rule brightspecial brightspecial
+rule specialdiff specialdiff
+rule brightspecialdiff brightspecialdiff
 rule veryspecial veryspecial
 rule dim dim
 

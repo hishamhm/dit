@@ -2,6 +2,7 @@ FILES
 name suffix .html
 name suffix .htm
 name suffix .php
+name suffix .inc
 RULES
 
 context <?`[a`-z`]`* ?> veryspecial veryspecial special
@@ -12,10 +13,19 @@ context <?`[a`-z`]`* ?> veryspecial veryspecial special
    rule global brightspecial
    rule echo brightspecial
    rule isset brightspecial
+   rule = brightspecial
    rule { brightspecial
    rule } brightspecial   
    rule ( brightspecial
    rule ) brightspecial   
+   rule [ brightspecial
+   rule ] brightspecial   
+   rule $`[A`-Z_a`-z`]`[A`-Z_a`-z0`-9`]`* brightspecialdiff
+   context " " specialdiff
+      rule $`[A`-Z_a`-z`]`[A`-Z_a`-z0`-9`]`* brightspecialdiff
+   /context
+   context ' ' specialdiff
+   /context
 /context
 
 insensitive
