@@ -9,7 +9,10 @@ make=make
 [ -e /bin/ColorMake ] && make=ColorMake
 
 if [ ! -e mode.txt -o "`cat mode.txt`" != "$1" ]
-then make clean
+then
+   cp e e.old
+   make clean
+   mv e.old e
 fi
 echo "$1" > mode.txt
 
