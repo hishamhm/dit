@@ -16,6 +16,7 @@
 typedef enum UndoActionType_ {
    UndoBreak,
    UndoJoinNext,
+   UndoBackwardDeleteChar,
    UndoDeleteChar,
    UndoInsertChar,
    UndoDeleteBlock,
@@ -23,7 +24,7 @@ typedef enum UndoActionType_ {
    UndoIndent,
    UndoUnindent,
    UndoBeginGroup,
-   UndoEndGroup
+   UndoEndGroup,
 } UndoActionType;
 
 struct UndoAction_ {
@@ -46,6 +47,7 @@ struct UndoAction_ {
          int* buf;
          int len;
       } arr;
+      bool backspace;
    } data;
 };
 
@@ -109,6 +111,10 @@ void Undo_deleteCharAt(Undo* this, int x, int y, char c) {
    Undo_char(this, UndoDeleteChar, x, y, c);
 }
 
+void Undo_backwardDeleteCharAt(Undo* this, int x, int y, char c) {
+   Undo_char(this, UndoBackwardDeleteChar, x, y, c);
+}
+
 void Undo_insertCharAt(Undo* this, int x, int y, char c) {
    UndoAction* top = (UndoAction*) Stack_peek(this->actions, NULL);
    if (top) {
@@ -129,8 +135,9 @@ void Undo_breakAt(Undo* this, int x, int y, int indent) {
    Stack_push(this->actions, action, 0);
 }
 
-void Undo_joinNext(Undo* this, int x, int y) {
+void Undo_joinNext(Undo* this, int x, int y, bool backspace) {
    UndoAction* action = UndoAction_new(UndoJoinNext, x, y);
+   action->data.backspace = backspace;
    Stack_push(this->actions, action, 0);
 }
 
@@ -222,6 +229,16 @@ void Undo_undo(Undo* this, int* x, int* y) {
    case UndoJoinNext:
    {
       Line_breakAt(line, action->x, 0);
+      if (action->data.backspace) {
+         *x = 0;
+         *y = action->y + 1;
+      }
+      break;
+   }
+   case UndoBackwardDeleteChar:
+   {
+      Line_insertCharAt(line, action->data.c, action->x);
+      *x = action->x + 1;
       break;
    }
    case UndoDeleteChar:
@@ -313,7 +330,9 @@ void Undo_store(Undo* this, char* fileName) {
          fwrite(&action->data.size, sizeof(int), 1, ufd);
          break;
       case UndoJoinNext:
+         fwrite(&action->data.backspace, sizeof(bool), 1, ufd);
          break;
+      case UndoBackwardDeleteChar:
       case UndoDeleteChar:
       case UndoInsertChar:
          fwrite(&action->data.c, sizeof(char), 1, ufd);
@@ -377,7 +396,10 @@ void Undo_restore(Undo* this, char* fileName) {
          if (read < 1) { fclose(ufd); return; }
          break;
       case UndoJoinNext:
+         read = fread(&action->data.backspace, sizeof(bool), 1, ufd);
+         if (read < 1) { fclose(ufd); return; }
          break;
+      case UndoBackwardDeleteChar:
       case UndoDeleteChar:
       case UndoInsertChar:
          read = fread(&action->data.c, sizeof(char), 1, ufd);

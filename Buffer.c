@@ -92,7 +92,7 @@ Buffer* Buffer_new(char* fileName, bool command) {
 
    this->readOnly = (access(fileName, R_OK) == 0 && access(fileName, W_OK) != 0);
    
-   this->panel = ListBox_new(0, 0, COLS - 1, LINES - 1, NormalColor, LINE_CLASS, true);
+   this->panel = ListBox_new(0, 0, COLS - 1, LINES - 1, CRT_colors[NormalColor], LINE_CLASS, true);
    this->undo = Undo_new(this->panel->items);
    this->fileName = String_copy(fileName);
    
@@ -538,12 +538,13 @@ void Buffer_wordWrap(Buffer* this, int wrap) {
       if (this->line->super.next) {
          this->x = this->line->len;
          Buffer_defaultKeyHandler(this, ' ');
-         Undo_joinNext(this->undo, this->x, this->y);
+         Undo_joinNext(this->undo, this->x, this->y, false);
          Line_joinNext(this->line);
          this->line = (Line*) ListBox_getSelected(this->panel);
          //this->y--;
          Buffer_wordWrap(this, wrap);
       }
+      this->panel->needsRedraw = true;
    }
    Undo_endGroup(this->undo, this->x, this->y);
 }
@@ -625,7 +626,7 @@ void Buffer_deleteChar(Buffer* this) {
       Line_deleteChars(this->line, this->x, 1);
    } else {
       if (this->line->super.next) {
-         Undo_joinNext(this->undo, this->x, this->y);
+         Undo_joinNext(this->undo, this->x, this->y, false);
          Line_joinNext(this->line);
          this->line = (Line*) ListBox_getSelected(this->panel);
          this->y--;
@@ -722,13 +723,13 @@ void Buffer_backwardDeleteChar(Buffer* this) {
    }
    if (this->x > 0) {
       this->x--;
-      Undo_deleteCharAt(this->undo, this->x, this->y, Line_charAt(this->line, this->x));
+      Undo_backwardDeleteCharAt(this->undo, this->x, this->y, Line_charAt(this->line, this->x));
       Line_deleteChars(this->line, this->x, 1);
    } else {
       if (this->line->super.prev) {
          Line* prev = (Line*) this->line->super.prev;
          this->x = prev->len;
-         Undo_joinNext(this->undo, this->x, this->y - 1);
+         Undo_joinNext(this->undo, this->x, this->y - 1, true);
          Line_joinNext(prev);
          ListBox_onKey(this->panel, KEY_UP);
          this->line = (Line*) ListBox_getSelected(this->panel);
