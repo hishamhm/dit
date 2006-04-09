@@ -39,7 +39,7 @@ echo
 echo 'gcov: MYCFLAGS += -fprofile-arcs -ftest-coverage'
 echo 'gcov: '$1
 echo
-echo 'all: MYCFLAGS += -O3'
+echo 'all: MYCFLAGS += -O3 -finline-functions -finline-limit=1200'
 echo 'all: '$1
 echo '	strip '$1
 echo
