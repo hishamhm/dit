@@ -14,30 +14,12 @@
 
 extern char* HIGHLIGHTRULE_CLASS;
 
-typedef enum {
-   NormalColor = 0,
-   SelectionColor,
-   BracketColor,
-   BrightColor,
-   SymbolColor,
-   BrightSymbolColor,
-   AltColor,
-   BrightAltColor,
-   DiffColor,
-   BrightDiffColor,
-   SpecialColor,
-   BrightSpecialColor,
-   VerySpecialColor,
-   DimColor,
-   HighlightColors
-} HighlightColor;
-
 struct HighlightContext_ {
    Object super;
    int id;
    PatternMatcher* follows;
    HighlightContext* nextLine;
-   HighlightColor defaultColor;
+   Color defaultColor;
    PatternMatcher* rules;
 };
 
@@ -45,7 +27,6 @@ extern char* HIGHLIGHTCONTEXT_CLASS;
 
 struct Highlight_ {
    Vector* contexts;
-   int colors[HighlightColors];
    HighlightContext* mainContext;
    HighlightContext* currentContext;
    // PatternMatcher* words;
@@ -56,61 +37,6 @@ struct Highlight_ {
 #define isword(x) (isalpha(x) || x == '_')
 #endif
 
-//#define ANTARCTIC_THEME
-//#define CLASSIC_TURBO_THEME
-//#define BLACK_TURBO_THEME
-
-#ifdef BLACK_TURBO_THEME
-#define NormalColor (A_NORMAL)
-#define SelectionColor (A_REVERSE | CRT_color(Blue, White))
-#define BracketColor (A_REVERSE | CRT_color(Cyan, Black))
-#define BrightColor (A_BOLD | CRT_color(Yellow, Black))
-#define SymbolColor (A_BOLD | CRT_color(Cyan, Black))
-#define BrightSymbolColor (A_BOLD | CRT_color(Yellow, Black))
-#define AltColor (CRT_color(Green, Black))
-#define BrightAltColor (A_BOLD | CRT_color(Green, Black))
-#define DiffColor (CRT_color(Cyan, Black))
-#define BrightDiffColor (A_BOLD | CRT_color(Cyan, Black))
-#define SpecialColor (CRT_color(Red, Black))
-#define BrightSpecialColor (A_BOLD | CRT_color(Red, Black))
-#define VerySpecialColor (A_BOLD | CRT_color(Yellow, Red))
-#define DimColor (CRT_color(Yellow, Black))
-#endif
-
-#ifdef CLASSIC_TURBO_THEME
-#define NormalColor (CRT_color(White, Blue))
-#define SelectionColor (A_REVERSE | CRT_color(Cyan, Black))
-#define BracketColor (A_REVERSE | CRT_color(Green, Black))
-#define BrightColor (A_BOLD | CRT_color(Yellow, Blue))
-#define SymbolColor (A_BOLD | CRT_color(Cyan, Blue))
-#define BrightSymbolColor (A_BOLD | CRT_color(Yellow, Blue))
-#define AltColor (CRT_color(Green, Blue))
-#define BrightAltColor (A_BOLD | CRT_color(Green, Blue))
-#define DiffColor (CRT_color(Cyan, Blue))
-#define BrightDiffColor (A_BOLD | CRT_color(Cyan, Blue))
-#define SpecialColor (CRT_color(Red, Blue))
-#define BrightSpecialColor (A_BOLD | CRT_color(Red, Blue))
-#define VerySpecialColor (A_BOLD | CRT_color(Yellow, Red))
-#define DimColor (CRT_color(Yellow, Blue))
-#endif
-
-#ifdef ANTARCTIC_THEME
-#define NormalColor (A_NORMAL)
-#define SelectionColor (A_REVERSE | CRT_color(Blue, White))
-#define BracketColor (A_REVERSE | CRT_color(Cyan, Black))
-#define BrightColor (A_BOLD | CRT_color(White, Black))
-#define SymbolColor (A_BOLD | CRT_color(White, Black))
-#define BrightSymbolColor (A_BOLD | CRT_color(Cyan, Black))
-#define AltColor (CRT_color(Cyan, Black))
-#define BrightAltColor (A_BOLD | CRT_color(Cyan, Black))
-#define DiffColor (CRT_color(Green, Black))
-#define BrightDiffColor (A_BOLD | CRT_color(Green, Black))
-#define SpecialColor (CRT_color(Yellow, Black))
-#define BrightSpecialColor (A_BOLD | CRT_color(Yellow, Black))
-#define VerySpecialColor (A_BOLD | CRT_color(Yellow, Red))
-#define DimColor (A_BOLD | CRT_color(Black, Black))
-#endif
-
 }*/
 
 /* private property */
@@ -119,7 +45,7 @@ char* HIGHLIGHTCONTEXT_CLASS = "HighlightContext";
 /* private property */
 char* HIGHLIGHTRULE_CLASS = "HighlightRule";
 
-static HighlightColor Highlight_translateColor(char* color) {
+static Color Highlight_translateColor(char* color) {
    if (String_eq(color, "bright")) return BrightColor;
    if (String_eq(color, "symbol")) return SymbolColor;
    if (String_eq(color, "brightsymbol")) return BrightSymbolColor;
@@ -129,6 +55,8 @@ static HighlightColor Highlight_translateColor(char* color) {
    if (String_eq(color, "brightdiff")) return BrightDiffColor;
    if (String_eq(color, "special")) return SpecialColor;
    if (String_eq(color, "brightspecial")) return BrightSpecialColor;
+   if (String_eq(color, "specialdiff")) return SpecialDiffColor;
+   if (String_eq(color, "brightspecialdiff")) return BrightSpecialDiffColor;
    if (String_eq(color, "veryspecial")) return VerySpecialColor;
    if (String_eq(color, "dim")) return DimColor;
    return NormalColor;
@@ -137,20 +65,6 @@ static HighlightColor Highlight_translateColor(char* color) {
 Highlight* Highlight_new(const char* fileName, const char* firstLine) {
    Highlight* this = (Highlight*) malloc(sizeof(Highlight));
    // this->words = PatternMatcher_new();
-   this->colors[NormalColor] = (A_NORMAL);
-   this->colors[SelectionColor] = (A_REVERSE | CRT_color(Blue, White));
-   this->colors[BracketColor] = (A_REVERSE | CRT_color(Cyan, Black));
-   this->colors[BrightColor] = (A_BOLD | CRT_color(White, Black));
-   this->colors[SymbolColor] = (A_BOLD | CRT_color(White, Black));
-   this->colors[BrightSymbolColor] = (A_BOLD | CRT_color(Cyan, Black));
-   this->colors[AltColor] = (CRT_color(Cyan, Black));
-   this->colors[BrightAltColor] = (A_BOLD | CRT_color(Cyan, Black));
-   this->colors[DiffColor] = (CRT_color(Green, Black));
-   this->colors[BrightDiffColor] = (A_BOLD | CRT_color(Green, Black));
-   this->colors[SpecialColor] = (CRT_color(Yellow, Black));
-   this->colors[BrightSpecialColor] = (A_BOLD | CRT_color(Yellow, Black));
-   this->colors[VerySpecialColor] = (A_BOLD | CRT_color(Yellow, Red));
-   this->colors[DimColor] = (A_BOLD | CRT_color(Black, Black));
 
    this->contexts = Vector_new(HIGHLIGHTCONTEXT_CLASS, true, DEFAULT_SIZE);
    this->currentContext = NULL;
@@ -244,7 +158,7 @@ Highlight* Highlight_new(const char* fileName, const char* firstLine) {
             if (String_eq(tokens[0], "context") && (ntokens == 4 || ntokens == 6)) {
                char* open = tokens[1];
                char* close = (String_eq(tokens[2], "`$") ? NULL : tokens[2]);
-               HighlightColor color;
+               Color color;
                if (ntokens == 6) {
                   HighlightContext_addRule(context, open, Highlight_translateColor(tokens[3]));
                   color = Highlight_translateColor(tokens[5]);
@@ -308,7 +222,7 @@ void Highlight_delete(Highlight* this) {
    free(this);
 }
 
-HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close, HighlightContext* parent, HighlightColor color) {
+HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close, HighlightContext* parent, Color color) {
    int id = Vector_size(this->contexts);
    HighlightContext* ctx = HighlightContext_new(id, color);
    Vector_add(this->contexts, ctx);
@@ -331,9 +245,9 @@ static inline int Highlight_tryMatch(Highlight* this, unsigned char* buffer, int
    unsigned char* here = buffer+at;
    int intColor;
    int matchlen = match(rules, here, &intColor);
-   HighlightColor color = (HighlightColor) intColor;
-   assert(color >= 0 && color < HighlightColors);
-   int attr = this->colors[color];
+   Color color = (Color) intColor;
+   assert(color >= 0 && color < Color);
+   int attr = CRT_colors[color];
    if (matchlen && !(isword(here[matchlen-1]) && isword(here[matchlen]))) {
       for (int i = at; i < at+matchlen; i++)
          attrs[i] = attr;
@@ -345,7 +259,7 @@ static inline int Highlight_tryMatch(Highlight* this, unsigned char* buffer, int
       }
       at += matchlen;
    } else if (paintUnmatched) {
-      int defaultAttr = this->colors[(*ctx)->defaultColor];
+      int defaultAttr = CRT_colors[(*ctx)->defaultColor];
       int word = isword(*here);
       if (word) {
          while (isword(buffer[at]))
@@ -384,7 +298,7 @@ inline void Highlight_setContext(Highlight* this, HighlightContext* context) {
    this->currentContext = (HighlightContext*) context;
 }
 
-HighlightContext* HighlightContext_new(int id, HighlightColor defaultColor) {
+HighlightContext* HighlightContext_new(int id, Color defaultColor) {
    HighlightContext* this = (HighlightContext*) malloc(sizeof(HighlightContext));
    Object_init((Object*) this, HIGHLIGHTCONTEXT_CLASS);
    ((Object*)this)->delete = HighlightContext_delete;
@@ -403,6 +317,6 @@ void HighlightContext_delete(Object* cast) {
    free(this);
 }
 
-void HighlightContext_addRule(HighlightContext* this, char* rule, HighlightColor color) {
+void HighlightContext_addRule(HighlightContext* this, char* rule, Color color) {
    PatternMatcher_add(this->rules, (unsigned char*) rule, (int) color);
 }

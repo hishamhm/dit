@@ -38,13 +38,13 @@ extern char* FIELDITEM_CLASS;
 /* private property */
 char* FIELDITEM_CLASS = "FieldItem";
 
-Field* Field_new(char* label, int x, int y, int w, int labelColor, int fieldColor) {
+Field* Field_new(char* label, int x, int y, int w) {
    Field* this = (Field*) malloc(sizeof(Field));
    this->x = x;
    this->y = y;
    this->w = w;
-   this->labelColor = labelColor;
-   this->fieldColor = fieldColor;
+   this->labelColor = CRT_colors[StatusColor];
+   this->fieldColor = CRT_colors[FieldColor];
    this->cursor = 0;
    this->history = List_new(FIELDITEM_CLASS);
    this->current = NULL;

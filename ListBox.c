@@ -225,7 +225,7 @@ void ListBox_draw(ListBox* this, bool focus) {
    assert(last <= itemCount);
 
    if (this->header.len > 0) {
-      int attr = HEADER_PAIR;
+      int attr = CRT_colors[HeaderColor];
       attron(attr);
       mvhline(y, x, ' ', w);
       attroff(attr);
@@ -241,9 +241,9 @@ void ListBox_draw(ListBox* this, bool focus) {
    
    int highlight;
    if (focus) {
-      highlight = FOCUS_HIGHLIGHT_PAIR;
+      highlight = CRT_colors[SelectionColor];
    } else {
-      highlight = UNFOCUS_HIGHLIGHT_PAIR;
+      highlight = CRT_colors[UnfocusedSelectionColor];
    }
 
    attrset(this->color);
@@ -282,14 +282,16 @@ void ListBox_draw(ListBox* this, bool focus) {
          float step = (float)h / (float) itemCount ;
          int handleHeight = ceil(step * (float)h);
          int startAt = step * (float)this->scrollV;
+         Color bar = CRT_colors[ScrollBarColor];
+         Color handle = CRT_colors[ScrollHandleColor];
          for (int i = 0; i < h; i++) {
             char ch;
             if (i >= startAt && handleHeight) {
-               attrset(CRT_color(White, Cyan));
+               attrset(handle);
                ch = CRT_scrollHandle;
                handleHeight--;
             } else {
-               attrset(CRT_color(White, Blue));
+               attrset(bar);
                ch = CRT_scrollBar;
             }
             mvaddch(x + i, w, ch);

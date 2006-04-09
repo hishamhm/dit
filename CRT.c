@@ -22,6 +22,36 @@
 #define Cyan    COLOR_CYAN
 #define White   COLOR_WHITE
 
+
+typedef enum {
+   NormalColor = 0,
+   SelectionColor,
+   UnfocusedSelectionColor,
+   BracketColor,
+   BrightColor,
+   SymbolColor,
+   BrightSymbolColor,
+   AltColor,
+   BrightAltColor,
+   DiffColor,
+   BrightDiffColor,
+   SpecialColor,
+   BrightSpecialColor,
+   SpecialDiffColor,
+   BrightSpecialDiffColor,
+   VerySpecialColor,
+   DimColor,
+   ScrollBarColor,
+   ScrollHandleColor,
+   HeaderColor,
+   StatusColor,
+   KeyColor,
+   FieldColor,
+   FieldFailColor,
+   AlertColor,
+   Colors
+} Color;
+
 #define KEY_S_UP      KEY_F(30)
 #define KEY_S_DOWN    KEY_F(31)
 #define KEY_S_RIGHT   KEY_F(32)
@@ -53,13 +83,6 @@
 
 #define KEY_CTRL(x)  (x - 'A' + 1)
 
-#define FOCUS_HIGHLIGHT_PAIR   CRT_color(Black, Cyan)
-#define UNFOCUS_HIGHLIGHT_PAIR CRT_color(Black, White)
-#define FUNCTIONBAR_PAIR       CRT_color(Black, Cyan)
-#define FUNCTIONKEY_PAIR       CRT_color(White, Black)
-#define HEADER_PAIR            CRT_color(Black, Green)
-#define FAILEDSEARCH_PAIR      CRT_color(Red, Cyan)
-
 #define SHIFT_MASK 1
 #define ALTR_MASK 2
 #define CTRL_MASK 4
@@ -70,6 +93,8 @@ extern int CRT_delay;
 extern char CRT_scrollHandle;
 
 extern char CRT_scrollBar;
+
+extern int CRT_colors[Colors];
 
 int putenv(char*);
 
@@ -87,6 +112,9 @@ char CRT_scrollHandle;
 
 /* private property */
 char CRT_scrollBar;
+
+/* private property */
+int CRT_colors[Colors];
 
 /* private property */
 static SCREEN* CRT_term;
@@ -107,6 +135,7 @@ void CRT_init() {
    nonl();
    intrflush(stdscr, false);
    keypad(stdscr, true);
+   ESCDELAY = 100;
    if (has_colors()) {
       start_color();
       CRT_hasColors = true;
@@ -122,6 +151,134 @@ void CRT_init() {
       CRT_scrollHandle = '*';
       CRT_scrollBar = '|';
    }
+
+   #define ANTARCTIC_THEME
+
+   #ifdef ANTARCTIC_THEME
+   CRT_colors[NormalColor] = A_NORMAL;
+   CRT_colors[SelectionColor] = A_REVERSE | CRT_color(Blue, White);
+   CRT_colors[BracketColor] = A_REVERSE | CRT_color(Cyan, Black);
+   CRT_colors[BrightColor] = A_BOLD | CRT_color(White, Black);
+   CRT_colors[SymbolColor] = A_BOLD | CRT_color(White, Black);
+   CRT_colors[BrightSymbolColor] = A_BOLD | CRT_color(White, Black);
+   CRT_colors[AltColor] = CRT_color(Cyan, Black);
+   CRT_colors[BrightAltColor] = A_BOLD | CRT_color(Cyan, Black);
+   CRT_colors[DiffColor] = CRT_color(Green, Black);
+   CRT_colors[BrightDiffColor] = A_BOLD | CRT_color(Green, Black);
+   CRT_colors[SpecialColor] = CRT_color(Yellow, Black);
+   CRT_colors[BrightSpecialColor] = A_BOLD | CRT_color(Yellow, Black);
+   CRT_colors[SpecialDiffColor] = CRT_color(Red, Black);
+   CRT_colors[BrightSpecialDiffColor] = A_BOLD | CRT_color(Red, Black);
+   CRT_colors[VerySpecialColor] = A_BOLD | CRT_color(Yellow, Red);
+   CRT_colors[DimColor] = A_BOLD | CRT_color(Black, Black);
+   CRT_colors[ScrollBarColor] = CRT_color(White, Blue);
+   CRT_colors[ScrollHandleColor] = CRT_color(White, Cyan);
+   CRT_colors[StatusColor] = CRT_color(Black, Cyan);
+   CRT_colors[KeyColor] = A_REVERSE | CRT_color(Black, White);
+   CRT_colors[FieldColor] = CRT_color(White, Blue);
+   CRT_colors[FieldFailColor] = CRT_color(Red, Blue);
+   CRT_colors[AlertColor] = CRT_color(White, Red);
+   #endif
+   #ifdef VIM_THEME
+   CRT_colors[NormalColor] = A_NORMAL;
+   CRT_colors[SelectionColor] = A_REVERSE | CRT_color(White, Black);
+   CRT_colors[BracketColor] = A_NORMAL;
+   CRT_colors[BrightColor] = CRT_color(Yellow, Black);
+   CRT_colors[SymbolColor] = A_NORMAL;
+   CRT_colors[BrightSymbolColor] = CRT_color(Yellow, Black);
+   CRT_colors[AltColor] = CRT_color(Red, Black);
+   CRT_colors[BrightAltColor] = CRT_color(Magenta, Black);
+   CRT_colors[VerySpecialColor] = A_REVERSE | CRT_color(Yellow, Black);
+   CRT_colors[DimColor] = CRT_color(Blue, Black);
+   CRT_colors[SpecialColor] = CRT_color(Red, Black);
+   CRT_colors[BrightSpecialColor] = CRT_color(Magenta, Black);
+   CRT_colors[SpecialDiffColor] = CRT_color(Red, Black);
+   CRT_colors[BrightSpecialDiffColor] = A_BOLD | CRT_color(Red, Black);
+   CRT_colors[DiffColor] = CRT_color(Green, Black);
+   CRT_colors[BrightDiffColor] = CRT_color(Magenta, Black);
+   CRT_colors[ScrollBarColor] = CRT_color(White, Black);
+   CRT_colors[ScrollHandleColor] = CRT_color(White, Green);
+   CRT_colors[StatusColor] = CRT_color(White, Black);
+   CRT_colors[KeyColor] = CRT_color(Black, White);
+   CRT_colors[FieldColor] = CRT_color(White, Black);
+   CRT_colors[FieldFailColor] = CRT_color(Red, Black);
+   CRT_colors[AlertColor] = CRT_color(Red, Black);
+   #endif
+   #ifdef EMACS_THEME
+   CRT_colors[NormalColor] = A_NORMAL;
+   CRT_colors[SelectionColor] = A_REVERSE | CRT_color(White, Black);
+   CRT_colors[BracketColor] = A_NORMAL;
+   CRT_colors[BrightColor] = A_BOLD | CRT_color(Cyan, Black);
+   CRT_colors[SymbolColor] = A_NORMAL;
+   CRT_colors[BrightSymbolColor] = CRT_color(White, Black);
+   CRT_colors[AltColor] = CRT_color(Green, Black);
+   CRT_colors[BrightAltColor] = CRT_color(Green, Black);
+   CRT_colors[VerySpecialColor] = CRT_color(Red, Black);
+   CRT_colors[DimColor] = CRT_color(Red, Black);
+   CRT_colors[SpecialColor] = CRT_color(Green, Black);
+   CRT_colors[BrightSpecialColor] = CRT_color(Blue, Black);
+      CRT_colors[SpecialDiffColor] = CRT_color(Red, Black);
+      CRT_colors[BrightSpecialDiffColor] = A_BOLD | CRT_color(Red, Black);
+      CRT_colors[DiffColor] = CRT_color(Green, Black);
+      CRT_colors[BrightDiffColor] = CRT_color(Magenta, Black);
+   CRT_colors[ScrollBarColor] = CRT_color(White, Black);
+   CRT_colors[ScrollHandleColor] = CRT_color(Black, White);
+   CRT_colors[StatusColor] = CRT_color(Black, White);
+   CRT_colors[KeyColor] = A_REVERSE | CRT_color(Black, White);
+   CRT_colors[FieldColor] = CRT_color(White, Black);
+   CRT_colors[FieldFailColor] = CRT_color(Red, Black);
+   CRT_colors[AlertColor] = CRT_color(White, Red);
+   #endif
+   #ifdef CLASSIC_TURBO_THEME
+   CRT_colors[NormalColor] = (CRT_color(White, Blue));
+   CRT_colors[SelectionColor] = (A_REVERSE | CRT_color(Cyan, Black));
+   CRT_colors[BracketColor] = (A_REVERSE | CRT_color(Green, Black));
+   CRT_colors[BrightColor] = (A_BOLD | CRT_color(Yellow, Blue));
+   CRT_colors[SymbolColor] = (A_BOLD | CRT_color(Cyan, Blue));
+   CRT_colors[BrightSymbolColor] = (A_BOLD | CRT_color(Yellow, Blue));
+   CRT_colors[AltColor] = (CRT_color(Green, Blue));
+   CRT_colors[BrightAltColor] = (A_BOLD | CRT_color(Green, Blue));
+   CRT_colors[DiffColor] = (CRT_color(Cyan, Blue));
+   CRT_colors[BrightDiffColor] = (A_BOLD | CRT_color(Cyan, Blue));
+   CRT_colors[SpecialColor] = (CRT_color(Red, Blue));
+   CRT_colors[BrightSpecialColor] = (A_BOLD | CRT_color(Red, Blue));
+   CRT_colors[SpecialDiffColor] = (CRT_color(Magenta, Black));
+   CRT_colors[BrightSpecialDiffColor] = (A_BOLD | CRT_color(Magenta, Black));
+   CRT_colors[VerySpecialColor] = (A_BOLD | CRT_color(Yellow, Red));
+   CRT_colors[DimColor] = (CRT_color(Yellow, Blue));
+   CRT_colors[ScrollBarColor] = CRT_color(White, Black);
+   CRT_colors[ScrollHandleColor] = CRT_color(White, Green);
+   CRT_colors[StatusColor] = CRT_color(Black, Cyan);
+   CRT_colors[KeyColor] = A_REVERSE | CRT_color(Black, White);
+   CRT_colors[FieldColor] = CRT_color(White, Blue);
+   CRT_colors[FieldFailColor] = CRT_color(Red, Blue);
+   CRT_colors[AlertColor] = CRT_color(White, Red);
+   #endif
+   #ifdef BLACK_TURBO_THEME
+   CRT_colors[NormalColor] = (CRT_color(White, Black));
+   CRT_colors[SelectionColor] = (A_REVERSE | CRT_color(Cyan, Black));
+   CRT_colors[BracketColor] = (A_REVERSE | CRT_color(Green, Black));
+   CRT_colors[BrightColor] = (A_BOLD | CRT_color(Yellow, Black));
+   CRT_colors[SymbolColor] = (A_BOLD | CRT_color(Cyan, Black));
+   CRT_colors[BrightSymbolColor] = (A_BOLD | CRT_color(Yellow, Black));
+   CRT_colors[AltColor] = (CRT_color(Green, Black));
+   CRT_colors[BrightAltColor] = (A_BOLD | CRT_color(Green, Black));
+   CRT_colors[DiffColor] = (CRT_color(Cyan, Black));
+   CRT_colors[BrightDiffColor] = (A_BOLD | CRT_color(Cyan, Black));
+   CRT_colors[SpecialColor] = (CRT_color(Red, Black));
+   CRT_colors[BrightSpecialColor] = (A_BOLD | CRT_color(Red, Black));
+   CRT_colors[SpecialDiffColor] = (CRT_color(Magenta, Black));
+   CRT_colors[BrightSpecialDiffColor] = (A_BOLD | CRT_color(Magenta, Black));
+   CRT_colors[VerySpecialColor] = (A_BOLD | CRT_color(Yellow, Red));
+   CRT_colors[DimColor] = (CRT_color(Yellow, Black));
+   CRT_colors[ScrollBarColor] = CRT_color(White, Blue);
+   CRT_colors[ScrollHandleColor] = CRT_color(White, Cyan);
+   CRT_colors[StatusColor] = CRT_color(Black, Cyan);
+   CRT_colors[KeyColor] = A_REVERSE | CRT_color(Black, White);
+   CRT_colors[FieldColor] = CRT_color(White, Blue);
+   CRT_colors[FieldFailColor] = CRT_color(Red, Blue);
+   CRT_colors[AlertColor] = CRT_color(White, Red);
+   #endif
 
 //   #define teq(t) String_eq(termType, t)
    // if (teq("xterm") || teq("xterm-color") || teq("vt220"))

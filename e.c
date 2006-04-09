@@ -28,7 +28,7 @@ void printVersionFlag() {
 void clearStatusBar() {
    int y, x;
    getyx(stdscr, y, x);
-   attrset(CRT_color(Black, Cyan));
+   attrset(CRT_colors[StatusColor]);
    mvhline(LINES - 1, 0, ' ', COLS);
    move(y, x);
 }
@@ -36,15 +36,15 @@ void clearStatusBar() {
 void statusMessage(char* message) {
    int cursorX, cursorY;
    getyx(stdscr, cursorY, cursorX);
-   attrset(CRT_color(Black, Cyan));
+   attrset(CRT_colors[StatusColor]);
    mvhline(LINES - 1, 0, ' ', COLS);
    mvprintw(LINES - 1, 0, message);
-   attrset(A_NORMAL);
+   attrset(CRT_colors[NormalColor]);
    move(cursorY, cursorX);
 }
 
 bool attemptSave(Buffer* buffer) {
-   Field* saveAsField = Field_new("Save failed. Save as:", 0, LINES-1, COLS-2, CRT_color(Black, Cyan), CRT_color(White, Blue));
+   Field* saveAsField = Field_new("Save failed. Save as:", 0, LINES-1, COLS-2);
    bool saved = false;
    while (true) {
       saved = Buffer_save(buffer);
@@ -108,10 +108,10 @@ int main(int argc, char** argv) {
       bookmarkY[i] = 0;
    }
 
-   Field* gotoField = Field_new("Go to line:", 0, LINES - 1, MIN(20, COLS - 20), CRT_color(Black, Cyan), CRT_color(White, Blue));
+   Field* gotoField = Field_new("Go to line:", 0, LINES - 1, MIN(20, COLS - 20));
 
-   Field* findField = Field_new("Find:", 0, LINES - 1, MIN(100, COLS - 20), CRT_color(Black, Cyan), CRT_color(White, Blue));
-   Field* replaceField = Field_new("Replace with:", 0, LINES - 1, MIN(100, COLS - 20), CRT_color(Black, Cyan), CRT_color(White, Blue));
+   Field* findField = Field_new("Find:", 0, LINES - 1, MIN(100, COLS - 20));
+   Field* replaceField = Field_new("Replace with:", 0, LINES - 1, MIN(100, COLS - 20));
 
    bkgdset(NormalColor);
 
@@ -119,9 +119,9 @@ int main(int argc, char** argv) {
    while (!quit) {
       
       if (buffer->readOnly)
-         attrset(CRT_color(White, Red));
+         attrset(CRT_colors[AlertColor]);
       else
-         attrset(CRT_color(Black, Cyan));
+         attrset(CRT_colors[StatusColor]);
       mvhline(LINES - 1, 0, ' ', COLS);
       mvprintw(LINES - 1, 0, "Lin=%d Col=%d %s%s %.40s",
                              buffer->y + 1, buffer->x + 1,
@@ -164,7 +164,6 @@ int main(int argc, char** argv) {
       case KEY_CTRL('Y'):
       {
          statusMessage("Press a key to go to a bookmark; Ctrl+Y: create bookmark; Esc: cancel");
-
          buffer->selecting = false;
          buffer->marking = false;
          int key = getch();
@@ -320,10 +319,10 @@ int main(int argc, char** argv) {
                                  if (buffer->y == firstY && buffer->x == firstX)
                                     wrapped = true;
                               }
-                              findField->fieldColor = CRT_color(White, Blue);
+                              findField->fieldColor = CRT_colors[FieldColor];
                               Buffer_draw(buffer);
                            } else {
-                              findField->fieldColor = CRT_color(Red, Blue);
+                              findField->fieldColor = CRT_colors[FieldFailColor];
                               break;
                            }
                         }
@@ -378,10 +377,10 @@ int main(int argc, char** argv) {
                      if (buffer->y == firstY && buffer->x == firstX)
                         wrapped = true;
                   }
-                  findField->fieldColor = CRT_color(White, Blue);
+                  findField->fieldColor = CRT_colors[FieldColor];
                   Buffer_draw(buffer);
                } else
-                  findField->fieldColor = CRT_color(Red, Blue);
+                  findField->fieldColor = CRT_colors[FieldFailColor];
             }
          }
          buffer->selecting = false;
@@ -440,10 +439,10 @@ int main(int argc, char** argv) {
       case KEY_F(10):
       case KEY_CTRL('Q'):
          if (buffer->modified) {
-            attrset(CRT_color(Black, Cyan));
+            attrset(CRT_colors[StatusColor]);
             mvprintw(LINES - 1, 0, "Buffer was modified. Save before exit? [y/n/c]");
             clrtoeol();
-            attrset(A_NORMAL);
+            attrset(CRT_colors[NormalColor]);
             refresh();
             int opt;
             do {
@@ -600,9 +599,9 @@ int main(int argc, char** argv) {
       }
    }
 
-   attron(CRT_color(White, Black));
+   attron(CRT_colors[NormalColor]);
    mvhline(LINES-1, 0, ' ', COLS);
-   attroff(CRT_color(White, Black));
+   attroff(CRT_colors[NormalColor]);
    refresh();
    
    CRT_done();

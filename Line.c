@@ -99,7 +99,7 @@ void Line_display(Object* cast, RichString* str) {
    out[outIndex] = '\0';
 
    if (buffer->bracketY == y && buffer->bracketX < outIndex) {
-      attrs[buffer->bracketX] = hl->colors[BracketColor];
+      attrs[buffer->bracketX] = CRT_colors[BracketColor];
    }
    
    if (buffer->selecting) {
@@ -132,7 +132,7 @@ void Line_display(Object* cast, RichString* str) {
             to = outIndex;
          }
          for (int i = from; i < to; i++) {
-            attrs[i] = hl->colors[SelectionColor];
+            attrs[i] = CRT_colors[SelectionColor];
          }
       }
    }

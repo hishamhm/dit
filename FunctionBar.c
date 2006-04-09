@@ -47,22 +47,22 @@ void FunctionBar_delete(FunctionBar* this) {
 }
 
 void FunctionBar_draw(FunctionBar* this, char* buffer) {
-   FunctionBar_drawAttr(this, buffer, FUNCTIONBAR_PAIR);
+   FunctionBar_drawAttr(this, buffer, CRT_colors[StatusColor]);
 }
 
 void FunctionBar_drawAttr(FunctionBar* this, char* buffer, int attr) {
-   attron(FUNCTIONBAR_PAIR);
+   attron(CRT_colors[StatusColor]);
    mvhline(LINES-1, 0, ' ', COLS);
-   attroff(FUNCTIONBAR_PAIR);
+   attroff(CRT_colors[StatusColor]);
    int x = 0;
    for (int i = 0; i < this->size; i++) {
-      attron(FUNCTIONKEY_PAIR);
+      attron(CRT_colors[KeyColor]);
       mvaddstr(LINES-1, x, this->keys[i]);
-      attroff(FUNCTIONKEY_PAIR);
+      attroff(CRT_colors[KeyColor]);
       x += strlen(this->keys[i]);
-      attron(FUNCTIONBAR_PAIR);
+      attron(CRT_colors[StatusColor]);
       mvaddstr(LINES-1, x, this->functions[i]);
-      attroff(FUNCTIONBAR_PAIR);
+      attroff(CRT_colors[StatusColor]);
       x += strlen(this->functions[i]);
    }
    if (buffer != NULL) {
