@@ -246,7 +246,7 @@ static inline int Highlight_tryMatch(Highlight* this, unsigned char* buffer, int
    int intColor;
    int matchlen = match(rules, here, &intColor);
    Color color = (Color) intColor;
-   assert(color >= 0 && color < Color);
+   assert(color >= 0 && color < Colors);
    int attr = CRT_colors[color];
    if (matchlen && !(isword(here[matchlen-1]) && isword(here[matchlen]))) {
       for (int i = at; i < at+matchlen; i++)
