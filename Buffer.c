@@ -418,11 +418,46 @@ void Buffer_breakLine(Buffer* this) {
    Undo_breakAt(this->undo, this->x, this->y, indent);
    Line_breakAt(this->line, this->x, indent);
    ListBox_onKey(this->panel, KEY_DOWN);
+   Line* prev = this->line;
    this->line = (Line*) ListBox_getSelected(this->panel);
    this->x = indent;
    this->y++;
    this->panel->needsRedraw = true;
    this->modified = true;
+
+   if (this->lastKey == '>') {
+      char* last = prev->text + (prev->len - 1);
+      assert(this->lastKey == *last);
+      last--;
+      if (last > prev->text && *last != '/') {
+         char tag[20];
+         int taglen = 0;
+         do {
+            tag[taglen] = *last;
+            if (*last != ' ') {
+               taglen++;
+            } else {
+               taglen = 0;
+            }
+            last--;
+
+         } while (taglen < 20 && last > prev->text && *last != '<');
+         taglen--;
+         if (tag[taglen] != '/') {
+            Buffer_defaultKeyHandler(this, '<');
+            Buffer_defaultKeyHandler(this, '/');
+            for (int i = 0; i <= taglen; i++)
+               Buffer_defaultKeyHandler(this, tag[taglen - i]);
+            Buffer_defaultKeyHandler(this, '>');
+            for (int i = 0; i <= taglen + 3; i++)
+               Buffer_backwardChar(this);
+            int indent = MIN(Line_getIndentChars(this->line), this->x);
+            Undo_breakAt(this->undo, this->x, this->y, indent);
+            Line_breakAt(this->line, this->x, indent);
+            Buffer_indent(this);
+         }
+      }
+   }
    
    if (this->lastKey == '{') {
       this->lastKey = 0;
