@@ -3,7 +3,7 @@
 clear
 reset -w
 
-PROGRAM=e
+PROGRAM=dit
 
 make=make
 [ -e /bin/ColorMake ] && make=ColorMake

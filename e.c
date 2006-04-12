@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
          printVersionFlag();
       }
    } else {
-      fprintf(stderr, "Usage: e <filename>\n");
+      fprintf(stderr, "Usage: dit <filename>\n");
       exit(0);
    }
 
@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
    struct stat st;
    stat(argv[1], &st);
    if (S_ISDIR(st.st_mode)) {
-      fprintf(stderr, "e: %s is a directory.\n", argv[1]);
+      fprintf(stderr, "dit: %s is a directory.\n", argv[1]);
       exit(0);
    }
    char dir[1000];
