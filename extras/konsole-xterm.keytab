@@ -1,0 +1,218 @@
+# [xterm.keytab] Konsole Keyboard Table (XTerm emulation)
+# Supports XTerm escape codes such as "^[[1;2C" for shift-right
+# -- Hisham Muhammad <hisham at inf.puc-rio.br>
+#
+# --------------------------------------------------------------
+
+keyboard "XTerm (Xorg with shift-arrows)"
+
+# --------------------------------------------------------------
+#
+# This configuration table allows to customize the
+# meaning of the keys.
+#
+# The syntax is that each entry has the form : 
+#
+#   "key" Keyname { ("+"|"-") Modename } ":" (String|Operation)
+#
+# Keynames are those defined in <qnamespace.h> with the
+# "Qt::Key_" removed. (We'd better insert the list here)
+#
+# Mode names are : 
+#
+# - Shift
+# - Alt
+# - Control
+#
+#   The VT100 emulation has two modes that can affect the
+#   sequences emitted by certain keys. These modes are
+#   under control of the client program.
+#   
+# - Newline     : effects Return and Enter key.
+# - Application : effects Up and Down key.
+#
+# - Ansi        : effects Up and Down key (This is for VT52, really).
+#
+# Operations are
+#
+# - scrollUpLine
+# - scrollUpPage
+# - scrollDownLine
+# - scrollDownPage
+#
+# - emitSelection
+#
+# If the key is not found here, the text of the
+# key event as provided by QT is emitted, possibly
+# preceeded by ESC if the Alt key is pressed.
+#
+# --------------------------------------------------------------
+
+key Escape : "\E"
+key Tab    : "\t"
+
+# VT100 can add an extra \n after return.
+# The NewLine mode is set by an escape sequence.
+
+key Return-NewLine : "\r"  
+key Return+NewLine : "\r\n"
+
+# Konsole's vt100 mode tries to "save ^H",
+# but XTerm only does that after a 'reset' on the command line.
+
+key Backspace : "\x7f"
+
+# Arrow keys in VT52 mode
+
+key Up   -Shift-Ansi : "\EA"
+key Down -Shift-Ansi : "\EB"
+key Right-Shift-Ansi : "\EC"
+key Left -Shift-Ansi : "\ED"
+
+# Arrow keys in ANSI mode with Application - and Normal Cursor Mode)
+
+key Up   -Shift+Ansi+AppCuKeys : "\EOA"
+key Down -Shift+Ansi+AppCuKeys : "\EOB"
+key Right-Shift+Ansi+AppCuKeys : "\EOC"
+key Left -Shift+Ansi+AppCuKeys : "\EOD"
+
+key Up   -Shift+Ansi-AppCuKeys : "\E[A"
+key Down -Shift+Ansi-AppCuKeys : "\E[B"
+key Right-Shift+Ansi-AppCuKeys : "\E[C"
+key Left -Shift+Ansi-AppCuKeys : "\E[D"
+
+key Home  -Shift-Control-Alt+Ansi : "\E[H"
+key End   -Shift-Control-Alt+Ansi : "\E[F"
+key Delete-Shift-Control-Alt+Ansi : "\E[3~"
+key Insert-Shift-Control-Alt+Ansi : "\E[2~"
+key Prior -Shift-Control-Alt+Ansi : "\E[5~"
+key Next  -Shift-Control-Alt+Ansi : "\E[6~"
+
+key Up    +Shift-Control-Alt+Ansi : "\E[1;2A"
+key Down  +Shift-Control-Alt+Ansi : "\E[1;2B"
+key Right +Shift-Control-Alt+Ansi : "\E[1;2C"
+key Left  +Shift-Control-Alt+Ansi : "\E[1;2D"
+key Home  +Shift-Control-Alt+Ansi : "\E[1;2H"
+key End   +Shift-Control-Alt+Ansi : "\E[1;2F"
+key Delete+Shift-Control-Alt+Ansi : "\E[3;2~"
+key Insert+Shift-Control-Alt+Ansi : "\E[2;2~"
+#key Prior +Shift-Control-Alt+Ansi : "\E[5;2~"
+#key Next  +Shift-Control-Alt+Ansi : "\E[6;2~"
+
+key Up    -Shift-Control+Alt+Ansi : "\E[1;3A"
+key Down  -Shift-Control+Alt+Ansi : "\E[1;3B"
+key Right -Shift-Control+Alt+Ansi : "\E[1;3C"
+key Left  -Shift-Control+Alt+Ansi : "\E[1;3D"
+key Home  -Shift-Control+Alt+Ansi : "\E[1;3H"
+key End   -Shift-Control+Alt+Ansi : "\E[1;3F"
+key Delete-Shift-Control+Alt+Ansi : "\E[3;3~"
+key Insert-Shift-Control+Alt+Ansi : "\E[2;3~"
+key Prior -Shift-Control+Alt+Ansi : "\E[5;3~"
+key Next  -Shift-Control+Alt+Ansi : "\E[6;3~"
+
+key Up    +Shift-Control+Alt+Ansi : "\E[1;4A"
+key Down  +Shift-Control+Alt+Ansi : "\E[1;4B"
+key Right +Shift-Control+Alt+Ansi : "\E[1;4C"
+key Left  +Shift-Control+Alt+Ansi : "\E[1;4D"
+key Home  +Shift-Control+Alt+Ansi : "\E[1;4H"
+key End   +Shift-Control+Alt+Ansi : "\E[1;4F"
+key Delete+Shift-Control+Alt+Ansi : "\E[3;4~"
+key Insert+Shift-Control+Alt+Ansi : "\E[2;4~"
+key Prior +Shift-Control+Alt+Ansi : "\E[5;4~"
+key Next  +Shift-Control+Alt+Ansi : "\E[6;4~"
+
+key Up    -Shift+Control-Alt+Ansi : "\E[1;5A"
+key Down  -Shift+Control-Alt+Ansi : "\E[1;5B"
+key Right -Shift+Control-Alt+Ansi : "\E[1;5C"
+key Left  -Shift+Control-Alt+Ansi : "\E[1;5D"
+key Home  -Shift+Control-Alt+Ansi : "\E[1;5H"
+key End   -Shift+Control-Alt+Ansi : "\E[1;5F"
+key Delete-Shift+Control-Alt+Ansi : "\E[3;5~"
+key Insert-Shift+Control-Alt+Ansi : "\E[2;5~"
+key Prior -Shift+Control-Alt+Ansi : "\E[5;5~"
+key Next  -Shift+Control-Alt+Ansi : "\E[6;5~"
+
+key Up    +Shift+Control-Alt+Ansi : "\E[1;6A"
+key Down  +Shift+Control-Alt+Ansi : "\E[1;6B"
+key Right +Shift+Control-Alt+Ansi : "\E[1;6C"
+key Left  +Shift+Control-Alt+Ansi : "\E[1;6D"
+key Home  +Shift+Control-Alt+Ansi : "\E[1;6H"
+key End   +Shift+Control-Alt+Ansi : "\E[1;6F"
+key Delete+Shift+Control-Alt+Ansi : "\E[3;6~"
+key Insert+Shift+Control-Alt+Ansi : "\E[2;6~"
+key Prior +Shift+Control-Alt+Ansi : "\E[5;6~"
+key Next  +Shift+Control-Alt+Ansi : "\E[6;6~"
+
+key Up    -Shift+Control+Alt+Ansi : "\E[1;7A"
+key Down  -Shift+Control+Alt+Ansi : "\E[1;7B"
+key Right -Shift+Control+Alt+Ansi : "\E[1;7C"
+key Left  -Shift+Control+Alt+Ansi : "\E[1;7D"
+key Home  -Shift+Control+Alt+Ansi : "\E[1;7H"
+key End   -Shift+Control+Alt+Ansi : "\E[1;7F"
+key Delete-Shift+Control+Alt+Ansi : "\E[3;7~"
+key Insert-Shift+Control+Alt+Ansi : "\E[2;7~"
+key Prior -Shift+Control+Alt+Ansi : "\E[5;7~"
+key Next  -Shift+Control+Alt+Ansi : "\E[6;7~"
+
+key Up    +Shift+Control+Alt+Ansi : "\E[1;8A"
+key Down  +Shift+Control+Alt+Ansi : "\E[1;8B"
+key Right +Shift+Control+Alt+Ansi : "\E[1;8C"
+key Left  +Shift+Control+Alt+Ansi : "\E[1;8D"
+key Home  +Shift+Control+Alt+Ansi : "\E[1;8H"
+key End   +Shift+Control+Alt+Ansi : "\E[1;8F"
+key Delete+Shift+Control+Alt+Ansi : "\E[3;8~"
+key Insert+Shift+Control+Alt+Ansi : "\E[2;8~"
+key Prior +Shift+Control+Alt+Ansi : "\E[5;8~"
+key Next  +Shift+Control+Alt+Ansi : "\E[6;8~"
+
+# function keys (FIXME: make pf1-pf4)
+
+key F1     : "\E[11~"
+key F2     : "\E[12~"
+key F3     : "\E[13~"
+key F4     : "\E[14~"
+
+# 'read' on the shell returns these values:
+#
+#key F1     : "\E[OP"
+#key F2     : "\E[OQ"
+#key F3     : "\E[OR"
+#key F4     : "\E[OS"
+
+key F5     : "\E[15~"
+
+key F6     : "\E[17~" 
+key F7     : "\E[18~" 
+key F8     : "\E[19~" 
+key F9     : "\E[20~" 
+key F10    : "\E[21~" 
+key F11    : "\E[23~" 
+key F12    : "\E[24~" 
+
+# Keypad-Enter. See comment on Return above.
+
+key Enter+NewLine : "\r\n"
+key Enter-NewLine : "\r"  
+
+key Space +Control : "\x00"
+
+# some of keys are used by konsole.
+
+#key Up    +Shift   : scrollLineUp
+key Prior +Shift   : scrollPageUp
+#key Down  +Shift   : scrollLineDown
+key Next  +Shift   : scrollPageDown
+#key Insert+Shift -Control  : emitClipboard
+#key Insert+Shift +Control  : emitSelection
+
+key ScrollLock     : scrollLock
+
+
+#----------------------------------------------------------
+
+# keypad characters as offered by Qt
+# cannot be recognized as such.
+
+#----------------------------------------------------------
+
+# Following other strings as emitted by konsole.
