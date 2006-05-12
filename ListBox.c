@@ -17,9 +17,9 @@ typedef enum HandlerResult_ {
    BREAK_LOOP
 } HandlerResult;
 
-typedef HandlerResult(*ListBox_eventHandler)(ListBox*, int);
+typedef HandlerResult(*Panel_eventHandler)(Panel*, int);
 
-struct ListBox_ {
+struct Panel_ {
    Object super;
    int x, y, w, h;
    WINDOW* window;
@@ -29,36 +29,36 @@ struct ListBox_ {
    int oldSelected;
    bool needsRedraw;
    RichString header;
-   ListBox_eventHandler eventHandler;
+   Panel_eventHandler eventHandler;
    bool highlightBar;
    int cursorX;
    int displaying;
    int color;
 };
 
-extern char* LISTBOX_CLASS;
+extern char* PANEL_CLASS;
 
 }*/
 
 /* private property */
-char* LISTBOX_CLASS = "ListBox";
+char* PANEL_CLASS = "Panel";
 
-ListBox* ListBox_new(int x, int y, int w, int h, int color, char* type, bool owner) {
-   ListBox* this = (ListBox*) malloc(sizeof(ListBox));
-   ListBox_init(this, x, y, w, h, color, type, owner);
+Panel* Panel_new(int x, int y, int w, int h, int color, char* type, bool owner) {
+   Panel* this = (Panel*) malloc(sizeof(Panel));
+   Panel_init(this, x, y, w, h, color, type, owner);
    return this;
 }
 
-void ListBox_delete(Object* cast) {
-   ListBox* this = (ListBox*)cast;
-   ListBox_done(this);
+void Panel_delete(Object* cast) {
+   Panel* this = (Panel*)cast;
+   Panel_done(this);
    free(this);
 }
 
-void ListBox_init(ListBox* this, int x, int y, int w, int h, int color, char* type, bool owner) {
+void Panel_init(Panel* this, int x, int y, int w, int h, int color, char* type, bool owner) {
    Object* super = (Object*) this;
-   super->class = LISTBOX_CLASS;
-   super->delete = ListBox_delete;
+   super->class = PANEL_CLASS;
+   super->delete = Panel_delete;
    this->x = x;
    this->y = y;
    this->w = w;
@@ -77,13 +77,13 @@ void ListBox_init(ListBox* this, int x, int y, int w, int h, int color, char* ty
    RichString_prune(&(this->header));
 }
 
-void ListBox_done(ListBox* this) {
+void Panel_done(Panel* this) {
    assert (this != NULL);
    RichString_delete(this->header);
    List_delete(this->items);
 }
 
-void ListBox_setHeader(ListBox* this, RichString header) {
+void Panel_setHeader(Panel* this, RichString header) {
    assert (this != NULL);
 
    if (this->header.len > 0) {
@@ -93,7 +93,7 @@ void ListBox_setHeader(ListBox* this, RichString header) {
    this->needsRedraw = true;
 }
 
-void ListBox_move(ListBox* this, int x, int y) {
+void Panel_move(Panel* this, int x, int y) {
    assert (this != NULL);
 
    this->x = x;
@@ -101,7 +101,7 @@ void ListBox_move(ListBox* this, int x, int y) {
    this->needsRedraw = true;
 }
 
-void ListBox_resize(ListBox* this, int w, int h) {
+void Panel_resize(Panel* this, int w, int h) {
    assert (this != NULL);
 
    if (this->header.len > 0)
@@ -111,7 +111,7 @@ void ListBox_resize(ListBox* this, int w, int h) {
    this->needsRedraw = true;
 }
 
-void ListBox_prune(ListBox* this) {
+void Panel_prune(Panel* this) {
    assert (this != NULL);
 
    List_prune(this->items);
@@ -121,26 +121,26 @@ void ListBox_prune(ListBox* this) {
    this->needsRedraw = true;
 }
 
-void ListBox_add(ListBox* this, ListItem* l) {
+void Panel_add(Panel* this, ListItem* l) {
    assert (this != NULL);
 
    List_add(this->items, l);
    this->needsRedraw = true;
 }
 
-void ListBox_set(ListBox* this, int i, ListItem* l) {
+void Panel_set(Panel* this, int i, ListItem* l) {
    assert (this != NULL);
 
    List_set(this->items, i, l);
 }
 
-ListItem* ListBox_get(ListBox* this, int i) {
+ListItem* Panel_get(Panel* this, int i) {
    assert (this != NULL);
 
    return List_get(this->items, i);
 }
 
-Object* ListBox_remove(ListBox* this, int i) {
+Object* Panel_remove(Panel* this, int i) {
    assert (this != NULL);
 
    this->needsRedraw = true;
@@ -151,14 +151,14 @@ Object* ListBox_remove(ListBox* this, int i) {
    return removed;
 }
 
-ListItem* ListBox_getSelected(ListBox* this) {
+ListItem* Panel_getSelected(Panel* this) {
    assert (this != NULL);
 
    return List_get(this->items, this->selected);
 }
 
 /*
-void ListBox_moveSelectedUp(ListBox* this) {
+void Panel_moveSelectedUp(Panel* this) {
    assert (this != NULL);
 
    List_moveUp(this->items, this->selected);
@@ -166,7 +166,7 @@ void ListBox_moveSelectedUp(ListBox* this) {
       this->selected--;
 }
 
-void ListBox_moveSelectedDown(ListBox* this) {
+void Panel_moveSelectedDown(Panel* this) {
    assert (this != NULL);
 
    List_moveDown(this->items, this->selected);
@@ -175,26 +175,26 @@ void ListBox_moveSelectedDown(ListBox* this) {
 }
 */
 
-int ListBox_getSelectedIndex(ListBox* this) {
+int Panel_getSelectedIndex(Panel* this) {
    assert (this != NULL);
 
    return this->selected;
 }
 
-int ListBox_size(ListBox* this) {
+int Panel_size(Panel* this) {
    assert (this != NULL);
 
    return List_size(this->items);
 }
 
-void ListBox_setSelected(ListBox* this, int selected) {
+void Panel_setSelected(Panel* this, int selected) {
    assert (this != NULL);
 
    selected = MAX(0, MIN(List_size(this->items) - 1, selected));
    this->selected = selected;
 }
 
-void ListBox_draw(ListBox* this, bool focus) {
+void Panel_draw(Panel* this, bool focus) {
    assert (this != NULL);
 
    int cursorY = 0;
@@ -329,7 +329,7 @@ void ListBox_draw(ListBox* this, bool focus) {
    move(cursorY, this->cursorX);
 }
 
-bool ListBox_onKey(ListBox* this, int key) {
+bool Panel_onKey(Panel* this, int key) {
    assert (this != NULL);
    switch (key) {
    case KEY_DOWN:
