@@ -20,7 +20,7 @@
 
 void printVersionFlag() {
    clear();
-   printf("e " VERSION " - (C) 2005 Hisham Muhammad.\n");
+   printf("dit " VERSION " - (C) 2005 Hisham Muhammad.\n");
    printf("Released under the GNU GPL.\n\n");
    exit(0);
 }

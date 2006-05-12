@@ -289,16 +289,16 @@ void Undo_undo(Undo* this, int* x, int* y) {
 static void Undo_makeFileName(Undo* this, char* fileName, char* undoFileName) {
    char rpath[4097];
    realpath(fileName, rpath);
-   snprintf(undoFileName, 4096, "%s/.e", getenv("HOME"));
+   snprintf(undoFileName, 4096, "%s/.dit", getenv("HOME"));
    undoFileName[4095] = '\0';
    mkdir(undoFileName, 0755);
-   snprintf(undoFileName, 4096, "%s/.e/undo", getenv("HOME"));
+   snprintf(undoFileName, 4096, "%s/.dit/undo", getenv("HOME"));
    undoFileName[4095] = '\0';
    mkdir(undoFileName, 0755);
    for(char *c = rpath; *c; c++)
       if (*c == '/')
          *c = ':';
-   snprintf(undoFileName, 4096, "%s/.e/undo/%s", getenv("HOME"), rpath);
+   snprintf(undoFileName, 4096, "%s/.dit/undo/%s", getenv("HOME"), rpath);
    undoFileName[4095] = '\0';
 }
 

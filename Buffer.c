@@ -49,7 +49,7 @@ struct Buffer_ {
    bool selecting;
    // mark block using 'mark' key (ie, without shift)
    bool marking;
-   ListBox* panel;
+   Panel* panel;
    Undo* undo;
    // previous key for compound actions
    int lastKey;
@@ -92,7 +92,7 @@ Buffer* Buffer_new(char* fileName, bool command) {
 
    this->readOnly = (access(fileName, R_OK) == 0 && access(fileName, W_OK) != 0);
    
-   this->panel = ListBox_new(0, 0, COLS - 1, LINES - 1, CRT_colors[NormalColor], LINE_CLASS, true);
+   this->panel = Panel_new(0, 0, COLS - 1, LINES - 1, CRT_colors[NormalColor], LINE_CLASS, true);
    this->undo = Undo_new(this->panel->items);
    this->fileName = String_copy(fileName);
    
@@ -104,19 +104,19 @@ Buffer* Buffer_new(char* fileName, bool command) {
       this->hl = Highlight_new(fileName, text);
       if (strchr(text, '\t')) this->tabCharacters = true;
       Line* line = Line_new(text, len, this);
-      ListBox_set(this->panel, i, (ListItem*) line);
+      Panel_set(this->panel, i, (ListItem*) line);
       while (!FileReader_eof(file)) {
          i++;
          char* text = FileReader_readLine(file, &len);
          if (text) {
             if (!this->tabCharacters && strchr(text, '\t')) this->tabCharacters = true;
             Line* line = Line_new(text, len, this);
-            ListBox_set(this->panel, i, (ListItem*) line);
+            Panel_set(this->panel, i, (ListItem*) line);
          }
       }
    } else {
       this->hl = Highlight_new(fileName, "");
-      ListBox_set(this->panel, 0, (ListItem*) Line_new(String_copy(""), 0, this));
+      Panel_set(this->panel, 0, (ListItem*) Line_new(String_copy(""), 0, this));
    }
    if (file)
       FileReader_delete(file);
@@ -134,7 +134,7 @@ inline void Buffer_restorePosition(Buffer* this) {
    realpath(this->fileName, rpath);
    
    char fileposFileName[4097];
-   snprintf(fileposFileName, 4096, "%s/.e/filepos", getenv("HOME"));
+   snprintf(fileposFileName, 4096, "%s/.dit/filepos", getenv("HOME"));
    fileposFileName[4095] = '\0';
    FILE* fd = fopen(fileposFileName, "r");
    if (fd) {
@@ -159,9 +159,9 @@ inline void Buffer_restorePosition(Buffer* this) {
 }
 
 void Buffer_goto(Buffer* this, int x, int y) {
-   ListBox_setSelected(this->panel, y);
-   this->line = (Line*) ListBox_getSelected(this->panel);
-   this->y = ListBox_getSelectedIndex(this->panel);
+   Panel_setSelected(this->panel, y);
+   this->line = (Line*) Panel_getSelected(this->panel);
+   this->y = Panel_getSelectedIndex(this->panel);
    this->x = MIN(x, this->line->len);
    this->panel->scrollV = MAX(0, this->y - (this->panel->h / 2));
    this->panel->needsRedraw = true;
@@ -173,10 +173,10 @@ inline void Buffer_storePosition(Buffer* this) {
    realpath(this->fileName, rpath);
 
    char fileposFileName[4097];
-   snprintf(fileposFileName, 4096, "%s/.e", getenv("HOME"));
+   snprintf(fileposFileName, 4096, "%s/.dit", getenv("HOME"));
    fileposFileName[4095] = '\0';
    mkdir(fileposFileName, 0755);
-   snprintf(fileposFileName, 4096, "%s/.e/filepos", getenv("HOME"));
+   snprintf(fileposFileName, 4096, "%s/.dit/filepos", getenv("HOME"));
    fileposFileName[4095] = '\0';
    FILE* fd = fopen(fileposFileName, "r");
    FilePosition* fps = NULL;
@@ -234,13 +234,13 @@ inline void Buffer_storePosition(Buffer* this) {
 }
 
 void Buffer_draw(Buffer* this) {
-   ListBox* p = this->panel;
+   Panel* p = this->panel;
 
    if (this->wasSelecting && !this->selecting)
       p->needsRedraw = true;
 
-   this->y = ListBox_getSelectedIndex(p);
-   this->line = (Line*) ListBox_getSelected(p);
+   this->y = Panel_getSelectedIndex(p);
+   this->line = (Line*) Panel_getSelected(p);
    
    Line_updateContext(this->line);
    
@@ -265,7 +265,7 @@ void Buffer_draw(Buffer* this) {
    Buffer_highlightBracket(this);
    
    p->cursorX = screenX - p->scrollH;
-   ListBox_draw(p, true);
+   Panel_draw(p, true);
    
    this->wasSelecting = this->selecting;
 }
@@ -359,7 +359,7 @@ void Buffer_delete(Buffer* this) {
 
 void Buffer_refreshHighlight(Buffer* this) {
    Highlight_delete(this->hl);
-   Line* firstLine = (Line*) ListBox_get(this->panel, 0);
+   Line* firstLine = (Line*) Panel_get(this->panel, 0);
    char* firstText;
    if (firstLine)
       firstText = firstLine->text;
@@ -367,9 +367,9 @@ void Buffer_refreshHighlight(Buffer* this) {
       firstText = "";
    Highlight* hl = Highlight_new(this->fileName, firstText);
    this->hl = hl;
-   int size = ListBox_size(this->panel);
+   int size = Panel_size(this->panel);
    for (int i = 0; i < size; i++) {
-      Line* line = (Line*) ListBox_get(this->panel, i);
+      Line* line = (Line*) Panel_get(this->panel, i);
       line->context = hl->mainContext;
    }
    this->panel->needsRedraw = true;
@@ -392,8 +392,8 @@ void Buffer_undo(Buffer* this) {
    int uy = this->y;
    Undo_undo(this->undo, &ux, &uy);
    this->x = ux;
-   ListBox_setSelected(this->panel, uy);
-   this->line = (Line*) ListBox_getSelected(this->panel);
+   Panel_setSelected(this->panel, uy);
+   this->line = (Line*) Panel_getSelected(this->panel);
    this->panel->needsRedraw = true;
    this->savedX = Line_widthUntil(this->line, this->x);
    this->selecting = false;
@@ -417,9 +417,9 @@ void Buffer_breakLine(Buffer* this) {
 
    Undo_breakAt(this->undo, this->x, this->y, indent);
    Line_breakAt(this->line, this->x, indent);
-   ListBox_onKey(this->panel, KEY_DOWN);
+   Panel_onKey(this->panel, KEY_DOWN);
    Line* prev = this->line;
-   this->line = (Line*) ListBox_getSelected(this->panel);
+   this->line = (Line*) Panel_getSelected(this->panel);
    this->x = indent;
    this->y++;
    this->panel->needsRedraw = true;
@@ -475,7 +475,7 @@ void Buffer_forwardChar(Buffer* this) {
       this->x++;
    } else if (this->line->super.next) {
       this->x = 0;
-      ListBox_onKey(this->panel, KEY_DOWN);
+      Panel_onKey(this->panel, KEY_DOWN);
       this->y++;
    }
    this->savedX = Line_widthUntil(this->line, this->x);
@@ -486,7 +486,7 @@ void Buffer_forwardWord(Buffer* this) {
       this->x = String_forwardWord(this->line->text, this->line->len, this->x);
    } else if (this->line->super.next) {
       this->x = 0;
-      ListBox_onKey(this->panel, KEY_DOWN);
+      Panel_onKey(this->panel, KEY_DOWN);
       this->y++;
    }
    this->savedX = Line_widthUntil(this->line, this->x);
@@ -496,8 +496,8 @@ void Buffer_backwardWord(Buffer* this) {
    if (this->x > 0) {
       this->x = String_backwardWord(this->line->text, this->line->len, this->x);
    } else if (this->y > 0) {
-      ListBox_onKey(this->panel, KEY_UP);
-      this->line = (Line*) ListBox_getSelected(this->panel);
+      Panel_onKey(this->panel, KEY_UP);
+      this->line = (Line*) Panel_getSelected(this->panel);
       this->x = this->line->len;
       this->y--;
    }
@@ -508,8 +508,8 @@ void Buffer_backwardChar(Buffer* this) {
    if (this->x > 0) {
       this->x--;
    } else if (this->y > 0) {
-      ListBox_onKey(this->panel, KEY_UP);
-      this->line = (Line*) ListBox_getSelected(this->panel);
+      Panel_onKey(this->panel, KEY_UP);
+      this->line = (Line*) Panel_getSelected(this->panel);
       this->x = this->line->len;
       this->y--;
    }
@@ -537,12 +537,12 @@ void Buffer_beginningOfFile(Buffer* this) {
 }
 
 void Buffer_endOfFile(Buffer* this) {
-   Buffer_goto(this, 0, ListBox_size(this->panel) - 1);
+   Buffer_goto(this, 0, Panel_size(this->panel) - 1);
    Buffer_endOfLine(this);
 }
 
 int Buffer_size(Buffer* this) {
-   return ListBox_size(this->panel);
+   return Panel_size(this->panel);
 }
 
 void Buffer_previousPage(Buffer* this) {
@@ -575,7 +575,7 @@ void Buffer_wordWrap(Buffer* this, int wrap) {
          Buffer_defaultKeyHandler(this, ' ');
          Undo_joinNext(this->undo, this->x, this->y, false);
          Line_joinNext(this->line);
-         this->line = (Line*) ListBox_getSelected(this->panel);
+         this->line = (Line*) Panel_getSelected(this->panel);
          //this->y--;
          Buffer_wordWrap(this, wrap);
       }
@@ -597,8 +597,8 @@ void Buffer_deleteBlock(Buffer* this) {
    }
    this->x = xFrom;
    this->y = yFrom;
-   ListBox_setSelected(this->panel, this->y);
-   this->line = (Line*) ListBox_getSelected(this->panel);
+   Panel_setSelected(this->panel, this->y);
+   this->line = (Line*) Panel_getSelected(this->panel);
    StringBuffer* str = Line_deleteBlock(this->line, yTo - yFrom + 1, xFrom, xTo);
    int len = StringBuffer_len(str);
    assert (len > 0);
@@ -623,7 +623,7 @@ char* Buffer_copyBlock(Buffer* this, int *len) {
       tmp = xFrom; xFrom = xTo; xTo = tmp;
    }
 
-   StringBuffer* str = Line_copyBlock((Line*) ListBox_get(this->panel, yFrom), yTo - yFrom + 1, xFrom, xTo);
+   StringBuffer* str = Line_copyBlock((Line*) Panel_get(this->panel, yFrom), yTo - yFrom + 1, xFrom, xTo);
    this->selecting = false;
    this->panel->needsRedraw = true;
    *len = StringBuffer_len(str);
@@ -642,8 +642,8 @@ void Buffer_pasteBlock(Buffer* this, char* block, int len) {
 
    this->x = newX;
    this->y = newY;
-   ListBox_setSelected(this->panel, this->y);
-   this->line = (Line*) ListBox_getSelected(this->panel);
+   Panel_setSelected(this->panel, this->y);
+   this->line = (Line*) Panel_getSelected(this->panel);
    this->savedX = Line_widthUntil(this->line, this->x);
    this->panel->needsRedraw = true;
 
@@ -663,7 +663,7 @@ void Buffer_deleteChar(Buffer* this) {
       if (this->line->super.next) {
          Undo_joinNext(this->undo, this->x, this->y, false);
          Line_joinNext(this->line);
-         this->line = (Line*) ListBox_getSelected(this->panel);
+         this->line = (Line*) Panel_getSelected(this->panel);
          this->y--;
       }
       this->panel->needsRedraw = true;
@@ -766,8 +766,8 @@ void Buffer_backwardDeleteChar(Buffer* this) {
          this->x = prev->len;
          Undo_joinNext(this->undo, this->x, this->y - 1, true);
          Line_joinNext(prev);
-         ListBox_onKey(this->panel, KEY_UP);
-         this->line = (Line*) ListBox_getSelected(this->panel);
+         Panel_onKey(this->panel, KEY_UP);
+         this->line = (Line*) Panel_getSelected(this->panel);
          this->y--;
       }
       this->panel->needsRedraw = true;
@@ -778,28 +778,28 @@ void Buffer_backwardDeleteChar(Buffer* this) {
 
 void Buffer_upLine(Buffer* this) {
    this->savedY = this->y;
-   ListBox_onKey(this->panel, KEY_UP);
+   Panel_onKey(this->panel, KEY_UP);
    Buffer_correctPosition(this);
 }
 
 void Buffer_downLine(Buffer* this) {
    this->savedY = this->y;
-   ListBox_onKey(this->panel, KEY_DOWN);
+   Panel_onKey(this->panel, KEY_DOWN);
    Buffer_correctPosition(this);
 }
 
 void Buffer_slideUpLine(Buffer* this) {
-   ListBox_onKey(this->panel, KEY_C_UP);
+   Panel_onKey(this->panel, KEY_C_UP);
    Buffer_correctPosition(this);
 }
 
 void Buffer_slideDownLine(Buffer* this) {
-   ListBox_onKey(this->panel, KEY_C_DOWN);
+   Panel_onKey(this->panel, KEY_C_DOWN);
    Buffer_correctPosition(this);
 }
 
 void Buffer_correctPosition(Buffer* this) {
-   this->line = (Line*) ListBox_getSelected(this->panel);
+   this->line = (Line*) Panel_getSelected(this->panel);
    this->x = MIN(this->x, this->line->len);
    int screenX = Line_widthUntil(this->line, this->x);
    if (screenX > this->savedX) {
@@ -809,7 +809,7 @@ void Buffer_correctPosition(Buffer* this) {
       while (this->x < this->line->len && Line_widthUntil(this->line, this->x) < this->savedX)
          this->x++;
    }
-   this->y = ListBox_getSelectedIndex(this->panel);
+   this->y = Panel_getSelectedIndex(this->panel);
 }
 
 inline void Buffer_blockOperation(Buffer* this, Line** firstLine, int* yStart, int* lines) {
@@ -821,7 +821,7 @@ inline void Buffer_blockOperation(Buffer* this, Line** firstLine, int* yStart, i
       }
       *lines = yTo - yFrom + (this->selectXto > 0 ? 1 : 0);
       *yStart = yFrom;
-      *firstLine = (Line*) ListBox_get(this->panel, *yStart);
+      *firstLine = (Line*) Panel_get(this->panel, *yStart);
    } else {
       *lines = 1;
       *yStart = this->y;
@@ -856,7 +856,7 @@ void Buffer_indent(Buffer* this) {
 }
       
 void Buffer_defaultKeyHandler(Buffer* this, int ch) {
-   bool handled = ListBox_onKey(this->panel, ch);
+   bool handled = Panel_onKey(this->panel, ch);
 
    if (!handled && ((ch >= 32 && ch <= 255) || ch == '\t')) {
       if (this->selecting) {
@@ -1010,5 +1010,5 @@ bool Buffer_save(Buffer* this) {
 }
 
 void Buffer_resize(Buffer* this) {
-   ListBox_resize(this->panel, COLS - 1, LINES - 1);
+   Panel_resize(this->panel, COLS - 1, LINES - 1);
 }

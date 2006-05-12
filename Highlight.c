@@ -69,14 +69,14 @@ Highlight* Highlight_new(const char* fileName, const char* firstLine) {
    this->contexts = Vector_new(HIGHLIGHTCONTEXT_CLASS, true, DEFAULT_SIZE);
    this->currentContext = NULL;
    char highlightPath[4096];
-   snprintf(highlightPath, 4095, "%s/.e/highlight", getenv("HOME"));
+   snprintf(highlightPath, 4095, "%s/.dit/highlight", getenv("HOME"));
    highlightPath[4095] = '\0';
    DIR* dir = opendir(highlightPath);
    while (dir) {
       struct dirent* entry = readdir(dir);
       if (!entry) break;
       if (entry->d_name[0] == '.') continue;
-      snprintf(highlightPath, 4095, "%s/.e/highlight/%s", getenv("HOME"), entry->d_name);
+      snprintf(highlightPath, 4095, "%s/.dit/highlight/%s", getenv("HOME"), entry->d_name);
       highlightPath[4095] = '\0';
       FILE* file = fopen(highlightPath, "r");
       if (!file) continue;
