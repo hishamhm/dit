@@ -294,7 +294,7 @@ void Panel_draw(Panel* this, bool focus) {
                attrset(bar);
                ch = CRT_scrollBar;
             }
-            mvaddch(x + i, w, ch);
+            mvaddch(y + i, w, ch);
          }
          attrset(this->color);
       }
