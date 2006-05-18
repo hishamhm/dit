@@ -80,6 +80,9 @@ Highlight* Highlight_new(const char* fileName, const char* firstLine) {
       highlightPath[4095] = '\0';
       FILE* file = fopen(highlightPath, "r");
       if (!file) continue;
+
+      Script_loadExtensions(highlightPath);
+
       char buffer[4096];
       int state = 1;
       bool success = true;

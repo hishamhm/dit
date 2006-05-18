@@ -429,6 +429,8 @@ void Buffer_breakLine(Buffer* this) {
    this->panel->needsRedraw = true;
    this->modified = true;
 
+   Script_hook("onBreakLine");
+
    if (this->lastKey == '>') {
       char* last = prev->text + (prev->len - 1);
       assert(this->lastKey == *last);

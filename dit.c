@@ -132,6 +132,7 @@ int main(int argc, char** argv) {
          exit(0);
    }
    CRT_init();
+   Script_init();
    
    TabManager* tabs = TabManager_new(0, 0, COLS, LINES, 20);
 
@@ -165,6 +166,7 @@ int main(int argc, char** argv) {
       mvhline(LINES - 1, 0, ' ', COLS);
 
       Buffer* buffer = TabManager_draw(tabs);
+      Script_setCurrentBuffer(buffer);
       getyx(stdscr, y, x);
 
       attrset(CRT_colors[TabColor]);
