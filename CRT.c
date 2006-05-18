@@ -25,6 +25,8 @@
 
 typedef enum {
    NormalColor = 0,
+   TabColor,
+   CurrentTabColor,
    SelectionColor,
    UnfocusedSelectionColor,
    BracketColor,
@@ -156,7 +158,10 @@ void CRT_init() {
 
    #ifdef ANTARCTIC_THEME
    CRT_colors[NormalColor] = A_NORMAL;
+   CRT_colors[TabColor] = CRT_color(Black, Cyan);
+   CRT_colors[CurrentTabColor] = A_REVERSE | CRT_color(Green, Black);
    CRT_colors[SelectionColor] = A_REVERSE | CRT_color(Blue, White);
+   CRT_colors[UnfocusedSelectionColor] = A_REVERSE | CRT_color(White, Blue);
    CRT_colors[BracketColor] = A_REVERSE | CRT_color(Cyan, Black);
    CRT_colors[BrightColor] = A_BOLD | CRT_color(White, Black);
    CRT_colors[SymbolColor] = A_BOLD | CRT_color(White, Black);
@@ -181,7 +186,10 @@ void CRT_init() {
    #endif
    #ifdef VIM_THEME
    CRT_colors[NormalColor] = A_NORMAL;
+   CRT_colors[TabColor] = CRT_color(White, Black);
+   CRT_colors[CurrentTabColor] = A_BOLD | CRT_color(White, Black);
    CRT_colors[SelectionColor] = A_REVERSE | CRT_color(White, Black);
+   CRT_colors[UnfocusedSelectionColor] = A_BOLD | CRT_color(White, Black);
    CRT_colors[BracketColor] = A_NORMAL;
    CRT_colors[BrightColor] = CRT_color(Yellow, Black);
    CRT_colors[SymbolColor] = A_NORMAL;
@@ -206,7 +214,10 @@ void CRT_init() {
    #endif
    #ifdef EMACS_THEME
    CRT_colors[NormalColor] = A_NORMAL;
+   CRT_colors[TabColor] = CRT_color(Black, White);
+   CRT_colors[CurrentTabColor] = A_REVERSE | CRT_color(Black, White);
    CRT_colors[SelectionColor] = A_REVERSE | CRT_color(White, Black);
+   CRT_colors[UnfocusedSelectionColor] = A_BOLD | CRT_color(White, Black);
    CRT_colors[BracketColor] = A_NORMAL;
    CRT_colors[BrightColor] = A_BOLD | CRT_color(Cyan, Black);
    CRT_colors[SymbolColor] = A_NORMAL;
@@ -217,10 +228,10 @@ void CRT_init() {
    CRT_colors[DimColor] = CRT_color(Red, Black);
    CRT_colors[SpecialColor] = CRT_color(Green, Black);
    CRT_colors[BrightSpecialColor] = CRT_color(Blue, Black);
-      CRT_colors[SpecialDiffColor] = CRT_color(Red, Black);
-      CRT_colors[BrightSpecialDiffColor] = A_BOLD | CRT_color(Red, Black);
-      CRT_colors[DiffColor] = CRT_color(Green, Black);
-      CRT_colors[BrightDiffColor] = CRT_color(Magenta, Black);
+   CRT_colors[SpecialDiffColor] = CRT_color(Red, Black);
+   CRT_colors[BrightSpecialDiffColor] = A_BOLD | CRT_color(Red, Black);
+   CRT_colors[DiffColor] = CRT_color(Green, Black);
+   CRT_colors[BrightDiffColor] = CRT_color(Magenta, Black);
    CRT_colors[ScrollBarColor] = CRT_color(White, Black);
    CRT_colors[ScrollHandleColor] = CRT_color(Black, White);
    CRT_colors[StatusColor] = CRT_color(Black, White);
@@ -231,7 +242,10 @@ void CRT_init() {
    #endif
    #ifdef CLASSIC_TURBO_THEME
    CRT_colors[NormalColor] = (CRT_color(White, Blue));
+   CRT_colors[TabColor] = CRT_color(Black, Cyan);
+   CRT_colors[CurrentTabColor] = A_REVERSE | CRT_color(Green, Black);
    CRT_colors[SelectionColor] = (A_REVERSE | CRT_color(Cyan, Black));
+   CRT_colors[UnfocusedSelectionColor] = A_REVERSE | CRT_color(White, Blue);
    CRT_colors[BracketColor] = (A_REVERSE | CRT_color(Green, Black));
    CRT_colors[BrightColor] = (A_BOLD | CRT_color(Yellow, Blue));
    CRT_colors[SymbolColor] = (A_BOLD | CRT_color(Cyan, Blue));
@@ -256,7 +270,10 @@ void CRT_init() {
    #endif
    #ifdef BLACK_TURBO_THEME
    CRT_colors[NormalColor] = (CRT_color(White, Black));
+   CRT_colors[TabColor] = CRT_color(Black, Cyan);
+   CRT_colors[CurrentTabColor] = A_REVERSE | CRT_color(Green, Black);
    CRT_colors[SelectionColor] = (A_REVERSE | CRT_color(Cyan, Black));
+   CRT_colors[UnfocusedSelectionColor] = A_REVERSE | CRT_color(White, Blue);
    CRT_colors[BracketColor] = (A_REVERSE | CRT_color(Green, Black));
    CRT_colors[BrightColor] = (A_BOLD | CRT_color(Yellow, Black));
    CRT_colors[SymbolColor] = (A_BOLD | CRT_color(Cyan, Black));

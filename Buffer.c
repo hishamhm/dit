@@ -70,7 +70,7 @@ struct FilePosition_ {
 
 char* realpath(const char* path, char* resolved_path);
 
-Buffer* Buffer_new(char* fileName, bool command) {
+Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command) {
    Buffer* this = (Buffer*) malloc(sizeof(Buffer));
 
    this->x = 0;
@@ -92,7 +92,7 @@ Buffer* Buffer_new(char* fileName, bool command) {
 
    this->readOnly = (access(fileName, R_OK) == 0 && access(fileName, W_OK) != 0);
    
-   this->panel = Panel_new(0, 0, COLS - 1, LINES - 1, CRT_colors[NormalColor], LINE_CLASS, true);
+   this->panel = Panel_new(x, y, w-1, h, CRT_colors[NormalColor], LINE_CLASS, true);
    this->undo = Undo_new(this->panel->items);
    this->fileName = String_copy(fileName);
    
@@ -400,6 +400,11 @@ void Buffer_undo(Buffer* this) {
    this->modified = true;
 }
 
+static inline void Buffer_breakAt(Buffer* this, int indent) {
+   Undo_breakAt(this->undo, this->x, this->y, indent);
+   Line_breakAt(this->line, this->x, indent);
+}
+
 void Buffer_breakLine(Buffer* this) {
    if (this->selecting) {
       Buffer_deleteBlock(this);
@@ -415,8 +420,7 @@ void Buffer_breakLine(Buffer* this) {
       indent = 0;
    this->lastTime = now;
 
-   Undo_breakAt(this->undo, this->x, this->y, indent);
-   Line_breakAt(this->line, this->x, indent);
+   Buffer_breakAt(this, indent);
    Panel_onKey(this->panel, KEY_DOWN);
    Line* prev = this->line;
    this->line = (Line*) Panel_getSelected(this->panel);
@@ -452,8 +456,7 @@ void Buffer_breakLine(Buffer* this) {
             for (int i = 0; i <= taglen + 3; i++)
                Buffer_backwardChar(this);
             int indent = MIN(Line_getIndentChars(this->line), this->x);
-            Undo_breakAt(this->undo, this->x, this->y, indent);
-            Line_breakAt(this->line, this->x, indent);
+            Buffer_breakAt(this, indent);
             Buffer_indent(this);
          }
       }
@@ -464,8 +467,7 @@ void Buffer_breakLine(Buffer* this) {
       Buffer_defaultKeyHandler(this, '}');
       Buffer_backwardChar(this);
       int indent = MIN(Line_getIndentChars(this->line), this->x);
-      Undo_breakAt(this->undo, this->x, this->y, indent);
-      Line_breakAt(this->line, this->x, indent);
+      Buffer_breakAt(this, indent);
       Buffer_indent(this);
    }
 }
@@ -1009,6 +1011,10 @@ bool Buffer_save(Buffer* this) {
    return true;
 }
 
-void Buffer_resize(Buffer* this) {
-   Panel_resize(this->panel, COLS - 1, LINES - 1);
+void Buffer_resize(Buffer* this, int w, int h) {
+   Panel_resize(this->panel, w-1, h);
+}
+
+void Buffer_refresh(Buffer* this) {
+   this->panel->needsRedraw = true;
 }

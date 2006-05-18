@@ -64,6 +64,41 @@ bool attemptSave(Buffer* buffer) {
    return saved;
 }
 
+inline void restoreRecentHistory(TabManager* tabs, int items) {
+   char fileName[4097];
+   snprintf(fileName, 4096, "%s/.dit/recent", getenv("HOME"));
+   fileName[4095] = '\0';
+   FILE* fd = fopen(fileName, "r");
+   if (fd) {
+      char line[256];
+      while (!feof(fd)) {
+         int ok = fscanf(fd, "%255[^\n]\n", line);
+         if (ok && !TabManager_find(tabs, line)) {
+            TabManager_add(tabs, line, basename(line), NULL);
+            items++;
+            if (items == 5)
+               break;
+         }
+      }
+      fclose(fd);
+   }
+}
+
+inline void storeRecentHistory(TabManager* tabs) {
+   char fileName[4097];
+   snprintf(fileName, 4096, "%s/.dit/recent", getenv("HOME"));
+   fileName[4095] = '\0';
+   FILE* fd = fopen(fileName, "w");
+   if (fd) {
+      int items = Vector_size(tabs->items);
+      for (int i = 0; i < 5 && i < items; i++) {
+         TabPage* page = (TabPage*) Vector_get(tabs->items, i);
+         fprintf(fd, "%s\n", page->name);
+      }
+      fclose(fd);
+   }
+}
+
 int main(int argc, char** argv) {
 
    if (argc > 1) {
@@ -91,14 +126,21 @@ int main(int argc, char** argv) {
    bool canWrite = (access(argv[1], W_OK) == 0);
    if ((exists && !canWrite) || (!exists && !canWriteDir)) {
       char buffer[4096];
-      snprintf(buffer, 4095, "sudo e %s", argv[1]);
+      snprintf(buffer, 4095, "sudo %s %s", argv[0], argv[1]);
       int ret = system(buffer);
       if (ret == 0)
          exit(0);
    }
    CRT_init();
    
-   Buffer* buffer = Buffer_new(argv[1], false);
+   TabManager* tabs = TabManager_new(0, 0, COLS, LINES, 20);
+
+   char rpath[4097];
+   realpath(argv[1], rpath);
+   rpath[4096] = '\0';
+   TabManager_add(tabs, rpath, basename(argv[1]), NULL);
+
+   restoreRecentHistory(tabs, 1);
 
    Clipboard* clip = Clipboard_new();
    char bookmarkX[256];
@@ -117,20 +159,22 @@ int main(int argc, char** argv) {
 
    int ch = 0;
    while (!quit) {
-      
-      if (buffer->readOnly)
-         attrset(CRT_colors[AlertColor]);
-      else
-         attrset(CRT_colors[StatusColor]);
+      int y, x;
+
+      attrset(CRT_colors[TabColor]);
       mvhline(LINES - 1, 0, ' ', COLS);
-      mvprintw(LINES - 1, 0, "Lin=%d Col=%d %s%s %.40s",
+
+      Buffer* buffer = TabManager_draw(tabs);
+      getyx(stdscr, y, x);
+
+      attrset(CRT_colors[TabColor]);
+      mvprintw(LINES - 1, 0, "L:%d C:%d %s",
                              buffer->y + 1, buffer->x + 1,
-                             (buffer->readOnly ? "R-O" : (buffer->modified ? "[*]" : "[ ]")),
-                             (buffer->tabCharacters ? " TABS" : ""),
-                             buffer->fileName);
+                             (buffer->tabCharacters ? " TABS" : ""));
+
       attrset(A_NORMAL);
-      Buffer_draw(buffer);
       buffer->lastKey = ch;
+      move(y, x);
       ch = CRT_getCharacter();
       
       //TODO: mouse
@@ -157,8 +201,7 @@ int main(int argc, char** argv) {
       case ERR:
          continue;
       case KEY_RESIZE:
-         // TODO: support multiple buffers
-         Buffer_resize(buffer);
+         TabManager_resize(tabs, COLS, LINES);
          findField->y = LINES - 1;
          break;
       case KEY_CTRL('Y'):
@@ -438,25 +481,41 @@ int main(int argc, char** argv) {
       }
       case KEY_F(10):
       case KEY_CTRL('Q'):
-         if (buffer->modified) {
-            attrset(CRT_colors[StatusColor]);
-            mvprintw(LINES - 1, 0, "Buffer was modified. Save before exit? [y/n/c]");
-            clrtoeol();
-            attrset(CRT_colors[NormalColor]);
-            refresh();
-            int opt;
-            do {
-               beep();
-               opt = getch();
-            } while (opt != 'y' && opt != 'n' && opt != 'c');
-            if (opt == 'y')
-               if (!attemptSave(buffer))
-                  continue;
-            if (opt == 'c')
-               continue;
+      {
+         bool reallyQuit = true;
+         int items = Vector_size(tabs->items);
+         for (int i = 0; i < items; i++) {
+            TabManager_setPage(tabs, i);
+            TabPage* page = (TabPage*) Vector_get(tabs->items, i);
+            buffer = page->buffer;
+         
+            if (buffer && buffer->modified) {
+               TabManager_draw(tabs);
+               attrset(CRT_colors[StatusColor]);
+               mvprintw(LINES - 1, 0, "Buffer was modified. Save before exit? [y/n/c]");
+               clrtoeol();
+               attrset(CRT_colors[NormalColor]);
+               refresh();
+               int opt;
+               do {
+                  beep();
+                  opt = getch();
+               } while (opt != 'y' && opt != 'n' && opt != 'c');
+               if (opt == 'y')
+                  if (!attemptSave(buffer)) {
+                     reallyQuit = false;
+                     break;
+                  }
+               if (opt == 'c') {
+                  reallyQuit = false;
+                  break;
+               }
+            }
          }
-         quit = 1;
+         if (reallyQuit)
+            quit = 1;
          break;
+      }
       case 0x0d:
       case KEY_ENTER:
          Buffer_breakLine(buffer);
@@ -588,10 +647,14 @@ int main(int argc, char** argv) {
          buffer->tabCharacters = !buffer->tabCharacters;
          break;
       case KEY_CTRL('J'):
-         Buffer_defaultKeyHandler(buffer, KEY_PPAGE);
+         TabManager_previousPage(tabs);
+         ch = 0;
+         // Buffer_defaultKeyHandler(buffer, KEY_PPAGE);
          break;
       case KEY_CTRL('K'):
-         Buffer_defaultKeyHandler(buffer, KEY_NPAGE);
+         TabManager_nextPage(tabs);
+         ch = 0;
+         // Buffer_defaultKeyHandler(buffer, KEY_NPAGE);
          break;
       default:
          Buffer_defaultKeyHandler(buffer, ch);
@@ -609,7 +672,8 @@ int main(int argc, char** argv) {
    Field_delete(gotoField);
    Field_delete(findField);
    Field_delete(replaceField);
-   Buffer_delete(buffer);
+   storeRecentHistory(tabs);
+   TabManager_delete(tabs);
    debug_done();
    return 0;
 }
