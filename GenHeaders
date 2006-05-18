@@ -10,10 +10,15 @@ echo >> Prototypes.h
 echo '#define _GNU_SOURCE' >> Prototypes.h
 echo '#include <stdbool.h>' >> Prototypes.h
 echo '#include <stdio.h>' >> Prototypes.h
+echo '#include <string.h>' >> Prototypes.h
 echo '#include <curses.h>' >> Prototypes.h
 echo >> Prototypes.h
 echo '#include "Structures.h"' >> Prototypes.h
 echo >> Prototypes.h
+
+includes() {
+   cat "$1" | grep --text "^#include"
+}
 
 proto() {
    cat "$1" | grep --text -v "^static" | grep '^[^ ].*) {$' | sed 's,) {$,);,' >> Prototypes.h
@@ -51,6 +56,7 @@ then rm -f order.txt
 fi
 } &> /dev/null
 
+do_all includes | sort -u | tac >>  Prototypes.h
 do_all proto
 
 echo >> Prototypes.h

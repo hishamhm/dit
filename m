@@ -10,9 +10,9 @@ make=make
 
 if [ ! -e mode.txt -o "`cat mode.txt`" != "$1" ]
 then
-   cp e e.old
+   cp $PROGRAM $PROGRAM.old
    make clean
-   mv e.old e
+   mv $PROGRAM.old $PROGRAM
 fi
 echo "$1" > mode.txt
 
