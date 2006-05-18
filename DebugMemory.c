@@ -13,8 +13,6 @@
 #undef calloc
 #undef free
 
-//#include "efence.h"
-
 /*{
 
 struct DebugMemoryItem_ {
@@ -35,7 +33,7 @@ typedef struct DebugMemory_ {
 
 }*/
 
-#ifdef DEBUG
+#if defined(DEBUG)
 
 /* private property */
 static DebugMemory* singleton = NULL;
@@ -48,7 +46,8 @@ void DebugMemory_new() {
    singleton->allocations = 0;
    singleton->deallocations = 0;
    singleton->size = 0;
-   singleton->file = fopen("/tmp/alloc.txt", "w");
+   //singleton->file = fopen("/tmp/alloc.txt", "w");
+   singleton->file = NULL;
 }
 
 void* DebugMemory_malloc(int size, char* file, int line, char* str) {
@@ -202,5 +201,9 @@ void DebugMemory_report() {
    if (singleton->file)
       fclose(singleton->file);
 }
+
+#elif defined(DEBUGLITE)
+
+#include "efence.h"
 
 #endif
