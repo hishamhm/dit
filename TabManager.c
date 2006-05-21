@@ -26,7 +26,7 @@ extern char* TABPAGE_CLASS;
 }*/
 
 /* private property */
-static char* TABPAGE_CLASS = "TabPage";
+char* TABPAGE_CLASS = "TabPage";
 
 TabPage* TabPage_new(char* name, char* label, Buffer* buffer) {
    TabPage* this = (TabPage*) malloc(sizeof(TabPage));
