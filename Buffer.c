@@ -270,6 +270,26 @@ void Buffer_draw(Buffer* this) {
    this->wasSelecting = this->selecting;
 }
 
+int Buffer_y(Buffer* this) {
+   return this->y;
+}
+
+char* Buffer_currentLine(Buffer* this) {
+   return this->line->text;
+}
+
+inline char* Buffer_getLine(Buffer* this, int i) {
+   Line* line = (Line*) Panel_get(this->panel, i);
+   if (line) 
+      return line->text;
+   else
+      return NULL;
+}
+
+char* Buffer_previousLine(Buffer* this) {
+   return Buffer_getLine(this, this->y - 1);
+}
+
 static inline bool Buffer_matchBracket(char ch, char* oth, int* dir) {
    switch (ch) {
    case '(': *oth = ')'; *dir = 1; return true;
@@ -400,9 +420,18 @@ void Buffer_undo(Buffer* this) {
    this->modified = true;
 }
 
-static inline void Buffer_breakAt(Buffer* this, int indent) {
+inline void Buffer_breakIndenting(Buffer* this, int indent) {
+   indent = MIN(indent, this->line->len);
    Undo_breakAt(this->undo, this->x, this->y, indent);
    Line_breakAt(this->line, this->x, indent);
+}
+
+char Buffer_getLastKey(Buffer* this) {
+   return this->lastKey;
+}
+
+inline int Buffer_getIndentSize(Buffer* this) {
+   return Line_getIndentChars(this->line);
 }
 
 void Buffer_breakLine(Buffer* this) {
@@ -410,7 +439,7 @@ void Buffer_breakLine(Buffer* this) {
       Buffer_deleteBlock(this);
    }
 
-   int indent = MIN(Line_getIndentChars(this->line), this->x);
+   int indent = Buffer_getIndentSize(this);
 
    /* Hack to disable auto-indent when pasting through X11 */
    struct timeval tv;
@@ -420,9 +449,8 @@ void Buffer_breakLine(Buffer* this) {
       indent = 0;
    this->lastTime = now;
 
-   Buffer_breakAt(this, indent);
+   Buffer_breakIndenting(this, indent);
    Panel_onKey(this->panel, KEY_DOWN);
-   Line* prev = this->line;
    this->line = (Line*) Panel_getSelected(this->panel);
    this->x = indent;
    this->y++;
@@ -431,47 +459,7 @@ void Buffer_breakLine(Buffer* this) {
 
    Script_hook("onBreakLine");
 
-   if (this->lastKey == '>') {
-      char* last = prev->text + (prev->len - 1);
-      assert(this->lastKey == *last);
-      last--;
-      if (last > prev->text && *last != '/') {
-         char tag[20];
-         int taglen = 0;
-         do {
-            tag[taglen] = *last;
-            if (*last != ' ') {
-               taglen++;
-            } else {
-               taglen = 0;
-            }
-            last--;
-
-         } while (taglen < 20 && last > prev->text && *last != '<');
-         taglen--;
-         if (tag[taglen] != '/') {
-            Buffer_defaultKeyHandler(this, '<');
-            Buffer_defaultKeyHandler(this, '/');
-            for (int i = 0; i <= taglen; i++)
-               Buffer_defaultKeyHandler(this, tag[taglen - i]);
-            Buffer_defaultKeyHandler(this, '>');
-            for (int i = 0; i <= taglen + 3; i++)
-               Buffer_backwardChar(this);
-            int indent = MIN(Line_getIndentChars(this->line), this->x);
-            Buffer_breakAt(this, indent);
-            Buffer_indent(this);
-         }
-      }
-   }
-   
-   if (this->lastKey == '{') {
-      this->lastKey = 0;
-      Buffer_defaultKeyHandler(this, '}');
-      Buffer_backwardChar(this);
-      int indent = MIN(Line_getIndentChars(this->line), this->x);
-      Buffer_breakAt(this, indent);
-      Buffer_indent(this);
-   }
+   this->lastKey = 0;
 }
 
 void Buffer_forwardChar(Buffer* this) {
