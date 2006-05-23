@@ -30,7 +30,6 @@ List* List_new(char* type) {
    return this;
 }
 
-/* private */
 inline void List_reset(List* this) {
    this->head = NULL;
    this->tail = NULL;

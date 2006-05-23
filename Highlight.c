@@ -39,10 +39,8 @@ struct Highlight_ {
 
 }*/
 
-/* private property */
 char* HIGHLIGHTCONTEXT_CLASS = "HighlightContext";
 
-/* private property */
 char* HIGHLIGHTRULE_CLASS = "HighlightRule";
 
 static Color Highlight_translateColor(char* color) {
@@ -243,7 +241,6 @@ HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close,
    return ctx;
 }
 
-/* private */
 static inline int Highlight_tryMatch(Highlight* this, unsigned char* buffer, int* attrs, int at, GraphNode* rules, GraphNode* follows, Method_PatternMatcher_match match, HighlightContext** ctx, bool paintUnmatched) {
    unsigned char* here = buffer+at;
    int intColor;

@@ -25,7 +25,6 @@ extern char* LINE_CLASS;
 
 }*/
 
-/* private property */
 char* LINE_CLASS = "Line";
 
 Line* Line_new(char* text, int len, Buffer* buffer) {

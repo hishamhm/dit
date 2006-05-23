@@ -65,7 +65,6 @@ struct Undo_ {
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #endif
 
-/* private property */
 char* UNDOACTION_CLASS = "UndoAction";
 
 inline UndoAction* UndoAction_new(UndoActionType type, int x, int y) {

@@ -35,7 +35,6 @@ typedef struct DebugMemory_ {
 
 #if defined(DEBUG)
 
-/* private property */
 static DebugMemory* singleton = NULL;
 
 void DebugMemory_new() {

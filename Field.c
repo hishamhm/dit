@@ -35,7 +35,6 @@ extern char* FIELDITEM_CLASS;
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #endif
 
-/* private property */
 char* FIELDITEM_CLASS = "FieldItem";
 
 Field* Field_new(char* label, int x, int y, int w) {

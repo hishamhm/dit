@@ -106,19 +106,14 @@ int putenv(char*);
 
 bool CRT_hasColors;
 
-/* private property */
 int CRT_delay;
 
-/* private property */
 char CRT_scrollHandle;
 
-/* private property */
 char CRT_scrollBar;
 
-/* private property */
 int CRT_colors[Colors];
 
-/* private property */
 static SCREEN* CRT_term;
 
 void CRT_init() {

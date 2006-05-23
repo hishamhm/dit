@@ -40,7 +40,6 @@ extern char* PANEL_CLASS;
 
 }*/
 
-/* private property */
 char* PANEL_CLASS = "Panel";
 
 Panel* Panel_new(int x, int y, int w, int h, int color, char* type, bool owner) {

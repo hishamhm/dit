@@ -18,10 +18,8 @@ struct FunctionBar_ {
 
 }*/
 
-/* private property */
 char* FunctionBar_FKeys[10] = {" 1", " 2", " 3", " 4", " 5", " 6", " 7", " 8", " 9", "10"};
 
-/* private property */
 int FunctionBar_FEvents[10] = {KEY_F(1), KEY_F(2), KEY_F(3), KEY_F(4), KEY_F(5), KEY_F(6), KEY_F(7), KEY_F(8), KEY_F(9), KEY_F(10)};
 
 FunctionBar* FunctionBar_new(int size, char** functions, char** keys, int* events) {
