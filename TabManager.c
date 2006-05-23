@@ -25,7 +25,6 @@ extern char* TABPAGE_CLASS;
    
 }*/
 
-/* private property */
 char* TABPAGE_CLASS = "TabPage";
 
 TabPage* TabPage_new(char* name, char* label, Buffer* buffer) {
