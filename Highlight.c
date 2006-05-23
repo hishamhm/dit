@@ -81,8 +81,6 @@ Highlight* Highlight_new(const char* fileName, const char* firstLine) {
       FILE* file = fopen(highlightPath, "r");
       if (!file) continue;
 
-      Script_loadExtensions(highlightPath);
-
       char buffer[4096];
       int state = 1;
       bool success = true;
@@ -151,8 +149,10 @@ Highlight* Highlight_new(const char* fileName, const char* firstLine) {
          {
             // FILES match succeeded. Skip over other FILES section,
             // waiting for RULES section
-            if (String_eq(tokens[0], "RULES") && ntokens == 1)
+            if (String_eq(tokens[0], "RULES") && ntokens == 1) {
+               Script_loadExtensions(highlightPath);
                state = 4;
+            }
             break;
          }
          case 4:
