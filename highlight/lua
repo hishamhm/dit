@@ -1,5 +1,6 @@
 FILES
 name suffix .lua
+firstline regex ^#!.*/lua($|[[:blank:]].*)
 RULES   
 rule and      bright
 rule break    bright

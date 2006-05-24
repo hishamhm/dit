@@ -8,7 +8,9 @@ context dnl `$ special
 /context
 rule define brightspecial
 
-context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
+rule `[A`-Z`]`[A`-Z0`-9_`]`+ brightspecial
+
+context ( ) brightspecial brightspecial normal
    rule , symbol
    context [ ] brightdiff brightdiff diff
       context [ ] brightdiff brightdiff diff
