@@ -88,7 +88,11 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command) {
    this->lastKey = 0;
    this->modified = false;
    this->tabCharacters = false;
-   this->lastTime = 0;
+   
+   /* Hack to disable auto-indent when pasting through X11, part 1 */
+   struct timeval tv;
+   gettimeofday(&tv, NULL);
+   this->lastTime = tv.tv_sec * 1000000 + tv.tv_usec;
 
    this->readOnly = (access(fileName, R_OK) == 0 && access(fileName, W_OK) != 0);
    
@@ -441,7 +445,7 @@ void Buffer_breakLine(Buffer* this) {
 
    int indent = Buffer_getIndentSize(this);
 
-   /* Hack to disable auto-indent when pasting through X11 */
+   /* Hack to disable auto-indent when pasting through X11, part 2 */
    struct timeval tv;
    gettimeofday(&tv, NULL);
    double now = tv.tv_sec * 1000000 + tv.tv_usec;
