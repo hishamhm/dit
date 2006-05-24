@@ -1,0 +1,20 @@
+#!/usr/bin/python
+
+def onBreakLine():
+   if dit.getLastKey() == ">":
+      prev = dit.previousLine()
+      tag = prev[prev.rindex('<'):]
+      space = tag.find(' ')
+      if space:
+         tag = tag[1:space]
+      else:
+         tag = tag[1:-1]
+      tag = "</" + tag + ">"      
+      dit.write(tag)
+      for i in range(len(tag)):
+         dit.backwardChar()
+      indent = dit.getIndentSize()
+      dit.breakIndenting(indent)
+      dit.indent()
+
+dit.onBreakLine = onBreakLine
