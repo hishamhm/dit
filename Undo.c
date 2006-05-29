@@ -42,11 +42,16 @@ struct UndoAction_ {
          int xTo;
          int yTo;
       } coord;
+      struct {
+         int lines;
+         char width;
+      } indent;
       int size;
       struct {
          int* buf;
          int len;
-      } arr;
+         bool tab;
+      } unindent;
       bool backspace;
    } data;
 };
@@ -82,7 +87,7 @@ void UndoAction_delete(Object* cast) {
    if (this->type == UndoDeleteBlock) {
       free(this->data.str.buf);
    } else if (this->type == UndoUnindent) {
-      free(this->data.arr.buf);
+      free(this->data.unindent.buf);
    }
    free(this);
 }
@@ -116,7 +121,7 @@ void Undo_backwardDeleteCharAt(Undo* this, int x, int y, char c) {
 
 void Undo_insertCharAt(Undo* this, int x, int y, char c) {
    UndoAction* top = (UndoAction*) Stack_peek(this->actions, NULL);
-   if (top) {
+   if (top && c != '\t') {
       if ((top->type == UndoInsertChar && top->y == y && top->x == x-1)
        || (top->type == UndoInsertBlock && top->data.coord.yTo == y && top->data.coord.xTo == x)) {
          top->type = UndoInsertBlock;
@@ -148,16 +153,18 @@ void Undo_deleteBlock(Undo* this, int x, int y, char* block, int len) {
    Stack_push(this->actions, action, 0);
 }
 
-void Undo_indent(Undo* this, int x, int y, int lines) {
+void Undo_indent(Undo* this, int x, int y, int lines, int width) {
    UndoAction* action = UndoAction_new(UndoIndent, x, y);
-   action->data.size = lines;
+   action->data.indent.lines = lines;
+   action->data.indent.width = width;
    Stack_push(this->actions, action, 0);
 }
 
-void Undo_unindent(Undo* this, int x, int y, int* counts, int lines) {
+void Undo_unindent(Undo* this, int x, int y, int* counts, int lines, bool tab) {
    UndoAction* action = UndoAction_new(UndoUnindent, x, y);
-   action->data.arr.buf = counts;
-   action->data.arr.len = lines;
+   action->data.unindent.buf = counts;
+   action->data.unindent.len = lines;
+   action->data.unindent.tab = tab;
    Stack_push(this->actions, action, 0);
 }
 
@@ -266,14 +273,14 @@ void Undo_undo(Undo* this, int* x, int* y) {
    }
    case UndoIndent:
    {
-      Line_unindent(line, action->data.size);
+      Line_unindent(line, action->data.indent.lines, action->data.indent.width);
       break;
    }
    case UndoUnindent:
    {
-      for (int i = 0; i < action->data.arr.len; i++) {
-         for (int j = 0; j < action->data.arr.buf[i]; j++)
-            Line_insertCharAt(line, ' ', 0);
+      for (int i = 0; i < action->data.unindent.len; i++) {
+         for (int j = 0; j < action->data.unindent.buf[i]; j++)
+            Line_insertCharAt(line, action->data.unindent.tab ? '\t' : ' ', 0);
          line = (Line*) line->super.next;
          assert(line);
       }
@@ -325,6 +332,9 @@ void Undo_store(Undo* this, char* fileName) {
       case UndoEndGroup:
          break;
       case UndoIndent:
+         fwrite(&action->data.indent.lines, sizeof(int), 1, ufd);
+         fwrite(&action->data.indent.width, sizeof(int), 1, ufd);
+         break;
       case UndoBreak:
          fwrite(&action->data.size, sizeof(int), 1, ufd);
          break;
@@ -346,8 +356,9 @@ void Undo_store(Undo* this, char* fileName) {
          fwrite(&action->data.coord.yTo, sizeof(char), 1, ufd);
          break;
       case UndoUnindent:
-         fwrite(&action->data.arr.len, sizeof(int), 1, ufd);
-         fwrite(action->data.arr.buf, sizeof(int), action->data.arr.len, ufd);
+         fwrite(&action->data.unindent.len, sizeof(int), 1, ufd);
+         fwrite(action->data.unindent.buf, sizeof(int), action->data.unindent.len, ufd);
+         fwrite(&action->data.unindent.tab, sizeof(bool), 1, ufd);
          break;
       }
    }
@@ -390,6 +401,11 @@ void Undo_restore(Undo* this, char* fileName) {
       case UndoEndGroup:
          break;
       case UndoIndent:
+         read = fread(&action->data.indent.lines, sizeof(int), 1, ufd);
+         if (read < 1) { fclose(ufd); return; }
+         read = fread(&action->data.indent.width, sizeof(int), 1, ufd);
+         if (read < 1) { fclose(ufd); return; }
+         break;
       case UndoBreak:
          read = fread(&action->data.size, sizeof(int), 1, ufd);
          if (read < 1) { fclose(ufd); return; }
@@ -407,7 +423,7 @@ void Undo_restore(Undo* this, char* fileName) {
       case UndoDeleteBlock:
          read = fread(&action->data.str.len, sizeof(int), 1, ufd);
          if (read < 1) { fclose(ufd); return; }
-         action->data.str.buf = malloc(sizeof(int) * action->data.str.len);
+         action->data.str.buf = malloc(sizeof(char) * action->data.str.len);
          read = fread(action->data.str.buf, sizeof(char), action->data.str.len, ufd);
          if (read < action->data.str.len) { fclose(ufd); return; }
          break;
@@ -418,11 +434,13 @@ void Undo_restore(Undo* this, char* fileName) {
          if (read < 1) { fclose(ufd); return; }
          break;
       case UndoUnindent:
-         read = fread(&action->data.arr.len, sizeof(int), 1, ufd);
+         read = fread(&action->data.unindent.len, sizeof(int), 1, ufd);
          if (read < 1) { fclose(ufd); return; }
-         action->data.arr.buf = malloc(sizeof(int) * action->data.arr.len);
-         read = fread(action->data.arr.buf, sizeof(int), action->data.arr.len, ufd);
-         if (read < action->data.str.len) { fclose(ufd); return; }
+         action->data.unindent.buf = malloc(sizeof(int) * action->data.unindent.len);
+         read = fread(action->data.unindent.buf, sizeof(int), action->data.unindent.len, ufd);
+         if (read < action->data.unindent.len) { fclose(ufd); return; }
+         read = fread(&action->data.unindent.tab, sizeof(bool), 1, ufd);
+         if (read < 1) { fclose(ufd); return; }
          break;
       }
       Stack_push(this->actions, action, 0);

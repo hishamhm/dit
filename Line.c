@@ -10,7 +10,6 @@
 /*{
 
 #define TAB_WIDTH 8
-#define INDENT_WIDTH 3
 
 struct Line_ {
    ListItem super;
@@ -331,32 +330,40 @@ void Line_insertStringAt(Line* this, int at, char* text, int len) {
    assert(this->text[this->len] == '\0');
 }
 
-// TODO: optionally indent with tab
-void Line_indent(Line* this, int lines) {
-   char indent[INDENT_WIDTH + 1];
-   for (int i = 0; i < INDENT_WIDTH; i++)
-      indent[i] = ' ';
-   indent[INDENT_WIDTH] = '\0';
-   // TODO: expand tabs
-   Line_insertStringAt(this, 0, indent, INDENT_WIDTH);
+void Line_indent(Line* this, int lines, int indentSpaces) {
+   char spacer = ' ';
+   int width = indentSpaces;
+   if (width == 0) {
+      width = 1;
+      spacer = '\t';
+   }
+   char indent[width + 1];
+   for (int i = 0; i < width; i++)
+      indent[i] = spacer;
+   indent[width] = '\0';
+   Line_insertStringAt(this, 0, indent, width);
    if (lines > 1) {
       assert(this->super.next);
       Line* next = (Line*) this->super.next;
-      Line_indent(next, lines - 1);
+      Line_indent(next, lines - 1, indentSpaces);
    }
    assert(this->text[this->len] == '\0');
 }
 
-// TODO: optionally indent with tab
-int* Line_unindent(Line* this, int lines) {
+int* Line_unindent(Line* this, int lines, int indentSpaces) {
+   char spacer = ' ';
+   int width = indentSpaces;
+   if (width == 0) {
+      width = 1;
+      spacer = '\t';
+   }
    int* result = (int*) malloc(sizeof(int*) * lines);
    Line* l = this;
    for (int c = 0; c < lines; c++) {
-      // TODO: expand tabs
       assert(l);
-      int n = MIN(INDENT_WIDTH, l->len);
+      int n = MIN(width, l->len);
       for (int i = 0; i < n; i++)
-         if (l->text[i] != ' ') {
+         if (l->text[i] != spacer) {
             n = i;
             break;
          }

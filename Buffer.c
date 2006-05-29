@@ -55,6 +55,7 @@ struct Buffer_ {
    int lastKey;
    // document uses tab characters
    int tabCharacters;
+   int indentSpaces;
    // time tracker to disable auto-indent when pasting;
    double lastTime;
 };
@@ -88,6 +89,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command) {
    this->lastKey = 0;
    this->modified = false;
    this->tabCharacters = false;
+   this->indentSpaces = 3;
    
    /* Hack to disable auto-indent when pasting through X11, part 1 */
    struct timeval tv;
@@ -827,26 +829,42 @@ inline void Buffer_blockOperation(Buffer* this, Line** firstLine, int* yStart, i
 
 void Buffer_unindent(Buffer* this) {
    Line* firstLine;
-   int yStart;
-   int lines;
+   int yStart, lines, spaces, move;
+   if (this->tabCharacters) {
+      spaces = 0;
+      move = 1;
+   } else {
+      spaces = this->indentSpaces;
+      move = spaces;
+   }
    Buffer_blockOperation(this, &firstLine, &yStart, &lines);
-   int* unindented = Line_unindent(firstLine, lines);
-   Undo_unindent(this->undo, this->x, yStart, unindented, lines);
+   int* unindented = Line_unindent(firstLine, lines, spaces);
+   Undo_unindent(this->undo, this->x, yStart, unindented, lines, this->tabCharacters);
    if (unindented[0] > 0 && this->y >= yStart && this->y <= (yStart + lines - 1))
-      this->x = MAX(0, this->x - INDENT_WIDTH);
+      this->x = MAX(0, this->x - move);
    this->panel->needsRedraw = true;
    this->modified = true;
 }
 
 void Buffer_indent(Buffer* this) {
    Line* firstLine;
-   int yStart;
-   int lines;
+   int yStart, lines, spaces, move;
+   if (this->tabCharacters) {
+      if (!this->selecting) {
+         Buffer_defaultKeyHandler(this, '\t');
+         return;
+      }
+      spaces = 0;
+      move = 1;
+   } else {
+      spaces = this->indentSpaces;
+      move = spaces;
+   }
    Buffer_blockOperation(this, &firstLine, &yStart, &lines);
-   Undo_indent(this->undo, this->x, yStart, lines);
-   Line_indent(firstLine, lines);
+   Undo_indent(this->undo, this->x, yStart, lines, spaces);
+   Line_indent(firstLine, lines, spaces);
    if (this->y >= yStart && this->y <= (yStart + lines - 1))
-      this->x += INDENT_WIDTH;
+      this->x += move;
    this->panel->needsRedraw = true;
    this->modified = true;
 }
