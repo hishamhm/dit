@@ -101,9 +101,15 @@ inline void storeRecentHistory(TabManager* tabs) {
 
 int main(int argc, char** argv) {
 
+   int jump = 1;
+   
    if (argc > 1) {
       if (String_eq(argv[1], "--version")) {
          printVersionFlag();
+      } else if (argv[1][0] == '+') {
+         argv[1]++;
+         jump = atoi(argv[1]);
+         argv++;
       }
    } else {
       fprintf(stderr, "Usage: dit <filename>\n");
@@ -157,6 +163,9 @@ int main(int argc, char** argv) {
    Field* replaceField = Field_new("Replace with:", 0, LINES - 1, MIN(100, COLS - 20));
 
    bkgdset(NormalColor);
+   
+   Buffer* buffer = TabManager_draw(tabs);
+   Buffer_goto(buffer, 0, jump - 1);
 
    int ch = 0;
    while (!quit) {
@@ -525,10 +534,7 @@ int main(int argc, char** argv) {
          break;
       case '\t':
       {
-         if (buffer->tabCharacters)
-            Buffer_defaultKeyHandler(buffer, '\t');
-         else
-            Buffer_indent(buffer);
+         Buffer_indent(buffer);
          /*
          char word[100];
          int at = Buffer_currentWord(buffer, word, 100);
