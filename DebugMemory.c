@@ -28,6 +28,7 @@ typedef struct DebugMemory_ {
    int allocations;
    int deallocations;
    int size;
+   bool totals;
    FILE* file;
 } DebugMemory;
 
@@ -45,23 +46,28 @@ void DebugMemory_new() {
    singleton->allocations = 0;
    singleton->deallocations = 0;
    singleton->size = 0;
-   //singleton->file = fopen("/tmp/alloc.txt", "w");
-   singleton->file = NULL;
+   singleton->file = fopen("/tmp/alloc.txt", "w");
+   singleton->totals = true;
+   //singleton->file = NULL;
 }
 
 void* DebugMemory_malloc(int size, char* file, int line, char* str) {
    void* data = malloc(size);
    DebugMemory_registerAllocation(data, file, line);
-   if (singleton->file)
+   if (singleton->file) {
+      if (singleton->totals) fprintf(singleton->file, "%d\t", singleton->size);
       fprintf(singleton->file, "%d\t%s:%d (%s)\n", size, file, line, str);
+   }
    return data;
 }
 
 void* DebugMemory_calloc(int a, int b, char* file, int line) {
    void* data = calloc(a, b);
    DebugMemory_registerAllocation(data, file, line);
-   if (singleton->file)
+   if (singleton->file) {
+      if (singleton->totals) fprintf(singleton->file, "%d\t", singleton->size);
       fprintf(singleton->file, "%d\t%s:%d\n", a*b, file, line);
+   }
    return data;
 }
 
@@ -70,8 +76,10 @@ void* DebugMemory_realloc(void* ptr, int size, char* file, int line, char* str) 
       DebugMemory_registerDeallocation(ptr, file, line);
    void* data = realloc(ptr, size);
    DebugMemory_registerAllocation(data, file, line);
-   if (singleton->file)
+   if (singleton->file) {
+      if (singleton->totals) fprintf(singleton->file, "%d\t", singleton->size);
       fprintf(singleton->file, "%d\t%s:%d (%s)\n", size, file, line, str);
+   }
    return data;
 }
 
@@ -79,16 +87,20 @@ void* DebugMemory_strdup(char* str, char* file, int line) {
    assert(str);
    char* data = strdup(str);
    DebugMemory_registerAllocation(data, file, line);
-   if (singleton->file)
+   if (singleton->file) {
+      if (singleton->totals) fprintf(singleton->file, "%d\t", singleton->size);
       fprintf(singleton->file, "%d\t%s:%d\n", (int) strlen(str), file, line);
+   }
    return data;
 }
 
 void DebugMemory_free(void* data, char* file, int line) {
    assert(data);
    DebugMemory_registerDeallocation(data, file, line);
-   if (singleton->file)
+   if (singleton->file) {
+      if (singleton->totals) fprintf(singleton->file, "%d\t", singleton->size);
       fprintf(singleton->file, "free\t%s:%d\n", file, line);
+   }
    free(data);
 }
 
