@@ -17,7 +17,11 @@ typedef enum HandlerResult_ {
    BREAK_LOOP
 } HandlerResult;
 
-typedef HandlerResult(*Panel_eventHandler)(Panel*, int);
+typedef HandlerResult(*Method_Panel_eventHandler)(Panel*, int);
+
+struct PanelClass_ {
+   ObjectClass super;
+};
 
 struct Panel_ {
    Object super;
@@ -29,22 +33,30 @@ struct Panel_ {
    int oldSelected;
    bool needsRedraw;
    RichString header;
-   Panel_eventHandler eventHandler;
    bool highlightBar;
    int cursorX;
    int displaying;
    int color;
+   bool focus;
+   Method_Panel_eventHandler eventHandler;
 };
 
-extern char* PANEL_CLASS;
+extern PanelClass PanelType;
 
 }*/
 
-char* PANEL_CLASS = "Panel";
+PanelClass PanelType = {
+   .super = {
+      .size = sizeof(Panel),
+      .display = NULL,
+      .equals = Object_equals,
+      .delete = Panel_delete
+   }
+};
 
-Panel* Panel_new(int x, int y, int w, int h, int color, char* type, bool owner) {
-   Panel* this = (Panel*) malloc(sizeof(Panel));
-   Panel_init(this, x, y, w, h, color, type, owner);
+Panel* Panel_new(int x, int y, int w, int h, int color, ListItemClass* class, bool owner, void* data) {
+   Panel* this = Alloc(Panel);
+   Panel_init(this, x, y, w, h, color, class, owner, data);
    return this;
 }
 
@@ -54,17 +66,14 @@ void Panel_delete(Object* cast) {
    free(this);
 }
 
-void Panel_init(Panel* this, int x, int y, int w, int h, int color, char* type, bool owner) {
-   Object* super = (Object*) this;
-   super->class = PANEL_CLASS;
-   super->delete = Panel_delete;
+void Panel_init(Panel* this, int x, int y, int w, int h, int color, ListItemClass* class, bool owner, void* data) {
    this->x = x;
    this->y = y;
    this->w = w;
    this->h = h;
    this->color = color;
    this->eventHandler = NULL;
-   this->items = List_new(type);
+   this->items = List_new(class, data);
    this->scrollV = 0;
    this->scrollH = 0;
    this->selected = 0;
@@ -73,12 +82,17 @@ void Panel_init(Panel* this, int x, int y, int w, int h, int color, char* type, 
    this->highlightBar = false;
    this->cursorX = 0;
    this->displaying = 0;
+   this->focus = true;
    RichString_prune(&(this->header));
 }
 
 void Panel_done(Panel* this) {
    assert (this != NULL);
    List_delete(this->items);
+}
+
+void Panel_setFocus(Panel* this, bool focus) {
+   this->focus = focus;
 }
 
 void Panel_setHeader(Panel* this, RichString header) {
@@ -188,7 +202,7 @@ void Panel_setSelected(Panel* this, int selected) {
    this->selected = selected;
 }
 
-void Panel_draw(Panel* this, bool focus) {
+void Panel_draw(Panel* this) {
    assert (this != NULL);
 
    int cursorY = 0;
@@ -234,7 +248,7 @@ void Panel_draw(Panel* this, bool focus) {
    scrollH = 0;
    
    int highlight;
-   if (focus) {
+   if (this->focus) {
       highlight = CRT_colors[SelectionColor];
    } else {
       highlight = CRT_colors[UnfocusedSelectionColor];
@@ -248,7 +262,7 @@ void Panel_draw(Panel* this, bool focus) {
          assert(itemObj);
          RichString itemRef; RichString_init(&itemRef);
          this->displaying = i;
-         itemObj->display(itemObj, &itemRef);
+         Msg(Object, display, itemObj, &itemRef);
          int amt = MIN(itemRef.len - scrollH, w);
          if (i == this->selected) {
             if (this->highlightBar) {
@@ -299,11 +313,11 @@ void Panel_draw(Panel* this, bool focus) {
       Object* oldObj = (Object*) List_get(this->items, this->oldSelected);
       RichString oldRef; RichString_init(&oldRef);
       this->displaying = this->oldSelected;
-      oldObj->display(oldObj, &oldRef);
+      Msg(Object, display, oldObj, &oldRef);
       Object* newObj = (Object*) List_get(this->items, this->selected);
       RichString newRef; RichString_init(&newRef);
       this->displaying = this->selected;
-      newObj->display(newObj, &newRef);
+      Msg(Object, display, newObj, &newRef);
       mvhline(y+ this->oldSelected - this->scrollV, x+0, ' ', w);
       if (scrollH < oldRef.len)
          mvaddchnstr(y+ this->oldSelected - this->scrollV, x+0, oldRef.chstr + scrollH, MIN(oldRef.len - scrollH, w));

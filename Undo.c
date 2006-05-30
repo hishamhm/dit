@@ -13,7 +13,7 @@
 
 /*{
 
-typedef enum UndoActionType_ {
+typedef enum UndoActionKind_ {
    UndoBreak,
    UndoJoinNext,
    UndoBackwardDeleteChar,
@@ -25,11 +25,15 @@ typedef enum UndoActionType_ {
    UndoUnindent,
    UndoBeginGroup,
    UndoEndGroup,
-} UndoActionType;
+} UndoActionKind;
+
+struct UndoActionClass_ {
+   ObjectClass super;
+};
 
 struct UndoAction_ {
    Object super;
-   UndoActionType type;
+   UndoActionKind kind;
    int x;
    int y;
    union {
@@ -56,7 +60,7 @@ struct UndoAction_ {
    } data;
 };
 
-extern char* UNDOACTION_CLASS;
+extern UndoActionClass UndoActionType;
 
 struct Undo_ {
    List* list;
@@ -70,13 +74,16 @@ struct Undo_ {
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #endif
 
-char* UNDOACTION_CLASS = "UndoAction";
+UndoActionClass UndoActionType = {
+   .super = {
+      .size = sizeof(UndoAction),
+      .delete = UndoAction_delete
+   }
+};
 
-inline UndoAction* UndoAction_new(UndoActionType type, int x, int y) {
-   UndoAction* this = (UndoAction*) malloc(sizeof(UndoAction));
-   ((Object*)this)->class = UNDOACTION_CLASS;
-   ((Object*)this)->delete = UndoAction_delete;
-   this->type = type;
+inline UndoAction* UndoAction_new(UndoActionKind kind, int x, int y) {
+   UndoAction* this = Alloc(UndoAction);
+   this->kind = kind;
    this->x = x;
    this->y = y;
    return this;
@@ -84,18 +91,17 @@ inline UndoAction* UndoAction_new(UndoActionType type, int x, int y) {
 
 void UndoAction_delete(Object* cast) {
    UndoAction* this = (UndoAction*) cast;
-   if (this->type == UndoDeleteBlock) {
+   if (this->kind == UndoDeleteBlock) {
       free(this->data.str.buf);
-   } else if (this->type == UndoUnindent) {
+   } else if (this->kind == UndoUnindent) {
       free(this->data.unindent.buf);
    }
-   free(this);
 }
 
 Undo* Undo_new(List* list) {
    Undo* this = (Undo*) malloc(sizeof(Undo));
    this->list = list;
-   this->actions = Stack_new(UNDOACTION_CLASS, true);
+   this->actions = Stack_new(ClassAs(UndoAction, Object), true);
    this->group = 0;
    return this;
 }
@@ -105,8 +111,8 @@ void Undo_delete(Undo* this) {
    free(this);
 }
 
-inline void Undo_char(Undo* this, UndoActionType type, int x, int y, char data) {
-   UndoAction* action = UndoAction_new(type, x, y);
+inline void Undo_char(Undo* this, UndoActionKind kind, int x, int y, char data) {
+   UndoAction* action = UndoAction_new(kind, x, y);
    action->data.c = data;
    Stack_push(this->actions, action, 0);
 }
@@ -122,9 +128,9 @@ void Undo_backwardDeleteCharAt(Undo* this, int x, int y, char c) {
 void Undo_insertCharAt(Undo* this, int x, int y, char c) {
    UndoAction* top = (UndoAction*) Stack_peek(this->actions, NULL);
    if (top && c != '\t') {
-      if ((top->type == UndoInsertChar && top->y == y && top->x == x-1)
-       || (top->type == UndoInsertBlock && top->data.coord.yTo == y && top->data.coord.xTo == x)) {
-         top->type = UndoInsertBlock;
+      if ((top->kind == UndoInsertChar && top->y == y && top->x == x-1)
+       || (top->kind == UndoInsertBlock && top->data.coord.yTo == y && top->data.coord.xTo == x)) {
+         top->kind = UndoInsertBlock;
          top->data.coord.xTo = x+1;
          top->data.coord.yTo = y;
          return;
@@ -214,7 +220,7 @@ void Undo_undo(Undo* this, int* x, int* y) {
    *x = action->x;
    *y = action->y;
    Line* line = (Line*) List_get(this->list, action->y);
-   switch (action->type) {
+   switch (action->kind) {
    case UndoBeginGroup:
    {
       this->group++;
@@ -324,10 +330,10 @@ void Undo_store(Undo* this, char* fileName) {
    fwrite(&items, sizeof(int), 1, ufd);
    for (int i = items - 1; i >= 0; i--) {
       UndoAction* action = (UndoAction*) Stack_peekAt(this->actions, i, NULL);
-      fwrite(&action->type, sizeof(UndoActionType), 1, ufd);
+      fwrite(&action->kind, sizeof(UndoActionKind), 1, ufd);
       fwrite(&action->x, sizeof(int), 1, ufd);
       fwrite(&action->y, sizeof(int), 1, ufd);
-      switch(action->type) {
+      switch(action->kind) {
       case UndoBeginGroup:
       case UndoEndGroup:
          break;
@@ -387,16 +393,16 @@ void Undo_restore(Undo* this, char* fileName) {
    read = fread(&items, sizeof(int), 1, ufd);
    if (read < 1) { fclose(ufd); return; }
    for (int i = items - 1; i >= 0; i--) {
-      UndoActionType type;
+      UndoActionKind kind;
       int x, y;
-      read = fread(&type, sizeof(UndoActionType), 1, ufd);
+      read = fread(&kind, sizeof(UndoActionKind), 1, ufd);
       if (read < 1) { fclose(ufd); return; }
       read = fread(&x, sizeof(int), 1, ufd);
       if (read < 1) { fclose(ufd); return; }
       read = fread(&y, sizeof(int), 1, ufd);
       if (read < 1) { fclose(ufd); return; }
-      UndoAction* action = UndoAction_new(type, x, y);
-      switch(action->type) {
+      UndoAction* action = UndoAction_new(kind, x, y);
+      switch(action->kind) {
       case UndoBeginGroup:
       case UndoEndGroup:
          break;

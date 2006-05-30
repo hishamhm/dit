@@ -13,7 +13,7 @@ struct StackItem_ {
 };
 
 struct Stack_ {
-   char* type;
+   ObjectClass* type;
    StackItem* head;
    bool owner;
    int size;
@@ -21,7 +21,7 @@ struct Stack_ {
 
 }*/
 
-Stack* Stack_new(char* type, bool owner) {
+Stack* Stack_new(ObjectClass* type, bool owner) {
    Stack* this = (Stack*) malloc(sizeof(Stack));
    this->type = type;
    this->head = NULL;
@@ -37,7 +37,7 @@ void Stack_delete(Stack* this) {
       if (this->owner) {
          if (this->type) {
             Object* obj = (Object*)item->data;
-            obj->delete(obj);
+            Msg0(Object, delete, obj);
          } else {
             if (item->data)
                free(item->data);
@@ -50,7 +50,7 @@ void Stack_delete(Stack* this) {
 }
 
 void Stack_push(Stack* this, void* data, int size) {
-   assert( !this->type || (((Object*)data)->class == this->type) );
+   assert( !this->type || Call(Object, instanceOf, data, this->type) );
    assert( data );
    StackItem* item = (StackItem*) malloc(sizeof(StackItem));
    item->data = data;
@@ -69,7 +69,7 @@ void* Stack_pop(Stack* this, int* size) {
    StackItem* headNext = this->head->next;
    free(this->head);
    this->head = headNext;
-   assert( !this->type || (((Object*)result)->class == this->type) );
+   assert( !this->type || Call(Object, instanceOf, result, this->type) );
    this->size--;
    return result;
 }

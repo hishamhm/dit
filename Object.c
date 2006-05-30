@@ -7,36 +7,42 @@
 
 /*{
 
+#define Msg(c,m,o,...) ((c ## Class*)(((Object*)o)->class))->m((c*) o, ## __VA_ARGS__)
+#define Msg0(c,m,o) ((c ## Class*)(((Object*)o)->class))->m((c*) o)
+#define Call(c,m,o,...) c ## _ ## m((c*) o, ## __VA_ARGS__)
+#define Call0(c,m,o) c ## _ ## m((c*) o)
+#define CallAs0(c,a,m,o) c ## _ ## m((a*) o)
+#define Class(c) ((c ## Class*)& c ## Type)
+#define ClassAs(c,a) ((a ## Class*)& c ## Type)
+
+#define Alloc(c) ((c*)malloc(sizeof(c))); ((Object*)this)->class = (ObjectClass*)&(c ## Type)
+#define Bless(c) ((Object*)this)->class = (ObjectClass*)&(c ## Type)
+
 typedef void(*Method_Object_display)(Object*, RichString*);
 typedef bool(*Method_Object_equals)(const Object*, const Object*);
 typedef void(*Method_Object_delete)(Object*);
 
-struct Object_ {
-   char* class;
+struct ObjectClass_ {
+   int size;
    Method_Object_display display;
    Method_Object_equals equals;
    Method_Object_delete delete;
 };
 
+struct Object_ {
+   ObjectClass* class;
+};
+
+extern ObjectClass ObjectType;
+
 }*/
 
-char* OBJECT_CLASS = "Object";
-
-void Object_new() {
-   Object* this = malloc(sizeof(Object));
-   Object_init(this, OBJECT_CLASS);
-}
-
-inline void Object_init(Object* this, char* class) {
-   this->class = class;
-   this->display = Object_display;
-   this->equals = Object_equals;
-   this->delete = Object_delete;
-}
-
-bool Object_instanceOf(Object* this, char* class) {
-   return this->class == class;
-}
+ObjectClass ObjectType = {
+   .size = sizeof(Object),
+   .display = Object_display,
+   .equals = Object_equals,
+   .delete = Object_delete
+};
 
 void Object_delete(Object* this) {
    free(this);
@@ -44,10 +50,14 @@ void Object_delete(Object* this) {
 
 void Object_display(Object* this, RichString* out) {
    unsigned char objAddress[50];
-   sprintf((char*)objAddress, "%s @ %p", this->class, (void*) this);
+   sprintf((char*)objAddress, "O:%p C:%p", (void*) this, (void*) this->class);
    RichString_write(out, objAddress);
 }
 
 bool Object_equals(const Object* this, const Object* o) {
    return (this == o);
+}
+
+bool Object_instanceOf(Object* this, ObjectClass* class) {
+   return this->class == class;
 }

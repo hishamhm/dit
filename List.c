@@ -4,6 +4,10 @@
 
 /*{
 
+struct ListItemClass_ {
+   ObjectClass super;
+};
+
 struct ListItem_ {
    Object super;
    ListItem* prev;
@@ -12,21 +16,35 @@ struct ListItem_ {
 };
 
 struct List_ {
+   ListItemClass* type;
    ListItem* head;
    ListItem* tail;
    ListItem* atPtr;
    int atCtr;
    int size;
-   char* type;
+   void* data;
+   Pool* pool;
 };
+
+extern ListItemClass ListItemType;
 
 }*/
 
-// TODO: 'owner' argument and associated semantics
-List* List_new(char* type) {
+ListItemClass ListItemType = {
+   .super = {
+      .size = sizeof(ListItem),
+      .display = NULL,
+      .equals = Object_equals,
+      .delete = Object_delete
+   }
+};
+
+List* List_new(ListItemClass* type, void* data) {
    List* this = (List*) malloc(sizeof(List));
    this->type = type;
+   this->data = data;
    List_reset(this);
+   this->pool = Pool_new((ObjectClass*)type);
    return this;
 }
 
@@ -45,7 +63,9 @@ void List_resetIterator(List* this) {
 }
 
 void List_delete(List* this) {
+   Pool_initiateDestruction(this->pool);
    List_prune(this);
+   Pool_delete(this->pool);
    free(this);
 }
 
@@ -53,14 +73,14 @@ void List_prune(List* this) {
    ListItem* walk = this->head;
    while (walk) {
       ListItem* save = walk->next;
-      ((Object*)walk)->delete(((Object*)walk));
+      Msg0(Object, delete, walk);
       walk = save;
    }
    List_reset(this);
 }
 
 void List_add(List* this, ListItem* item) {
-   assert(((Object*)item)->class == this->type);
+   assert( Call(Object, instanceOf, item, (ObjectClass*)this->type) );
    item->next = NULL;
    item->list = this;
    if (this->tail) {
@@ -126,7 +146,7 @@ ListItem* List_get(List* this, int i) {
 }
 
 void List_set(List* this, int i, ListItem* item) {
-   assert(((Object*)item)->class == this->type);
+   assert( Call(Object, instanceOf, item, (ObjectClass*)this->type) );
    assert (i >= 0 && i <= this->size);
    if (i == this->size) {
       List_add(this, item);
@@ -147,7 +167,7 @@ void List_set(List* this, int i, ListItem* item) {
    item->prev = old->prev;
    item->next = old->next;
    item->list = this;
-   ((Object*)old)->delete(((Object*)old));
+   Msg0(Object, delete, old);
 }
 
 void List_remove(List* this, int i) {
@@ -163,7 +183,7 @@ void List_remove(List* this, int i) {
    } else {
       this->tail = old->prev;
    }
-   ((Object*)old)->delete(((Object*)old));
+   Msg0(Object, delete, old);
    this->size--;
 }
 
@@ -201,6 +221,5 @@ void ListItem_remove(ListItem* this) {
       this->list->tail = this->prev;
    this->list->size--;
    List_resetIterator(this->list);
-   ((Object*)this)->delete((Object*)this);
+   Msg0(Object, delete, this);
 }
-

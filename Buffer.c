@@ -98,8 +98,9 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command) {
 
    this->readOnly = (access(fileName, R_OK) == 0 && access(fileName, W_OK) != 0);
    
-   this->panel = Panel_new(x, y, w-1, h, CRT_colors[NormalColor], LINE_CLASS, true);
-   this->undo = Undo_new(this->panel->items);
+   Panel* p = Panel_new(x, y, w-1, h, CRT_colors[NormalColor], ClassAs(Line, ListItem), true, this);
+   this->panel = p;
+   this->undo = Undo_new(p->items);
    this->fileName = String_copy(fileName);
    
    FileReader* file = FileReader_new(fileName, command);
@@ -109,20 +110,20 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command) {
       char* text = FileReader_readLine(file, &len);
       this->hl = Highlight_new(fileName, text);
       if (strchr(text, '\t')) this->tabCharacters = true;
-      Line* line = Line_new(text, len, this);
-      Panel_set(this->panel, i, (ListItem*) line);
+      Line* line = Line_new(p->items, text, len, this->hl->mainContext);
+      Panel_set(p, i, (ListItem*) line);
       while (!FileReader_eof(file)) {
          i++;
          char* text = FileReader_readLine(file, &len);
          if (text) {
             if (!this->tabCharacters && strchr(text, '\t')) this->tabCharacters = true;
-            Line* line = Line_new(text, len, this);
-            Panel_set(this->panel, i, (ListItem*) line);
+            Line* line = Line_new(p->items, text, len, this->hl->mainContext);
+            Panel_set(p, i, (ListItem*) line);
          }
       }
    } else {
       this->hl = Highlight_new(fileName, "");
-      Panel_set(this->panel, 0, (ListItem*) Line_new(String_copy(""), 0, this));
+      Panel_set(p, 0, (ListItem*) Line_new(p->items, String_copy(""), 0, this->hl->mainContext));
    }
    if (file)
       FileReader_delete(file);
@@ -271,7 +272,7 @@ void Buffer_draw(Buffer* this) {
    Buffer_highlightBracket(this);
    
    p->cursorX = screenX - p->scrollH;
-   Panel_draw(p, true);
+   Panel_draw(p);
    
    this->wasSelecting = this->selecting;
 }
@@ -376,7 +377,7 @@ inline void Buffer_highlightBracket(Buffer* this) {
 void Buffer_delete(Buffer* this) {
    Buffer_storePosition(this);
    free(this->fileName);
-   ((Object*) this->panel)->delete((Object*) this->panel);
+   Msg0(Object, delete, this->panel);
 
    Undo_delete(this->undo);
    Highlight_delete(this->hl);

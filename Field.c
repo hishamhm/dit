@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "Prototypes.h"
+//#needs Object
 //#needs List
 
 /*{
@@ -20,6 +21,10 @@ struct Field_ {
    int cursor;
 };
 
+struct FieldItemClass_ {
+   ListItemClass super;
+};
+
 struct FieldItem_ {
    ListItem super;
    char* text;
@@ -27,7 +32,7 @@ struct FieldItem_ {
    int w;
 };
 
-extern char* FIELDITEM_CLASS;
+extern FieldItemClass FieldItemType;
 
 }*/
 
@@ -35,7 +40,16 @@ extern char* FIELDITEM_CLASS;
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #endif
 
-char* FIELDITEM_CLASS = "FieldItem";
+FieldItemClass FieldItemType = {
+   .super = {
+      .super = {
+         .size = sizeof(FieldItem),
+         .display = NULL,
+         .equals = Object_equals,
+         .delete = FieldItem_delete
+      }
+   }
+};
 
 Field* Field_new(char* label, int x, int y, int w) {
    Field* this = (Field*) malloc(sizeof(Field));
@@ -45,7 +59,7 @@ Field* Field_new(char* label, int x, int y, int w) {
    this->labelColor = CRT_colors[StatusColor];
    this->fieldColor = CRT_colors[FieldColor];
    this->cursor = 0;
-   this->history = List_new(FIELDITEM_CLASS);
+   this->history = List_new( ClassAs(FieldItem, ListItem), NULL );
    this->current = NULL;
    this->label = malloc(w + 1);
    this->labelLen = strlen(label);
@@ -60,10 +74,9 @@ void Field_delete(Field* this) {
    free(this);
 }
 
-FieldItem* FieldItem_new(int w) {
-   FieldItem* this = (FieldItem*) malloc(sizeof(FieldItem));
-   ((Object*)this)->class = FIELDITEM_CLASS;
-   ((Object*)this)->delete = FieldItem_delete;
+FieldItem* FieldItem_new(List* list, int w) {
+   FieldItem* this = Pool_allocate(list->pool);
+   Bless(FieldItem);
    this->text = calloc(w, 1);
    this->len = 0;
    this->w = w;
@@ -81,13 +94,12 @@ void Field_printfLabel(Field* this, char* picture, ...) {
 void FieldItem_delete(Object* cast) {
    FieldItem* this = (FieldItem*) cast;
    free(this->text);
-   free(this);
 }
 
 void Field_start(Field* this) {
    this->current = (FieldItem*) List_getLast(this->history);
    if (!this->current || this->current->len > 0) {
-      this->current = FieldItem_new(this->w);
+      this->current = FieldItem_new(this->history, this->w);
       List_add(this->history, (ListItem*) this->current);
    }
    this->cursor = 0;

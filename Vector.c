@@ -11,18 +11,18 @@ typedef void(*Vector_procedure)(void*);
 typedef int(*Vector_booleanFunction)(const Object*,const Object*);
 
 struct Vector_ {
+   ObjectClass* type;
    Object **array;
    int items;
    int arraySize;
    int growthRate;
    Vector_booleanFunction compareFunction;
-   char* vectorType;
    bool owner;
 };
 
 }*/
 
-Vector* Vector_new(char* vectorType_, bool owner, int size) {
+Vector* Vector_new(ObjectClass* type, bool owner, int size) {
    if (size == DEFAULT_SIZE)
       size = 10;
    Vector* this = (Vector*) malloc(sizeof(Vector));
@@ -32,7 +32,7 @@ Vector* Vector_new(char* vectorType_, bool owner, int size) {
    this->arraySize = size;
    this->compareFunction = Vector_compareFunction;
    this->items = 0;
-   this->vectorType = vectorType_;
+   this->type = type;
    this->owner = owner;
    return this;
 }
@@ -46,7 +46,7 @@ void Vector_delete(Vector* this) {
 static inline bool Vector_isConsistent(Vector* this) {
    if (this->owner) {
       for (int i = 0; i < this->items; i++)
-         if (this->array[i]->class != this->vectorType)
+         if ( ! Call(Object, instanceOf, this->array[i], this->type) )
             return false;
       return true;
    } else {
@@ -61,14 +61,14 @@ void Vector_prune(Vector* this) {
    for (i = 0; i < this->items; i++)
       if (this->array[i]) {
          if (this->owner)
-            (this->array[i])->delete(this->array[i]);
+            Msg0(Object, delete, this->array[i]);
          this->array[i] = NULL;
       }
    this->items = 0;
 }
 
 int Vector_compareFunction(const Object* v1, const Object* v2) {
-   return !(v1->equals(v1, v2));
+   return !(Msg(Object, equals, v1, v2));
 }
 
 void Vector_setCompareFunction(Vector* this, Vector_booleanFunction f) {
@@ -116,7 +116,7 @@ static inline void Vector_checkArraySize(Vector* this) {
 
 void Vector_insert(Vector* this, int index, void* data_) {
    assert(index >= 0);
-   assert(((Object*)data_)->class == this->vectorType);
+   assert( Call(Object, instanceOf, data_, this->type) );
    Object* data = data_;
    assert(Vector_isConsistent(this));
    
@@ -146,7 +146,7 @@ Object* Vector_take(Vector* this, int index) {
 Object* Vector_remove(Vector* this, int index) {
    Object* removed = Vector_take(this, index);
    if (this->owner) {
-      removed->delete(removed);
+      Msg0(Object, delete, removed);
       return NULL;
    } else
       return removed;
@@ -174,7 +174,7 @@ void Vector_moveDown(Vector* this, int index) {
 
 void Vector_set(Vector* this, int index, void* data_) {
    assert(index >= 0);
-   assert(((Object*)data_)->class == this->vectorType);
+   assert( Call(Object, instanceOf, data_, this->type) );
    Object* data = data_;
    assert(Vector_isConsistent(this));
 
@@ -185,9 +185,8 @@ void Vector_set(Vector* this, int index, void* data_) {
       if (this->owner) {
          Object* removed = this->array[index];
          assert (removed != NULL);
-         if (this->owner) {
-            removed->delete(removed);
-         }
+         if (this->owner)
+            Msg0(Object, delete, removed);
       }
    }
    this->array[index] = data;
@@ -217,7 +216,7 @@ void Vector_merge(Vector* this, Vector* v2) {
 }
 
 void Vector_add(Vector* this, void* data_) {
-   assert(((Object*)data_)->class == this->vectorType);
+   assert( Call(Object, instanceOf, data_, this->type) );
    Object* data = data_;
    assert(Vector_isConsistent(this));
 
@@ -226,7 +225,7 @@ void Vector_add(Vector* this, void* data_) {
 }
 
 int Vector_indexOf(Vector* this, void* search_) {
-   assert(((Object*)search_)->class == this->vectorType);
+   assert( Call(Object, instanceOf, search_, this->type) );
    Object* search = search_;
    assert(Vector_isConsistent(this));
 
@@ -234,7 +233,7 @@ int Vector_indexOf(Vector* this, void* search_) {
 
    for (i = 0; i < this->items; i++) {
       Object* o = (Object*)this->array[i];
-      if (o && o->equals(o, search))
+      if (o && Msg(Object, equals, o, search))
          return i;
    }
    return -1;

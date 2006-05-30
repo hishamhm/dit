@@ -11,34 +11,42 @@
 
 #define TAB_WIDTH 8
 
+struct LineClass_ {
+   ListItemClass super;
+};
+
 struct Line_ {
    ListItem super;
    char* text;
    int textSize;
    int len;
    HighlightContext* context;
-   Buffer* buffer;
 };
 
-extern char* LINE_CLASS;
+extern LineClass LineType;
 
 }*/
 
-char* LINE_CLASS = "Line";
+LineClass LineType = {
+   .super = {
+      .super = {
+         .size = sizeof(Line),
+         .display = Line_display,
+         .equals = Line_equals,
+         .delete = Line_delete
+      }
+   }
+};
 
-Line* Line_new(char* text, int len, Buffer* buffer) {
-   Line* this = (Line*) malloc(sizeof(Line));
-   ((Object*)this)->class = LINE_CLASS;
-   ((Object*)this)->display = Line_display;
-   ((Object*)this)->equals = Line_equals;
-   ((Object*)this)->delete = Line_delete;
-   ListItem_init((ListItem*)this);
+Line* Line_new(List* list, char* text, int len, HighlightContext* context) {
+   Line* this = Pool_allocate(list->pool);
+   Bless(Line);
+   Call0(ListItem, init, this);
    assert(len == strlen(text));
    this->text = text;
    this->textSize = len + 1;
    this->len = len;
-   this->context = buffer->hl->mainContext;
-   this->buffer = buffer;
+   this->context = context;
    assert(this->text[this->len] == '\0');
    return this;
 }
@@ -46,20 +54,20 @@ Line* Line_new(char* text, int len, Buffer* buffer) {
 void Line_delete(Object* cast) {
    Line* this = (Line*) cast;
    free(this->text);
-   free(this);
 }
 
 void Line_updateContext(Line* this) {
    // temporarily disable selection
-   bool selecting = this->buffer->selecting;
-   this->buffer->selecting = false;
+   Buffer* buffer = (Buffer*)(this->super.list->data);
+   bool selecting = buffer->selecting;
+   buffer->selecting = false;
    Line_display((Object*)this, NULL);
-   this->buffer->selecting = selecting;
+   buffer->selecting = selecting;
 }
 
 void Line_display(Object* cast, RichString* str) {
    Line* this = (Line*) cast;
-   Buffer* buffer = this->buffer;
+   Buffer* buffer = (Buffer*)(this->super.list->data);
    int scrollH = buffer->panel->scrollH;
    int y = buffer->panel->displaying;
    int len = this->len;
@@ -227,7 +235,7 @@ void Line_breakAt(Line* this, int at, int indent) {
    rest[restLen + indent] = '\0';
    this->text[at] = '\0';
    this->len = at;
-   Line* newLine = Line_new(rest, restLen + indent, this->buffer);
+   Line* newLine = Line_new(this->super.list, rest, restLen + indent, this->context);
    ListItem_addAfter((ListItem*) this, (ListItem*) newLine);
    assert(this->text[this->len] == '\0');
 }
@@ -399,7 +407,7 @@ void Line_insertBlock(Line* this, int x, char* block, int len, int* newX, int* n
          char* text = malloc(lineLen+1);
          text[lineLen] = '\0';
          memcpy(text, walk, lineLen);
-         Line* newLine = Line_new(text, lineLen, this->buffer);
+         Line* newLine = Line_new(this->super.list, text, lineLen, this->context);
          ListItem_addAfter((ListItem*) at, (ListItem*) newLine);
          at = newLine;
          walk = ++nl;

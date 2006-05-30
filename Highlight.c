@@ -12,7 +12,9 @@
 
 /*{
 
-extern char* HIGHLIGHTRULE_CLASS;
+struct HighlightContextClass_ {
+   ObjectClass super;
+};
 
 struct HighlightContext_ {
    Object super;
@@ -23,7 +25,7 @@ struct HighlightContext_ {
    PatternMatcher* rules;
 };
 
-extern char* HIGHLIGHTCONTEXT_CLASS;
+extern HighlightContextClass HighlightContextType;
 
 struct Highlight_ {
    Vector* contexts;
@@ -39,9 +41,14 @@ struct Highlight_ {
 
 }*/
 
-char* HIGHLIGHTCONTEXT_CLASS = "HighlightContext";
-
-char* HIGHLIGHTRULE_CLASS = "HighlightRule";
+HighlightContextClass HighlightContextType = {
+   .super = {
+      .size = sizeof(HighlightContext),
+      .display = NULL,
+      .equals = Object_equals,
+      .delete = HighlightContext_delete
+   }
+};
 
 static Color Highlight_translateColor(char* color) {
    if (String_eq(color, "bright")) return BrightColor;
@@ -64,7 +71,7 @@ Highlight* Highlight_new(const char* fileName, const char* firstLine) {
    Highlight* this = (Highlight*) malloc(sizeof(Highlight));
    // this->words = PatternMatcher_new();
 
-   this->contexts = Vector_new(HIGHLIGHTCONTEXT_CLASS, true, DEFAULT_SIZE);
+   this->contexts = Vector_new(ClassAs(HighlightContext, Object), true, DEFAULT_SIZE);
    this->currentContext = NULL;
    char highlightPath[4096];
    snprintf(highlightPath, 4095, "%s/.dit/highlight", getenv("HOME"));
@@ -84,7 +91,7 @@ Highlight* Highlight_new(const char* fileName, const char* firstLine) {
       bool success = true;
       this->mainContext = Highlight_addContext(this, NULL, NULL, NULL, NormalColor);
       HighlightContext* context = this->mainContext;
-      Stack* contexts = Stack_new(HIGHLIGHTCONTEXT_CLASS, false);
+      Stack* contexts = Stack_new(ClassAs(HighlightContext, Object), false);
       Stack_push(contexts, context, 0);
       int lineno = 0;
       this->toLower = false;
@@ -299,9 +306,7 @@ inline void Highlight_setContext(Highlight* this, HighlightContext* context) {
 }
 
 HighlightContext* HighlightContext_new(int id, Color defaultColor) {
-   HighlightContext* this = (HighlightContext*) malloc(sizeof(HighlightContext));
-   Object_init((Object*) this, HIGHLIGHTCONTEXT_CLASS);
-   ((Object*)this)->delete = HighlightContext_delete;
+   HighlightContext* this = Alloc(HighlightContext);
    this->id = id;
    this->follows = PatternMatcher_new();
    this->defaultColor = defaultColor;

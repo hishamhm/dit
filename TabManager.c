@@ -4,6 +4,10 @@
 
 /*{
 
+struct TabPageClass_ {
+   ObjectClass super;
+};
+
 struct TabPage_ {
    Object super;
    char* label;
@@ -21,17 +25,19 @@ struct TabManager_ {
    int currentPage;
 };
 
-extern char* TABPAGE_CLASS;
+extern TabPageClass TabPageType;
    
 }*/
 
-char* TABPAGE_CLASS = "TabPage";
+TabPageClass TabPageType = {
+   .super = {
+      .size = sizeof(TabPage),
+      .delete = TabPage_delete
+   }
+};
 
 TabPage* TabPage_new(char* name, char* label, Buffer* buffer) {
-   TabPage* this = (TabPage*) malloc(sizeof(TabPage));
-   Object* super = (Object*) this;
-   super->class = TABPAGE_CLASS;
-   super->delete = TabPage_delete;
+   TabPage* this = Alloc(TabPage);
    this->name = String_copy(name);
    this->label = String_copy(label);
    this->buffer = buffer;
@@ -54,7 +60,7 @@ TabManager* TabManager_new(int x, int y, int w, int h, int tabOffset) {
    this->w = w;
    this->h = h;
    this->tabOffset = tabOffset;
-   this->items = Vector_new(TABPAGE_CLASS, true, DEFAULT_SIZE);
+   this->items = Vector_new(ClassAs(TabPage, Object), true, DEFAULT_SIZE);
    this->currentPage = 0;
    return this;
 }

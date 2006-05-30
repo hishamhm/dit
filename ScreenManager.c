@@ -33,7 +33,7 @@ ScreenManager* ScreenManager_new(int x1, int y1, int x2, int y2, Orientation ori
    this->y2 = y2;
    this->fuBar = NULL;
    this->orientation = orientation;
-   this->items = Vector_new(PANEL_CLASS, owner, DEFAULT_SIZE);
+   this->items = Vector_new(ClassAs(Panel, Object), owner, DEFAULT_SIZE);
    this->itemCount = 0;
    this->owner = owner;
    return this;
@@ -114,7 +114,8 @@ void ScreenManager_run(ScreenManager* this, Panel** lastFocus, int* lastKey) {
       int items = this->itemCount;
       for (int i = 0; i < items; i++) {
          Panel* lb = (Panel*) Vector_get(this->items, i);
-         Panel_draw(lb, i == focus);
+         Panel_setFocus(lb, i == focus);
+         Panel_draw(lb);
          if (i < items) {
             if (this->orientation == HORIZONTAL) {
                mvvline(lb->y, lb->x+lb->w, ' ', lb->h+1);
