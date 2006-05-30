@@ -1,5 +1,10 @@
 #!/bin/sh
 
+if [ -e libefence.a ]
+then EFENCE=libefence.a
+else EFENCE=
+fi
+
 OBJS=$(
 for i in *.c
 do
@@ -29,11 +34,11 @@ echo "MYCFLAGS=-pedantic -Wall -Werror -std=c99"
 echo ".PHONY=clean debug"
 echo
 echo 'debug: MYCFLAGS += -g -DDEBUG'
-echo 'debug: LIBS += libefence.a -lpthread'
+echo 'debug: LIBS += '$EFENCE' -lpthread'
 echo 'debug: '$1
 echo
 echo 'debuglite: MYCFLAGS += -g -DDEBUGLITE'
-echo 'debuglite: LIBS += libefence.a -lpthread'
+echo 'debuglite: LIBS += '$EFENCE' -lpthread'
 echo 'debuglite: '$1
 echo
 echo 'gcov: MYCFLAGS += -fprofile-arcs -ftest-coverage'
