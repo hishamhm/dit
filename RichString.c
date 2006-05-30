@@ -12,7 +12,7 @@
 
 struct RichString_ {
    int len;
-   chtype chstr[RICHSTRING_SIZE+1];
+   chtype chstr[RICHSTRING_SIZE+2];
 };
 
 }*/
@@ -21,26 +21,20 @@ void RichString_init(RichString* this) {
    this->len = 0;
 }
 
-void RichString_delete(RichString this) {
-}
-
 void RichString_prune(RichString* this) {
    this->len = 0;
 }
 
-void RichString_write(RichString* this, int attrs, unsigned char* data) {
+void RichString_write(RichString* this, unsigned char* data) {
    this->len = 0;
-   RichString_append(this, attrs, data, strlen((char*)data));
+   RichString_append(this, data, strlen((char*)data));
 }
 
-inline void RichString_append(RichString* this, int attrs, unsigned char* data, int len) {
-   // TODO: 8-bit clean
-   // int len = strlen((char*)data);
-   int maxToWrite = (RICHSTRING_SIZE - 1) - this->len;
+inline void RichString_append(RichString* this, unsigned char* data, int len) {
+   int maxToWrite = RICHSTRING_SIZE - this->len;
    int wrote = MIN(maxToWrite, len);
-   for (int i = 0; i < wrote; i++) {
-      this->chstr[this->len + i] = data[i] | attrs;
-   }
+   for (int i = 0; i < wrote; i++)
+      this->chstr[this->len + i] = data[i];
    this->len += wrote;
    this->chstr[this->len] = 0;
 }
@@ -66,7 +60,7 @@ void RichString_setAttrs(RichString *this, int* attrs) {
 
 RichString RichString_quickString(int attrs, unsigned char* data) {
    RichString str; RichString_init(&str);
-   RichString_write(&str, attrs, data);
+   RichString_write(&str, data);
    return str;
 }
 

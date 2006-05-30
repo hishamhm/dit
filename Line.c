@@ -87,6 +87,10 @@ void Line_display(Object* cast, RichString* str) {
             attrs[outIndex] = inAttrs[textIndex];
             out[outIndex++] = ' ';
          }
+         /* show tabs
+         out[outIndex - tabSize] = '.';
+         attrs[outIndex - tabSize] |= CRT_colors[DimColor];
+         */
       } else if (curr < 32) {
          out[outIndex++] = curr + 'A' - 1;
       } else {
@@ -136,7 +140,7 @@ void Line_display(Object* cast, RichString* str) {
    }
    
    if (str && outIndex >= scrollH) {
-      RichString_append(str, 0, out + scrollH, outIndex - scrollH);
+      RichString_append(str, out + scrollH, outIndex - scrollH);
       RichString_setAttrs(str, attrs + scrollH);
    }
    this->context = Highlight_getContext(hl);

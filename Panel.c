@@ -78,16 +78,11 @@ void Panel_init(Panel* this, int x, int y, int w, int h, int color, char* type, 
 
 void Panel_done(Panel* this) {
    assert (this != NULL);
-   RichString_delete(this->header);
    List_delete(this->items);
 }
 
 void Panel_setHeader(Panel* this, RichString header) {
    assert (this != NULL);
-
-   if (this->header.len > 0) {
-      RichString_delete(this->header);
-   }
    this->header = header;
    this->needsRedraw = true;
 }
