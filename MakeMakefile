@@ -50,7 +50,7 @@ echo
 #echo 'debug.h: debug.h.in DebugMemory.h'
 #echo '	cp debug.h.in debug.h'
 echo
-echo 'profile: MYCFLAGS += -pg'
+echo 'profile: MYCFLAGS += -pg -O3'
 echo 'profile: '$1
 echo
 echo 'clean:'
