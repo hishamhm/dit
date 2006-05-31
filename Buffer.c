@@ -438,7 +438,7 @@ char Buffer_getLastKey(Buffer* this) {
 }
 
 inline int Buffer_getIndentSize(Buffer* this) {
-   return Line_getIndentChars(this->line);
+   return MIN(Line_getIndentChars(this->line), this->x);
 }
 
 void Buffer_breakLine(Buffer* this) {
