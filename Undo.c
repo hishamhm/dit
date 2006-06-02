@@ -96,6 +96,7 @@ void UndoAction_delete(Object* cast) {
    } else if (this->kind == UndoUnindent) {
       free(this->data.unindent.buf);
    }
+   free(this);
 }
 
 Undo* Undo_new(List* list) {
