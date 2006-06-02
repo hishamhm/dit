@@ -68,16 +68,19 @@ void* Pool_allocate(Pool* this) {
    }
 }
 
+inline void* Pool_allocateClear(Pool* this) {
+   return memset(Pool_allocate(this), 0, this->objectSize);
+}
+
 void Pool_free(Pool* this, void* item) {
    if (this->destroying)
       return;
-   if (this->freeListUsed < this->freeListSize) {
-      this->freeList[this->freeListSize++] = item;
-   } else {
+   assert(!(this->freeListUsed > this->freeListSize));
+   if (this->freeListUsed == this->freeListSize) {
       this->freeListSize += POOL_FREELIST_RATE;
       this->freeList = realloc(this->freeList, sizeof(void*) * this->freeListSize);
-      this->freeList[this->freeListSize++] = item;
    }
+   this->freeList[this->freeListUsed++] = item;
 }
 
 void Pool_delete(Pool* this) {
