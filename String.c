@@ -139,17 +139,27 @@ inline int String_endsWith(const char* s, const char* match) {
    return String_startsWith(s+(slen-matchlen), match);
 }
 
+static inline char* String_skipSep(char* start, char sep, bool positive) {
+   if (sep)
+      while (*start && ((*start == sep) == positive)) start++;
+   else
+      while (*start && (isspace(*start) == positive)) start++;
+   return start;
+}
+
 char** String_split(char* s, char sep) {
    const int rate = 10;
    char** out = (char**) malloc(sizeof(char*) * rate);
    int ctr = 0;
    int blocks = rate;
-   char* where;
-   while (*s == sep) s++;
-   while ((where = strchr(s, sep)) != NULL) {
-      int size = where - s;
+   char* start = s;
+   start = String_skipSep(start, sep, true);
+   while (*start) {
+      char* where = start;
+      where = String_skipSep(where, sep, false);
+      int size = where - start;
       char* token = (char*) malloc(size + 1);
-      strncpy(token, s, size);
+      strncpy(token, start, size);
       token[size] = '\0';
       out[ctr] = token;
       ctr++;
@@ -157,15 +167,11 @@ char** String_split(char* s, char sep) {
          blocks += rate;
          out = (char**) realloc(out, sizeof(char*) * blocks);
       }
-      while (*(where+1) == sep) where++;
-      s = where + 1;
-   }
-   if (s[0] != '\0') {
-      int size = strlen(s);
-      char* token = (char*) malloc(size + 1);
-      strncpy(token, s, size + 1);
-      out[ctr] = token;
-      ctr++;
+      if (!*where)
+         break;
+      where++;
+      where = String_skipSep(where, sep, true);
+      start = where;
    }
    out = realloc(out, sizeof(char*) * (ctr + 1));
    out[ctr] = NULL;
@@ -215,4 +221,16 @@ int String_indexOf(char* s, char* match, int lens) {
       s++;
    }
    return -1;
+}
+
+void String_convertEscape(char* s, char* escape, char value) {
+   char* esc;
+   if ((esc = strstr(s, escape))) {
+      int len = strlen(escape);
+      *esc = value;
+      for (char* c = esc+len;;c++) {
+         *(c-(len-1)) = *c;
+         if (!*c) break;
+      }
+   }
 }
