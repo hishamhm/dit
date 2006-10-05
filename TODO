@@ -1,0 +1,3 @@
+* autoindent in TABS mode
+* configurable 'whole word' in highlighting ("\tblabla" in C)
+* centralize color configuration
