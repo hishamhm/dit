@@ -56,12 +56,12 @@ typedef enum {
 
 #define KEY_S_UP      KEY_F(30)
 #define KEY_S_DOWN    KEY_F(31)
-#define KEY_S_RIGHT   KEY_F(32)
-#define KEY_S_LEFT    KEY_F(33)
-#define KEY_S_HOME    KEY_F(34)
-#define KEY_S_END     KEY_F(35)
-#define KEY_S_INSERT  KEY_F(36)
-#define KEY_S_DELETE  KEY_F(37)
+//#define KEY_S_RIGHT   KEY_F(32)
+//#define KEY_S_LEFT    KEY_F(33)
+//#define KEY_S_HOME    KEY_F(34)
+//#define KEY_S_END     KEY_F(35)
+//#define KEY_S_INSERT  KEY_F(36)
+//#define KEY_S_DELETE  KEY_F(37)
 #define KEY_S_NPAGE   KEY_F(38)
 #define KEY_S_PPAGE   KEY_F(39)
 #define KEY_C_UP      KEY_F(40)
@@ -98,6 +98,8 @@ extern char CRT_scrollBar;
 
 extern int CRT_colors[Colors];
 
+extern Hashtable* CRT_keys;
+
 int putenv(char*);
 
 }*/
@@ -116,15 +118,48 @@ int CRT_colors[Colors];
 
 static SCREEN* CRT_term;
 
+Hashtable* CRT_keys;
+
+void CRT_parseTerminalFile(char* term) {
+
+   char buffer[PATH_MAX+1];
+   snprintf(buffer, PATH_MAX, "%s/.dit/terminals/%s", getenv("HOME"), term);
+   FILE* fd = fopen(buffer, "r");
+   if (!fd) {
+      mvprintw(0,0,"Warning: could not parse terminal rules file %s", buffer);
+      mvprintw(1,0,"Press any key.");
+      getch();
+      return;
+   }
+   while (!feof(fd)) {
+      fgets(buffer, PATH_MAX, fd);
+      char** tokens = String_split(buffer, 0);
+      char* sequence = tokens[0]; if (!sequence) goto nextLine;
+      char* key = tokens[1]; if (!key) goto nextLine;
+      String_convertEscape(sequence, "\\033", 033);
+      String_convertEscape(sequence, "\\177", 0177);
+      String_convertEscape(sequence, "^[", 033);
+      int keynum = (int) Hashtable_getString(CRT_keys, key);
+      if (keynum)
+         define_key(sequence, keynum);
+      nextLine:
+      String_freeArray(tokens);
+   }
+   fclose(fd);
+}
+
 void CRT_init() {
 
-   if (strcmp(getenv("TERM"), "xterm") == 0) {
+   char* term = getenv("TERM");
+
+   if (strcmp(term, "xterm") == 0) {
       putenv("TERM=xterm-color");
+      term = "xterm-color";
    }
 
    CRT_delay = 0;
    
-   CRT_term = newterm(getenv("TERM"), stdout, stdin);
+   CRT_term = newterm(term, stdout, stdin);
    raw();
    noecho();
    if (CRT_delay)
@@ -292,82 +327,136 @@ void CRT_init() {
    CRT_colors[AlertColor] = CRT_color(White, Red);
    #endif
 
-//   #define teq(t) String_eq(termType, t)
-   // if (teq("xterm") || teq("xterm-color") || teq("vt220"))
-      define_key("\033OH", KEY_HOME);
-      define_key("\033OF", KEY_END);
-      define_key("\033OP", KEY_F(1));
-      define_key("\033OQ", KEY_F(2));
-      define_key("\033OR", KEY_F(3));
-      define_key("\033OS", KEY_F(4));
+   CRT_keys = Hashtable_new(200, Hashtable_STR, Hashtable_BORROW_REFS);
+   for (int k = 'A'; k <= 'Z'; k++) {
+      char ctrlkey[8];
+      snprintf(ctrlkey, 7, "CTRL_%c", k);
+      Hashtable_putString(CRT_keys, ctrlkey, (void*) KEY_CTRL(k));
+   }
+   Hashtable_putString(CRT_keys, "A1", (void*) KEY_A1);
+   Hashtable_putString(CRT_keys, "A3", (void*) KEY_A3);
+   Hashtable_putString(CRT_keys, "B2", (void*) KEY_B2);
+   Hashtable_putString(CRT_keys, "C1", (void*) KEY_C1);
+   Hashtable_putString(CRT_keys, "C3", (void*) KEY_C3);
+   Hashtable_putString(CRT_keys, "BACKSPACE", (void*) KEY_BACKSPACE);
+   Hashtable_putString(CRT_keys, "BEGIN", (void*) KEY_BEG);
+   Hashtable_putString(CRT_keys, "BACK_TAB", (void*) KEY_BTAB);
+   Hashtable_putString(CRT_keys, "CANCEL", (void*) KEY_CANCEL);
+   Hashtable_putString(CRT_keys, "CLEAR_ALL_TABS", (void*) KEY_CATAB);
+   Hashtable_putString(CRT_keys, "CLEAR", (void*) KEY_CLEAR);
+   Hashtable_putString(CRT_keys, "CLOSE", (void*) KEY_CLOSE);
+   Hashtable_putString(CRT_keys, "COMMAND", (void*) KEY_COMMAND);
+   Hashtable_putString(CRT_keys, "COPY", (void*) KEY_COPY);
+   Hashtable_putString(CRT_keys, "CREATE", (void*) KEY_CREATE);
+   Hashtable_putString(CRT_keys, "CLEAR_TAB", (void*) KEY_CTAB);
+   Hashtable_putString(CRT_keys, "CTRL_DELETE", (void*) KEY_C_DELETE);
+   Hashtable_putString(CRT_keys, "CTRL_DOWN", (void*) KEY_C_DOWN);
+   Hashtable_putString(CRT_keys, "CTRL_END", (void*) KEY_C_END);
+   Hashtable_putString(CRT_keys, "CTRL_HOME", (void*) KEY_C_HOME);
+   Hashtable_putString(CRT_keys, "CTRL_INSERT", (void*) KEY_C_INSERT);
+   Hashtable_putString(CRT_keys, "CTRL_LEFT", (void*) KEY_C_LEFT);
+   Hashtable_putString(CRT_keys, "CTRL_RIGHT", (void*) KEY_C_RIGHT);
+   Hashtable_putString(CRT_keys, "CTRL_SHIFT_DELETE", (void*) KEY_CS_DELETE);
+   Hashtable_putString(CRT_keys, "CTRL_SHIFT_DOWN", (void*) KEY_CS_DOWN);
+   Hashtable_putString(CRT_keys, "CTRL_SHIFT_END", (void*) KEY_CS_END);
+   Hashtable_putString(CRT_keys, "CTRL_SHIFT_HOME", (void*) KEY_CS_HOME);
+   Hashtable_putString(CRT_keys, "CTRL_SHIFT_INSERT", (void*) KEY_CS_INSERT);
+   Hashtable_putString(CRT_keys, "CTRL_SHIFT_LEFT", (void*) KEY_CS_LEFT);
+   Hashtable_putString(CRT_keys, "CTRL_SHIFT_NPAGE", (void*) KEY_CS_NPAGE);
+   Hashtable_putString(CRT_keys, "CTRL_SHIFT_PPAGE", (void*) KEY_CS_PPAGE);
+   Hashtable_putString(CRT_keys, "CTRL_SHIFT_RIGHT", (void*) KEY_CS_RIGHT);
+   Hashtable_putString(CRT_keys, "CTRL_SHIFT_UP", (void*) KEY_CS_UP);
+   Hashtable_putString(CRT_keys, "CTRL_UP", (void*) KEY_C_UP);
+   Hashtable_putString(CRT_keys, "DELETE", (void*) KEY_DC);
+   Hashtable_putString(CRT_keys, "DELETE_LINE", (void*) KEY_DL);
+   Hashtable_putString(CRT_keys, "DOWN", (void*) KEY_DOWN);
+   Hashtable_putString(CRT_keys, "EIC", (void*) KEY_EIC);
+   Hashtable_putString(CRT_keys, "END", (void*) KEY_END);
+   Hashtable_putString(CRT_keys, "ENTER", (void*) KEY_ENTER);
+   Hashtable_putString(CRT_keys, "EOL", (void*) KEY_EOL);
+   Hashtable_putString(CRT_keys, "EOS", (void*) KEY_EOS);
+   Hashtable_putString(CRT_keys, "EXIT", (void*) KEY_EXIT);
+   Hashtable_putString(CRT_keys, "F0", (void*) KEY_F0);
+   Hashtable_putString(CRT_keys, "F1", (void*) KEY_F(1));
+   Hashtable_putString(CRT_keys, "F2", (void*) KEY_F(2));
+   Hashtable_putString(CRT_keys, "F3", (void*) KEY_F(3));
+   Hashtable_putString(CRT_keys, "F4", (void*) KEY_F(4));
+   Hashtable_putString(CRT_keys, "F5", (void*) KEY_F(5));
+   Hashtable_putString(CRT_keys, "F6", (void*) KEY_F(6));
+   Hashtable_putString(CRT_keys, "F7", (void*) KEY_F(7));
+   Hashtable_putString(CRT_keys, "F8", (void*) KEY_F(8));
+   Hashtable_putString(CRT_keys, "F9", (void*) KEY_F(9));
+   Hashtable_putString(CRT_keys, "F10", (void*) KEY_F(10));
+   Hashtable_putString(CRT_keys, "F11", (void*) KEY_F(11));
+   Hashtable_putString(CRT_keys, "F12", (void*) KEY_F(12));
+   Hashtable_putString(CRT_keys, "FIND", (void*) KEY_FIND);
+   Hashtable_putString(CRT_keys, "HELP", (void*) KEY_HELP);
+   Hashtable_putString(CRT_keys, "HOME", (void*) KEY_HOME);
+   Hashtable_putString(CRT_keys, "INSERT", (void*) KEY_IC);
+   Hashtable_putString(CRT_keys, "INSERT_LINE", (void*) KEY_IL);
+   Hashtable_putString(CRT_keys, "LEFT", (void*) KEY_LEFT);
+   Hashtable_putString(CRT_keys, "LL", (void*) KEY_LL);
+   Hashtable_putString(CRT_keys, "MARK", (void*) KEY_MARK);
+   Hashtable_putString(CRT_keys, "MESSAGE", (void*) KEY_MESSAGE);
+   Hashtable_putString(CRT_keys, "MOVE", (void*) KEY_MOVE);
+   Hashtable_putString(CRT_keys, "NEXT", (void*) KEY_NEXT);
+   Hashtable_putString(CRT_keys, "NPAGE", (void*) KEY_NPAGE);
+   Hashtable_putString(CRT_keys, "OPEN", (void*) KEY_OPEN);
+   Hashtable_putString(CRT_keys, "OPTIONS", (void*) KEY_OPTIONS);
+   Hashtable_putString(CRT_keys, "PPAGE", (void*) KEY_PPAGE);
+   Hashtable_putString(CRT_keys, "PREVIOUS", (void*) KEY_PREVIOUS);
+   Hashtable_putString(CRT_keys, "PRINT", (void*) KEY_PRINT);
+   Hashtable_putString(CRT_keys, "REDO", (void*) KEY_REDO);
+   Hashtable_putString(CRT_keys, "REFERENCE", (void*) KEY_REFERENCE);
+   Hashtable_putString(CRT_keys, "REFRESH", (void*) KEY_REFRESH);
+   Hashtable_putString(CRT_keys, "REPLACE", (void*) KEY_REPLACE);
+   Hashtable_putString(CRT_keys, "RESTART", (void*) KEY_RESTART);
+   Hashtable_putString(CRT_keys, "RESUME", (void*) KEY_RESUME);
+   Hashtable_putString(CRT_keys, "RETURN", (void*) 0x0d);
+   Hashtable_putString(CRT_keys, "RIGHT", (void*) KEY_RIGHT);
+   Hashtable_putString(CRT_keys, "SAVE", (void*) KEY_SAVE);
+   Hashtable_putString(CRT_keys, "SHIFT_CANCEL", (void*) KEY_SCANCEL);
+   Hashtable_putString(CRT_keys, "SHIFT_COMMAND", (void*) KEY_SCOMMAND);
+   Hashtable_putString(CRT_keys, "SHIFT_COPY", (void*) KEY_SCOPY);
+   Hashtable_putString(CRT_keys, "SHIFT_CREATE", (void*) KEY_SCREATE);
+   Hashtable_putString(CRT_keys, "SELECT", (void*) KEY_SELECT);
+   Hashtable_putString(CRT_keys, "SCROLL_FORWARD", (void*) KEY_SF);
+   Hashtable_putString(CRT_keys, "SHIFT_BEGIN", (void*) KEY_SBEG);
+   Hashtable_putString(CRT_keys, "SHIFT_DELETE", (void*) KEY_SDC);
+   Hashtable_putString(CRT_keys, "SHIFT_DL", (void*) KEY_SDL);
+   Hashtable_putString(CRT_keys, "SHIFT_DOWN", (void*) KEY_S_DOWN);
+   Hashtable_putString(CRT_keys, "SHIFT_END", (void*) KEY_SEND);
+   Hashtable_putString(CRT_keys, "SHIFT_EOL", (void*) KEY_SEOL);
+   Hashtable_putString(CRT_keys, "SHIFT_EXIT", (void*) KEY_SEXIT);
+   Hashtable_putString(CRT_keys, "SHIFT_FIND", (void*) KEY_SFIND);
+   Hashtable_putString(CRT_keys, "SHIFT_HELP", (void*) KEY_SHELP);
+   Hashtable_putString(CRT_keys, "SHIFT_HOME", (void*) KEY_SHOME);
+   Hashtable_putString(CRT_keys, "SHIFT_INSERT", (void*) KEY_SIC);
+   Hashtable_putString(CRT_keys, "SHIFT_LEFT", (void*) KEY_SLEFT);
+   Hashtable_putString(CRT_keys, "SHIFT_MESSAGE", (void*) KEY_SMESSAGE);
+   Hashtable_putString(CRT_keys, "SHIFT_MOVE", (void*) KEY_SMOVE);
+   Hashtable_putString(CRT_keys, "SHIFT_NEXT", (void*) KEY_SNEXT);
+   Hashtable_putString(CRT_keys, "SHIFT_NPAGE", (void*) KEY_S_NPAGE);
+   Hashtable_putString(CRT_keys, "SHIFT_OPTIONS", (void*) KEY_SOPTIONS);
+   Hashtable_putString(CRT_keys, "SHIFT_PPAGE", (void*) KEY_S_PPAGE);
+   Hashtable_putString(CRT_keys, "SHIFT_PREVIOUS", (void*) KEY_SPREVIOUS);
+   Hashtable_putString(CRT_keys, "SHIFT_PRINT", (void*) KEY_SPRINT);
+   Hashtable_putString(CRT_keys, "SHIFT_REDO", (void*) KEY_SREDO);
+   Hashtable_putString(CRT_keys, "SHIFT_REPLACE", (void*) KEY_SREPLACE);
+   Hashtable_putString(CRT_keys, "SHIFT_RIGHT", (void*) KEY_SRIGHT);
+   Hashtable_putString(CRT_keys, "SHIFT_RSUME", (void*) KEY_SRSUME);
+   Hashtable_putString(CRT_keys, "SHIFT_SAVE", (void*) KEY_SSAVE);
+   Hashtable_putString(CRT_keys, "SHIFT_SUSPEND", (void*) KEY_SSUSPEND);
+   Hashtable_putString(CRT_keys, "SHIFT_UNDO", (void*) KEY_SUNDO);
+   Hashtable_putString(CRT_keys, "SHIFT_UP", (void*) KEY_S_UP);
+   Hashtable_putString(CRT_keys, "SCROLL_BACKWARD", (void*) KEY_SR);
+   Hashtable_putString(CRT_keys, "SET_TAB", (void*) KEY_STAB);
+   Hashtable_putString(CRT_keys, "SUSPEND", (void*) KEY_SUSPEND);
+   Hashtable_putString(CRT_keys, "TAB", (void*) '\t');
+   Hashtable_putString(CRT_keys, "UNDO", (void*) KEY_UNDO);
+   Hashtable_putString(CRT_keys, "UP", (void*) KEY_UP);
 
-   // if (teq("rxvt"))
-      define_key("\033[a", KEY_S_UP);
-      define_key("\033[b", KEY_S_DOWN);
-      define_key("\033[c", KEY_S_RIGHT);
-      define_key("\033[d", KEY_S_LEFT);
-      define_key("\033Oa", KEY_C_UP);
-      define_key("\033Ob", KEY_C_DOWN);
-      define_key("\033Oc", KEY_C_RIGHT);
-      define_key("\033Od", KEY_C_LEFT);
-      define_key("\033[7$", KEY_S_HOME);
-      define_key("\033[8$", KEY_S_END);
-      define_key("\033[2^", KEY_C_INSERT);
-      define_key("\033[2$", KEY_S_INSERT);
-      define_key("\033[2@", KEY_CS_INSERT);
-      define_key("\033[3^", KEY_C_DELETE);
-      define_key("\033[3$", KEY_S_DELETE);
-      define_key("\033[7^", KEY_C_HOME);
-      define_key("\033[8^", KEY_C_END);
-      define_key("\033[5~", KEY_PPAGE);
-      define_key("\033[6~", KEY_NPAGE);
-      define_key("\033[7~", KEY_HOME);
-      define_key("\033[8~", KEY_END);
-   
-   // if (teq("linux") || teq("xterm") || teq("xterm-color") || teq("vt220"))
-
-      // did I invent this one?
-      define_key("\033[Z", KEY_BTAB);
-   
-      define_key("\033[1;5A", KEY_C_UP);
-      define_key("\033[1;5B", KEY_C_DOWN);
-      define_key("\033[1;5C", KEY_C_RIGHT);
-      define_key("\033[1;5D", KEY_C_LEFT);
-      define_key("\033[1;5H", KEY_C_HOME);
-      define_key("\033[1;5F", KEY_C_END);
-      define_key("\033[2;5~", KEY_C_INSERT);
-      define_key("\033[3;5~", KEY_C_DELETE);
-
-      define_key("\033[1;2A", KEY_S_UP);
-      define_key("\033[1;2B", KEY_S_DOWN);
-      define_key("\033[1;2C", KEY_S_RIGHT);
-      define_key("\033[1;2D", KEY_S_LEFT);
-      define_key("\033[1;2H", KEY_S_HOME);
-      define_key("\033[1;2F", KEY_S_END);
-      define_key("\033[2;2~", KEY_S_INSERT);
-      define_key("\033[3;2~", KEY_S_DELETE);
-
-      define_key("\033[5;2", KEY_S_PPAGE);
-      define_key("\033[6;2", KEY_S_NPAGE);
-
-      // Konsole on KDE 3.4
-      define_key("\033[H", KEY_S_HOME);
-      define_key("\033[F", KEY_S_END);
-      define_key("\033O2H", KEY_S_HOME);
-      define_key("\033O2F", KEY_S_END);
-      // Actually simple insert
-      define_key("\033[2~", KEY_C_INSERT);
-
-      define_key("\033[1;6A", KEY_CS_UP);
-      define_key("\033[1;6B", KEY_CS_DOWN);
-      define_key("\033[1;6C", KEY_CS_RIGHT);
-      define_key("\033[1;6D", KEY_CS_LEFT);
-      define_key("\033[1;6H", KEY_CS_HOME);
-      define_key("\033[1;6F", KEY_CS_END);
-      define_key("\033[2;6~", KEY_CS_INSERT);
-      define_key("\033[3;6~", KEY_CS_DELETE);
-   
-//   #undef teq
+   CRT_parseTerminalFile(term);
 
 #ifndef DEBUG
 //   signal(11, CRT_handleSIGSEGV);
@@ -378,6 +467,7 @@ void CRT_init() {
 }
 
 void CRT_done() {
+   Hashtable_delete(CRT_keys);
    curs_set(1);
    endwin();
    delscreen(CRT_term);
@@ -414,14 +504,14 @@ int CRT_getCharacter() {
       switch (modifiers) {
       case SHIFT_MASK:
          switch (ch) {
-         case KEY_LEFT: return KEY_S_LEFT;
-         case KEY_RIGHT: return KEY_S_RIGHT;
+         case KEY_LEFT: return KEY_SLEFT;
+         case KEY_RIGHT: return KEY_SRIGHT;
          case KEY_UP: return KEY_S_UP;
          case KEY_DOWN: return KEY_S_DOWN;
-         case KEY_HOME: return KEY_S_HOME;
-         case KEY_END: return KEY_S_END;
-         case KEY_IC: return KEY_S_INSERT;
-         case KEY_DC: return KEY_S_DELETE;
+         case KEY_HOME: return KEY_SHOME;
+         case KEY_END: return KEY_SEND;
+         case KEY_IC: return KEY_SIC;
+         case KEY_DC: return KEY_SDC;
          case KEY_NPAGE: return KEY_S_NPAGE;
          case KEY_PPAGE: return KEY_S_PPAGE;
          case '\t': return KEY_BTAB;
