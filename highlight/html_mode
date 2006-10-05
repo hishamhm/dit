@@ -4,6 +4,10 @@ def onBreakLine():
    if dit.getLastKey() == ">":
       prev = dit.previousLine()
       tag = prev[prev.rindex('<'):]
+      if prev[-2] == "/":
+         return
+      if tag[1] == "/":
+         return
       space = tag.find(' ')
       if space:
          tag = tag[1:space]
