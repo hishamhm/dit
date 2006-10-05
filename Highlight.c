@@ -122,6 +122,10 @@ Highlight* Highlight_new(const char* fileName, const char* firstLine) {
          {
             // Try to match FILES rule
             const char* subject = NULL;
+            if (!fileName) {
+               success = false;
+               break;
+            }
             if (String_eq(tokens[0],"name")) {
                subject = fileName;
                char* lastSlash = strrchr(subject, '/');
