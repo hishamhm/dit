@@ -1,5 +1,6 @@
 FILES
 name suffix .pl
+name suffix .pm
 firstline regex ^#!.*/[a-z]*/perl($|[:blank:])
 RULES
 
@@ -347,6 +348,8 @@ context " " alt
    rule %`[A`-Z`|a`-z`|_`]`[A`-Z`|a`-z`|_`|0`-9`]`* brightalt
    rule @`[A`-Z`|a`-z`|_`]`[A`-Z`|a`-z`|_`|0`-9`]`* brightalt
    rule \" brightalt
+   rule \n brightalt
+   rule \t brightalt
    rule \\ brightalt
 /context
 

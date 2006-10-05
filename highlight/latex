@@ -1,0 +1,11 @@
+FILES
+name suffix .tex
+RULES   
+
+context % `$ dim
+/context
+
+rule \`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightalt
+
+rule { brightdiff
+rule } brightdiff

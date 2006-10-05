@@ -1,6 +1,6 @@
 FILES
 name suffix .py
-firstline regex ^#!.*/python($|[[:blank:]].*)
+firstline regex ^#!.*python($|[[:blank:]].*)
 RULES
 context # `$ dim
 /context

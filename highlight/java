@@ -26,6 +26,7 @@ rule class bright
 rule private bright
 rule protected bright
 rule public bright
+rule native bright
 
 rule import bright
 rule instanceof bright

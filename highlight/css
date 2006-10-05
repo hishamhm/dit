@@ -67,6 +67,9 @@ rule `[0`-9`]`+px alt
 context // `$ dim
 /context
 
+context /* */ dim
+/context
+
 rule body brightdiff
 rule pre brightdiff
 rule img brightdiff
