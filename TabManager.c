@@ -39,8 +39,11 @@ TabPageClass TabPageType = {
 
 TabPage* TabPage_new(char* name, Buffer* buffer) {
    TabPage* this = Alloc(TabPage);
-   if (name)
+   if (name) {
       this->name = String_copy(name);
+   } else {
+      this->name = NULL;
+   }
    this->buffer = buffer;
    return this;
 }
