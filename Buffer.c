@@ -96,42 +96,47 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command) {
    gettimeofday(&tv, NULL);
    this->lastTime = tv.tv_sec * 1000000 + tv.tv_usec;
 
-   this->readOnly = (access(fileName, R_OK) == 0 && access(fileName, W_OK) != 0);
-   
    Panel* p = Panel_new(x, y, w-1, h, CRT_colors[NormalColor], ClassAs(Line, ListItem), true, this);
    this->panel = p;
    this->undo = Undo_new(p->items);
-   this->fileName = String_copy(fileName);
-   
-   FileReader* file = FileReader_new(fileName, command);
-   int i = 0;
-   if (file && !FileReader_eof(file)) {
-      int len = 0;
-      char* text = FileReader_readLine(file, &len);
-      this->hl = Highlight_new(fileName, text);
-      if (strchr(text, '\t')) this->tabCharacters = true;
-      Line* line = Line_new(p->items, text, len, this->hl->mainContext);
-      Panel_set(p, i, (ListItem*) line);
-      while (!FileReader_eof(file)) {
-         i++;
+   this->fileName = NULL;
+   bool newFile = true;
+   if (fileName) {
+      this->fileName = String_copy(fileName);
+      this->readOnly = (access(fileName, R_OK) == 0 && access(fileName, W_OK) != 0);
+      
+      FileReader* file = FileReader_new(fileName, command);
+      int i = 0;
+      if (file && !FileReader_eof(file)) {
+         newFile = false;
+         int len = 0;
          char* text = FileReader_readLine(file, &len);
-         if (text) {
-            if (!this->tabCharacters && strchr(text, '\t')) this->tabCharacters = true;
-            Line* line = Line_new(p->items, text, len, this->hl->mainContext);
-            Panel_set(p, i, (ListItem*) line);
+         this->hl = Highlight_new(fileName, text);
+         if (strchr(text, '\t')) this->tabCharacters = true;
+         Line* line = Line_new(p->items, text, len, this->hl->mainContext);
+         Panel_set(p, i, (ListItem*) line);
+         while (!FileReader_eof(file)) {
+            i++;
+            char* text = FileReader_readLine(file, &len);
+            if (text) {
+               if (!this->tabCharacters && strchr(text, '\t')) this->tabCharacters = true;
+               Line* line = Line_new(p->items, text, len, this->hl->mainContext);
+               Panel_set(p, i, (ListItem*) line);
+            }
          }
+         FileReader_delete(file);
+         Buffer_restorePosition(this);
+         Undo_restore(this->undo, fileName);
       }
    } else {
+      this->readOnly = false;
+   }
+   if (newFile) {
       this->hl = Highlight_new(fileName, "");
       Panel_set(p, 0, (ListItem*) Line_new(p->items, String_copy(""), 0, this->hl->mainContext));
    }
-   if (file)
-      FileReader_delete(file);
 
    this->savedContext = this->hl->mainContext;
-
-   Buffer_restorePosition(this);
-   Undo_restore(this->undo, fileName);
 
    return this;
 }
@@ -163,15 +168,6 @@ inline void Buffer_restorePosition(Buffer* this) {
       }
       fclose(fd);
    }
-}
-
-void Buffer_goto(Buffer* this, int x, int y) {
-   Panel_setSelected(this->panel, y);
-   this->line = (Line*) Panel_getSelected(this->panel);
-   this->y = Panel_getSelectedIndex(this->panel);
-   this->x = MIN(x, this->line->len);
-   this->panel->scrollV = MAX(0, this->y - (this->panel->h / 2));
-   this->panel->needsRedraw = true;
 }
 
 inline void Buffer_storePosition(Buffer* this) {
@@ -238,6 +234,17 @@ inline void Buffer_storePosition(Buffer* this) {
       fclose(fd);
    } else
       return;
+}
+
+void Buffer_goto(Buffer* this, int x, int y) {
+   if (y < 0)
+      y += Panel_size(this->panel);
+   Panel_setSelected(this->panel, y);
+   this->line = (Line*) Panel_getSelected(this->panel);
+   this->y = Panel_getSelectedIndex(this->panel);
+   this->x = MIN(x, this->line->len);
+   this->panel->scrollV = MAX(0, this->y - (this->panel->h / 2));
+   this->panel->needsRedraw = true;
 }
 
 void Buffer_draw(Buffer* this) {
@@ -375,8 +382,10 @@ inline void Buffer_highlightBracket(Buffer* this) {
 }
 
 void Buffer_delete(Buffer* this) {
-   Buffer_storePosition(this);
-   free(this->fileName);
+   if (this->fileName) {
+      Buffer_storePosition(this);
+      free(this->fileName);
+   }
    Msg0(Object, delete, this->panel);
 
    Undo_delete(this->undo);
@@ -478,6 +487,7 @@ void Buffer_forwardChar(Buffer* this) {
       this->y++;
    }
    this->savedX = Line_widthUntil(this->line, this->x);
+   this->selecting = false;
 }
 
 void Buffer_forwardWord(Buffer* this) {
@@ -489,6 +499,7 @@ void Buffer_forwardWord(Buffer* this) {
       this->y++;
    }
    this->savedX = Line_widthUntil(this->line, this->x);
+   this->selecting = false;
 }
 
 void Buffer_backwardWord(Buffer* this) {
@@ -501,6 +512,7 @@ void Buffer_backwardWord(Buffer* this) {
       this->y--;
    }
    this->savedX = Line_widthUntil(this->line, this->x);
+   this->selecting = false;
 }
 
 void Buffer_backwardChar(Buffer* this) {
@@ -513,6 +525,7 @@ void Buffer_backwardChar(Buffer* this) {
       this->y--;
    }
    this->savedX = Line_widthUntil(this->line, this->x);
+   this->selecting = false;
 }
 
 void Buffer_beginningOfLine(Buffer* this) {
@@ -524,20 +537,24 @@ void Buffer_beginningOfLine(Buffer* this) {
    if (prevX == this->x)
       this->x = 0;
    this->savedX = Line_widthUntil(this->line, this->x);
+   this->selecting = false;
 }
 
 void Buffer_endOfLine(Buffer* this) {
    this->x = this->line->len;
    this->savedX = Line_widthUntil(this->line, this->x);
+   this->selecting = false;
 }
 
 void Buffer_beginningOfFile(Buffer* this) {
    Buffer_goto(this, 0, 0);
+   this->selecting = false;
 }
 
 void Buffer_endOfFile(Buffer* this) {
    Buffer_goto(this, 0, Panel_size(this->panel) - 1);
    Buffer_endOfLine(this);
+   this->selecting = false;
 }
 
 int Buffer_size(Buffer* this) {
@@ -545,11 +562,13 @@ int Buffer_size(Buffer* this) {
 }
 
 void Buffer_previousPage(Buffer* this) {
-   Buffer_goto(this, this->x, this->y - this->panel->h);
+   Buffer_goto(this, this->x, MAX(this->y - this->panel->h, 0));
+   this->selecting = false;
 }
 
 void Buffer_nextPage(Buffer* this) {
-   Buffer_goto(this, this->x, this->y + this->panel->h);
+   Buffer_goto(this, this->x, MAX(this->y + this->panel->h, 0));
+   this->selecting = false;
 }
 
 void Buffer_wordWrap(Buffer* this, int wrap) {
@@ -779,22 +798,26 @@ void Buffer_upLine(Buffer* this) {
    this->savedY = this->y;
    Panel_onKey(this->panel, KEY_UP);
    Buffer_correctPosition(this);
+   this->selecting = false;
 }
 
 void Buffer_downLine(Buffer* this) {
    this->savedY = this->y;
    Panel_onKey(this->panel, KEY_DOWN);
    Buffer_correctPosition(this);
+   this->selecting = false;
 }
 
 void Buffer_slideUpLine(Buffer* this) {
    Panel_onKey(this->panel, KEY_C_UP);
    Buffer_correctPosition(this);
+   this->selecting = false;
 }
 
 void Buffer_slideDownLine(Buffer* this) {
    Panel_onKey(this->panel, KEY_C_DOWN);
    Buffer_correctPosition(this);
+   this->selecting = false;
 }
 
 void Buffer_correctPosition(Buffer* this) {
@@ -871,9 +894,7 @@ void Buffer_indent(Buffer* this) {
 }
       
 void Buffer_defaultKeyHandler(Buffer* this, int ch) {
-   bool handled = Panel_onKey(this->panel, ch);
-
-   if (!handled && ((ch >= 32 && ch <= 255) || ch == '\t')) {
+   if ((ch >= 32 && ch <= 255) || ch == '\t') {
       if (this->selecting) {
          Buffer_deleteBlock(this);
       }
@@ -1007,6 +1028,7 @@ bool Buffer_find(Buffer* this, char* needle, bool findNext, bool caseSensitive, 
 }
 
 bool Buffer_save(Buffer* this) {
+   assert(this->fileName);
    FILE* fd = fopen(this->fileName, "w");
    if (!fd)
       return false;
@@ -1030,4 +1052,12 @@ void Buffer_resize(Buffer* this, int w, int h) {
 
 void Buffer_refresh(Buffer* this) {
    this->panel->needsRedraw = true;
+}
+
+void Buffer_toggleMarking(Buffer* this) {
+   this->marking = !this->marking;
+}
+
+void Buffer_toggleTabCharacters(Buffer* this) {
+   this->tabCharacters = !this->tabCharacters;
 }
