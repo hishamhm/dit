@@ -1,5 +1,8 @@
 #!/bin/sh
 
+prog=$1
+shift
+
 if [ -e libefence.a ]
 then EFENCE=libefence.a
 else EFENCE=
@@ -23,47 +26,67 @@ do
    echo -n "-l$i "
 done
 )
+optlinks=`mktemp`
+{
+for i in *.c
+do
+   grep "^//#optlink " $i | cut -d" " -f2- | tr " " "\n"
+done
+} | sort -u > $optlinks
+LIBS=$LIBS$(
+cat $optlinks | while read i
+do
+   echo "$@" | grep -q -- "--with-$i" && echo -n "-l$i"
+done
+)
+DEFINES=$(
+cat $optlinks | while read i
+do
+   I=`echo $i | tr '[:lower:]' '[:upper:]'`
+   echo "$@" | grep -q -- "--with-$i" && echo -n "-DUSE_$I"
+done
+)
+
 echo
-echo "prefix=@prefix@"
-echo 'exec_prefix=@exec_prefix@'
-echo 'bindir=@bindir@'
+echo "prefix=/usr"
+echo 'bindir=$(prefix)/bin'
 echo "OBJS=$OBJS"
 echo "HEADERS=Prototypes.h Structures.h"
 echo "LIBS=$LIBS"
-echo "MYCFLAGS=-pedantic -Wall -Werror -std=c99"
+echo "MYCFLAGS=-pedantic -Wall -Werror -std=c99 "$DEFINES
 echo ".PHONY=clean debug"
+echo
+echo 'all: MYCFLAGS += -O3 -finline-functions -finline-limit=1200'
+echo 'all: '$prog
+echo '	strip '$prog
 echo
 echo 'debug: MYCFLAGS += -g -DDEBUG'
 echo 'debug: LIBS += '$EFENCE' -lpthread'
-echo 'debug: '$1
+echo 'debug: '$prog
 echo
 echo 'debuglite: MYCFLAGS += -g -DDEBUGLITE'
 echo 'debuglite: LIBS += '$EFENCE' -lpthread'
-echo 'debuglite: '$1
+echo 'debuglite: '$prog
 echo
 echo 'gcov: MYCFLAGS += -fprofile-arcs -ftest-coverage'
-echo 'gcov: '$1
+echo 'gcov: '$prog
 echo
-echo 'all: MYCFLAGS += -O3 -finline-functions -finline-limit=1200'
-echo 'all: '$1
-echo '	strip '$1
-echo
-echo $1': $(OBJS)'
-#echo $1': debug.h $(OBJS)'
-echo '	gcc $(MYCFLAGS) -o '$1' $(OBJS) $(LIBS)'
+echo $prog': $(OBJS)'
+#echo $prog': debug.h $(OBJS)'
+echo '	gcc $(MYCFLAGS) -o '$prog' $(OBJS) $(LIBS)'
 echo
 #echo 'debug.h: debug.h.in DebugMemory.h'
 #echo '	cp debug.h.in debug.h'
 echo
 echo 'profile: MYCFLAGS += -pg -O3'
-echo 'profile: '$1
+echo 'profile: '$prog
 echo
 echo 'clean:'
-echo '	rm -f core* '$1' $(OBJS) $(HEADERS) *.gcov *.bb *.bbg *.da order.txt'
+echo '	rm -f core* '$prog' $(OBJS) $(HEADERS) *.gcov *.bb *.bbg *.da order.txt'
 echo
 echo 'install:'
 echo '	mkdir -p $(bindir)'
-echo '	cp '$1' $(bindir)'
+echo '	cp '$prog' $(bindir)'
 echo
 for i in *.c
 do

@@ -1,6 +1,9 @@
 
-//#link script
+//#optlink script
+
+#ifdef USE_SCRIPT
 #include <libscript.h>
+#endif
 
 #include "Prototypes.h"
 
@@ -28,10 +31,13 @@ struct ScriptFunction_ {
 
 }*/
 
+#ifdef USE_SCRIPT
 static script_env* Script_env;
+#endif
 
 static Buffer* Script_buffer;
 
+#ifdef USE_SCRIPT
 static ScriptFunction Script_dispatchTable[] = {
    { .name = "backwardChar",  .type = VOID_FUNCTION, .f.vf = (ScriptVoidFunction) Buffer_backwardChar  },
    { .name = "indent",        .type = VOID_FUNCTION, .f.vf = (ScriptVoidFunction) Buffer_indent        },
@@ -101,8 +107,10 @@ script_err Script_fn_dispatcher(script_env* env) {
       }
    return SCRIPT_OK;
 }
+#endif
 
 void Script_init() {
+#ifdef USE_SCRIPT
    int i;
    Script_env = script_init("dit");
    script_new_function(Script_env, Script_fn_write, "write");
@@ -110,13 +118,16 @@ void Script_init() {
    script_new_function(Script_env, Script_fn_breakIndenting, "breakIndenting");
    for (i = 0; Script_dispatchTable[i].name; i++)
       script_new_function(Script_env, Script_fn_dispatcher, Script_dispatchTable[i].name);
+#endif
 }
 
 // TODO: script environments should vary based on buffer! Oh my!
 void Script_loadExtensions(char* name) {
+#ifdef USE_SCRIPT
    char fullPath[4096];
    snprintf(fullPath, 4095, "%s_mode", name);   
    script_run_file(Script_env, fullPath);
+#endif
 }
 
 void Script_setCurrentBuffer(Buffer* buffer) {
@@ -124,5 +135,7 @@ void Script_setCurrentBuffer(Buffer* buffer) {
 }
 
 void Script_hook(const char* name) {
+#ifdef USE_SCRIPT
    script_call(Script_env, name);
+#endif
 }
