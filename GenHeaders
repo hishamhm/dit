@@ -21,7 +21,7 @@ includes() {
 }
 
 proto() {
-   cat "$1" | grep --text -v "^static" | grep '^[^ ].*) {$' | sed 's,) {$,);,' >> Prototypes.h
+   cpp "$1" 2> /dev/null | grep --text -v "^static" | grep '^[^ ].*) {$' | sed 's,) {$,);,' >> Prototypes.h
 }
 
 process() {
