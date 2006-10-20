@@ -10,7 +10,7 @@ rule while bright
 rule switch bright
 rule case bright
 rule break bright
-rule bool bright
+rule boolean bright
 rule continue bright
 rule return bright
 rule inline bright
