@@ -143,6 +143,7 @@ void PatternMatcher_add(PatternMatcher* this, unsigned char* pattern, int value)
       i++;
    }
    input[i] = '\0';
+   special[i] = '\0';
    GraphNode* start = this->start;
    if (*special && *input == '^') {
       if (!this->lineStart)
