@@ -34,7 +34,7 @@ typedef struct DebugMemory_ {
 
 }*/
 
-#if defined(DEBUG)
+//#if defined(DEBUG)
 
 static DebugMemory* singleton = NULL;
 
@@ -85,7 +85,8 @@ void* DebugMemory_realloc(void* ptr, int size, char* file, int line, char* str) 
 
 void* DebugMemory_strdup(char* str, char* file, int line) {
    assert(str);
-   char* data = strdup(str);
+   char* data = malloc((((strlen(str)+1)/4)+1)*4);
+   strcpy(data, str);
    DebugMemory_registerAllocation(data, file, line);
    if (singleton->file) {
       if (singleton->totals) fprintf(singleton->file, "%d\t", singleton->size);
@@ -213,8 +214,8 @@ void DebugMemory_report() {
       fclose(singleton->file);
 }
 
-#elif defined(DEBUGLITE)
+//#elif defined(DEBUGLITE)
 
-#include "efence.h"
+//#include "efence.h"
 
-#endif
+//#endif
