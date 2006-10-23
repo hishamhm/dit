@@ -158,8 +158,8 @@ void DebugMemory_registerAllocation(void* data, char* file, int line) {
          walk = walk->next;
       }
    }
-   int nval = DebugMemory_getBlockCount();
-   assert(nval == val + 1);
+   (void)val;
+   assert(DebugMemory_getBlockCount() == val + 1);
    singleton->allocations++;
    singleton->size++;
    DebugMemory_assertSize();
@@ -171,6 +171,7 @@ void DebugMemory_registerDeallocation(void* data, char* file, int line) {
    DebugMemoryItem* walk = singleton->first;
    DebugMemoryItem* prev = NULL;
    int val = DebugMemory_getBlockCount();
+   (void)val;
    while (walk != NULL) {
       assert(walk->magic == 11061980);
       if (walk->data == data) {

@@ -26,7 +26,7 @@ do
    echo -n "-l$i "
 done
 )
-optlinks=`mktemp`
+optlinks=`mktemp /tmp/tmp.XXXXXX`
 {
 for i in *.c
 do

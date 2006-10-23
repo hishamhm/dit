@@ -499,8 +499,10 @@ int CRT_getCharacter() {
    if (ch == KEY_LEFT || ch == KEY_RIGHT || ch == KEY_UP || ch == KEY_DOWN
        || ch == KEY_HOME || ch == KEY_END || ch == KEY_IC || ch == KEY_DC || ch == '\t') {
       unsigned char modifiers = 6;
+      #ifdef linux
       int err = ioctl(0, TIOCLINUX, &modifiers);
       if (err) return ch;
+      #endif
       switch (modifiers) {
       case SHIFT_MASK:
          switch (ch) {
