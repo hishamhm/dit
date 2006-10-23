@@ -632,10 +632,10 @@ int main(int argc, char** argv) {
       fprintf(stderr, "dit: %s is a directory.\n", name);
       exit(0);
    }
-   char dir[1000];
    if (name) {
-      realpath(name, dir);
-      dirname(dir);
+      char dirbuf[1000];
+      realpath(name, dirbuf);
+      char* dir = dirname(dirbuf);
       bool exists = (access(name, F_OK) == 0);
       bool canWriteDir = (access(dir, W_OK) == 0);
       bool canWrite = (access(name, W_OK) == 0);
