@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 clear
 reset -w
