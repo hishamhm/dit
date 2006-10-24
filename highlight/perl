@@ -1,5 +1,6 @@
 FILES
 name suffix .pl
+name suffix .PL
 name suffix .pm
 firstline regex ^#!.*/[a-z]*/perl($|[:blank:])
 RULES
