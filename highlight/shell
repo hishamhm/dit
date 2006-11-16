@@ -128,6 +128,7 @@ context `` `` brightspecial brightspecial special
       rule ${`[a`-z`|A`-Z`|0`-9`|_[]%!@#-$*?_`s`]`+} brightspecialdiff
       rule ${`[!@#$*?_`]} brightspecialdiff
       rule $`[!@#$*?_`] brightspecialdiff
+      rule \" special
    /context
    context ' ' specialdiff
    /context
