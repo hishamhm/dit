@@ -359,8 +359,8 @@ void Undo_store(Undo* this, char* fileName) {
          fwrite(action->data.str.buf, sizeof(char), action->data.str.len, ufd);
          break;
       case UndoInsertBlock:
-         fwrite(&action->data.coord.xTo, sizeof(char), 1, ufd);
-         fwrite(&action->data.coord.yTo, sizeof(char), 1, ufd);
+         fwrite(&action->data.coord.xTo, sizeof(int), 1, ufd);
+         fwrite(&action->data.coord.yTo, sizeof(int), 1, ufd);
          break;
       case UndoUnindent:
          fwrite(&action->data.unindent.len, sizeof(int), 1, ufd);
@@ -435,9 +435,9 @@ void Undo_restore(Undo* this, char* fileName) {
          if (read < action->data.str.len) { fclose(ufd); return; }
          break;
       case UndoInsertBlock:
-         read = fread(&action->data.coord.xTo, sizeof(char), 1, ufd);
+         read = fread(&action->data.coord.xTo, sizeof(int), 1, ufd);
          if (read < 1) { fclose(ufd); return; }
-         read = fread(&action->data.coord.yTo, sizeof(char), 1, ufd);
+         read = fread(&action->data.coord.yTo, sizeof(int), 1, ufd);
          if (read < 1) { fclose(ufd); return; }
          break;
       case UndoUnindent:
