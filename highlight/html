@@ -23,8 +23,11 @@ context <?`[a`-z`]`* ?> veryspecial veryspecial special
    rule $`[A`-Z_a`-z`]`[A`-Z_a`-z0`-9`]`* brightspecialdiff
    context " " specialdiff
       rule $`[A`-Z_a`-z`]`[A`-Z_a`-z0`-9`]`* brightspecialdiff
+      rule \" brightspecialdiff
    /context
    context ' ' specialdiff
+   /context
+   context /* */ dim
    /context
 /context
 
@@ -178,10 +181,8 @@ context <ol > alt
 /context
 rule </ol> altse
 
-context <pre> </pre> alt alt diff
-   context < > alt
-   /context
-/context
+rule <pre> alt
+rule </pre> alt
 
 context <p > alt
    context " " diff
@@ -292,3 +293,33 @@ context <area > alt
    rule title brightalt
 /context
 rule </area> alt
+
+context <form > alt
+   context " " diff
+   /context
+   rule = bright
+   rule method brightalt
+   rule action brightalt
+/context
+rule </form> alt
+
+context <textarea > alt
+   context " " diff
+   /context
+   rule = bright
+   rule rows brightalt
+   rule cols brightalt
+   rule name brightalt
+   rule wrap brightalt
+   rule readonly brightalt
+/context
+rule </textarea> alt
+
+context <input > alt
+   context " " diff
+   /context
+   rule = bright
+   rule type brightalt
+   rule value brightalt
+   rule name brightalt
+/context
