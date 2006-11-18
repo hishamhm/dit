@@ -9,7 +9,7 @@ context # `$ dim
 
 rule `^`[A`-Za`-z_-.0`-9/()$`]`+: brightdiff
 
-context = `$ brightdiff normal alt
+context `[+?`]`?= `$ brightdiff normal alt
    rule $(`[A`-Za`-z_0`-9`]`+) brightalt
    rule ${`[A`-Za`-z_0`-9`]`+} special
 /context
