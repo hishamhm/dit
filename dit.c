@@ -179,9 +179,10 @@ static void Dit_paste(Buffer* buffer) {
       Dit_clipboard = Clipboard_new();
    int blockLen;
    char* block = Clipboard_get(Dit_clipboard, &blockLen);
-   if (block)
+   if (block) {
       Buffer_pasteBlock(buffer, block, blockLen);
-   free(block);
+      free(block);
+   }
    buffer->selecting = false;
 }
 
@@ -281,6 +282,18 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                Buffer_slideDownLine(buffer);
                Buffer_draw(buffer);
                break;
+            case KEY_CTRL('V'):
+            {
+               if (!Dit_clipboard)
+                  break;
+               int blockLen = 0;
+               char* block = Clipboard_get(Dit_clipboard, &blockLen);
+               if (block) {
+                  Field_setValue(Dit_findField, block);
+                  free(block);
+               }
+               break;
+            }
             case KEY_CTRL('I'):
             case KEY_CTRL('C'):
             case KEY_F(2):
@@ -626,7 +639,7 @@ int main(int argc, char** argv) {
 
    int quit = 0;
    
-   struct stat st;
+   struct stat st = {0};
    stat(name, &st);
    if (S_ISDIR(st.st_mode)) {
       fprintf(stderr, "dit: %s is a directory.\n", name);
