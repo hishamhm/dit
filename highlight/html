@@ -29,6 +29,8 @@ context <?`[a`-z`]`* ?> veryspecial veryspecial special
    /context
    context /* */ dim
    /context
+   context // `$ dim
+   /context
 /context
 
 insensitive
