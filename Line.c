@@ -100,6 +100,7 @@ void Line_display(Object* cast, RichString* str) {
          attrs[outIndex - tabSize] |= CRT_colors[DimColor];
          */
       } else if (curr < 32) {
+         attrs[outIndex] = CRT_colors[AlertColor];
          out[outIndex++] = curr + 'A' - 1;
       } else {
          out[outIndex++] = curr;
