@@ -23,6 +23,7 @@ context <?`[a`-z`]`* ?> veryspecial veryspecial special
    rule $`[A`-Z_a`-z`]`[A`-Z_a`-z0`-9`]`* brightspecialdiff
    context " " specialdiff
       rule $`[A`-Z_a`-z`]`[A`-Z_a`-z0`-9`]`* brightspecialdiff
+      rule \\ brightspecialdiff
       rule \" brightspecialdiff
    /context
    context ' ' specialdiff
