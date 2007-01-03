@@ -1,11 +1,13 @@
 FILES
 name suffix .tex
+name suffix .cls
+name suffix .sty
 RULES   
 
 context % `$ dim
 /context
 
-rule \`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightalt
+rule \`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_@*`]`* brightalt
 
 rule { brightdiff
 rule } brightdiff

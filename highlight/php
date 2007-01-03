@@ -1,30 +1,37 @@
 FILES
-name suffix .html
-name suffix .htm
+name suffix .php
+name suffix .inc
 RULES
 
-context <?`[a`-z`]`* ?> veryspecial veryspecial special
-   rule if  brightspecial
-   rule else brightspecial
-   rule include brightspecial
-   rule function brightspecial
-   rule global brightspecial
-   rule echo brightspecial
-   rule isset brightspecial
-   rule = brightspecial
-   rule { brightspecial
-   rule } brightspecial   
-   rule ( brightspecial
-   rule ) brightspecial   
-   rule [ brightspecial
-   rule ] brightspecial   
-   rule $`[A`-Z_a`-z`]`[A`-Z_a`-z0`-9`]`* brightspecialdiff
-   context " " specialdiff
-      rule $`[A`-Z_a`-z`]`[A`-Z_a`-z0`-9`]`* brightspecialdiff
-      rule \\ brightspecialdiff
-      rule \" brightspecialdiff
+context <?`[a`-z`]`* ?> veryspecial veryspecial normal
+   rule continue bright
+   rule if  bright
+   rule else bright
+   rule for bright
+   rule foreach bright
+   rule as bright
+   rule include bright
+   rule function bright
+   rule global bright
+   rule echo bright
+   rule isset bright
+   rule switch bright
+   rule case bright
+   rule = bright
+   rule { bright
+   rule } bright
+   rule ( bright
+   rule ) bright
+   rule [ bright
+   rule ] bright
+   rule -> bright
+   rule $`[A`-Z_a`-z`]`[A`-Z_a`-z0`-9`]`* brightdiff
+   context " " alt
+      rule $`[A`-Z_a`-z`]`[A`-Z_a`-z0`-9`]`* brightalt
+      rule \\ brightalt
+      rule \" brightalt
    /context
-   context ' ' specialdiff
+   context ' ' alt
    /context
    context /* */ dim
    /context
