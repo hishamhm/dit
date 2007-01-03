@@ -1,5 +1,5 @@
+* populate README file with text from the website
 * make libscript optional
-* use autotools
 * autoindent in TABS mode
 * configurable 'whole word' in highlighting ("\tblabla" in C)
 * centralize color configuration
