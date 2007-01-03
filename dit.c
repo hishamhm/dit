@@ -108,10 +108,7 @@ static bool confirmClose(Buffer* buffer, TabManager* tabs, char* question) {
 }
 
 static inline void restoreRecentHistory(TabManager* tabs, int items) {
-   char fileName[4097];
-   snprintf(fileName, 4096, "%s/.dit/recent", getenv("HOME"));
-   fileName[4095] = '\0';
-   FILE* fd = fopen(fileName, "r");
+   FILE* fd = Files_openHome("r", "recent", NULL);
    if (fd) {
       char line[256];
       while (!feof(fd)) {
@@ -133,10 +130,7 @@ static inline void restoreRecentHistory(TabManager* tabs, int items) {
 }
 
 static inline void storeRecentHistory(TabManager* tabs) {
-   char fileName[4097];
-   snprintf(fileName, 4096, "%s/.dit/recent", getenv("HOME"));
-   fileName[4095] = '\0';
-   FILE* fd = fopen(fileName, "w");
+   FILE* fd = Files_openHome("w", "recent", NULL);
    if (fd) {
       int items = Vector_size(tabs->items);
       for (int i = 0, j = 0; j < 5 && i < items; i++) {
@@ -592,19 +586,18 @@ static void Dit_loadHardcodedBindings(Dit_Action* keys) {
 static void Dit_parseBindings(Dit_Action* keys) {
    for (int i = 0; i < KEY_MAX; i++)
       keys[i] = 0;
-   char buffer[PATH_MAX+1];
-   snprintf(buffer, PATH_MAX, "%s/.dit/bindings/default", getenv("HOME"));
-   FILE* fd = fopen(buffer, "r");
+   FILE* fd = Files_open("r", "bindings/default", NULL);
    if (!fd) {
       clear();
-      mvprintw(0,0,"Warning: could not parse key bindings file %s", buffer);
+      mvprintw(0,0,"Warning: could not parse key bindings file bindings/default");
       mvprintw(1,0,"Press any key to load hardcoded defaults.");
       getch();
       Dit_loadHardcodedBindings(keys);
       return;
    }
    while (!feof(fd)) {
-      fgets(buffer, PATH_MAX, fd);
+      char buffer[256];
+      fgets(buffer, 255, fd);
       char** tokens = String_split(buffer, 0);
       char* key = tokens[0]; if (!key) goto nextLine;
       char* action = tokens[1]; if (!action) goto nextLine;
@@ -664,6 +657,7 @@ int main(int argc, char** argv) {
             exit(0);
       }
    }
+   Files_makeHome();
    CRT_init();
    Dit_Action keys[KEY_MAX];
    Dit_registerActions();

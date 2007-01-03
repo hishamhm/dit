@@ -302,16 +302,10 @@ void Undo_undo(Undo* this, int* x, int* y) {
 static void Undo_makeFileName(Undo* this, char* fileName, char* undoFileName) {
    char rpath[4097];
    realpath(fileName, rpath);
-   snprintf(undoFileName, 4096, "%s/.dit", getenv("HOME"));
-   undoFileName[4095] = '\0';
-   mkdir(undoFileName, 0755);
-   snprintf(undoFileName, 4096, "%s/.dit/undo", getenv("HOME"));
-   undoFileName[4095] = '\0';
-   mkdir(undoFileName, 0755);
    for(char *c = rpath; *c; c++)
       if (*c == '/')
          *c = ':';
-   snprintf(undoFileName, 4096, "%s/.dit/undo/%s", getenv("HOME"), rpath);
+   strncpy(undoFileName, rpath, 4096);
    undoFileName[4095] = '\0';
 }
 
@@ -322,7 +316,7 @@ void Undo_store(Undo* this, char* fileName) {
    char md5buf[32];
    md5_stream(fd, &md5buf);
    fclose(fd);
-   FILE* ufd = fopen(undoFileName, "w");
+   FILE* ufd = Files_openHome("w", "undo/%s", undoFileName);
    if (!ufd)
       return;
    fwrite(md5buf, 16, 1, ufd);
@@ -381,7 +375,7 @@ void Undo_restore(Undo* this, char* fileName) {
    char md5curr[32], md5saved[32];
    md5_stream(fd, md5curr);
    fclose(fd);
-   FILE* ufd = fopen(undoFileName, "r");
+   FILE* ufd = Files_openHome("r", "undo/%s", undoFileName);
    if (!ufd)
       return;
    int read = fread(md5saved, 16, 1, ufd);

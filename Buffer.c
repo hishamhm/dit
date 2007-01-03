@@ -145,10 +145,7 @@ inline void Buffer_restorePosition(Buffer* this) {
    char rpath[256];
    realpath(this->fileName, rpath);
    
-   char fileposFileName[4097];
-   snprintf(fileposFileName, 4096, "%s/.dit/filepos", getenv("HOME"));
-   fileposFileName[4095] = '\0';
-   FILE* fd = fopen(fileposFileName, "r");
+   FILE* fd = Files_openHome("r", "filepos", NULL);
    if (fd) {
       int x, y;
       char line[256];
@@ -175,13 +172,7 @@ inline void Buffer_storePosition(Buffer* this) {
    char rpath[4097];
    realpath(this->fileName, rpath);
 
-   char fileposFileName[4097];
-   snprintf(fileposFileName, 4096, "%s/.dit", getenv("HOME"));
-   fileposFileName[4095] = '\0';
-   mkdir(fileposFileName, 0755);
-   snprintf(fileposFileName, 4096, "%s/.dit/filepos", getenv("HOME"));
-   fileposFileName[4095] = '\0';
-   FILE* fd = fopen(fileposFileName, "r");
+   FILE* fd = Files_openHome("r", "filepos", NULL);
    FilePosition* fps = NULL;
    FilePosition* prev = NULL;
    bool set = false;
@@ -221,7 +212,7 @@ inline void Buffer_storePosition(Buffer* this) {
    }
    if (!fps)
       return;
-   fd = fopen(fileposFileName, "w");
+   fd = Files_openHome("w", "filepos", NULL);
    if (fd) {
       FilePosition* fp = fps;
       while (fp) {

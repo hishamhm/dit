@@ -122,17 +122,16 @@ Hashtable* CRT_keys;
 
 void CRT_parseTerminalFile(char* term) {
 
-   char buffer[PATH_MAX+1];
-   snprintf(buffer, PATH_MAX, "%s/.dit/terminals/%s", getenv("HOME"), term);
-   FILE* fd = fopen(buffer, "r");
+   FILE* fd = Files_open("r", "terminals/%s", term);
    if (!fd) {
-      mvprintw(0,0,"Warning: could not parse terminal rules file %s", buffer);
+      mvprintw(0,0,"Warning: could not parse terminal rules file terminals/%s", term);
       mvprintw(1,0,"Press any key.");
       getch();
       return;
    }
    while (!feof(fd)) {
-      fgets(buffer, PATH_MAX, fd);
+      char buffer[256];
+      fgets(buffer, 255, fd);
       char** tokens = String_split(buffer, 0);
       char* sequence = tokens[0]; if (!sequence) goto nextLine;
       char* key = tokens[1]; if (!key) goto nextLine;
@@ -205,7 +204,7 @@ void CRT_init() {
    CRT_colors[SpecialDiffColor] = CRT_color(Red, Black);
    CRT_colors[BrightSpecialDiffColor] = A_BOLD | CRT_color(Red, Black);
    CRT_colors[VerySpecialColor] = A_BOLD | CRT_color(Yellow, Red);
-   CRT_colors[DimColor] = A_BOLD | CRT_color(Black, Black);
+   CRT_colors[DimColor] = CRT_color(Yellow, Black);
    CRT_colors[ScrollBarColor] = CRT_color(White, Blue);
    CRT_colors[ScrollHandleColor] = CRT_color(White, Cyan);
    CRT_colors[StatusColor] = CRT_color(Black, Cyan);
