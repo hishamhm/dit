@@ -193,7 +193,7 @@ int String_startsWith_i(char* s, char* match) {
 int String_contains_i(char* s, char* match) {
    int lens = strlen(s);
    int lenmatch = strlen(match);
-   for (int i = 0; i < lens-lenmatch; i++) {
+   for (int i = 0; i < (lens-lenmatch)+1; i++) {
       if (strncasecmp(s, match, lenmatch) == 0)
          return 1;
       s++;
@@ -204,7 +204,7 @@ int String_contains_i(char* s, char* match) {
 /* deprecated */
 int String_indexOf_i(char* s, char* match, int lens) {
    int lenmatch = strlen(match);
-   for (int i = 0; i < lens-lenmatch+1; i++) {
+   for (int i = 0; i < (lens-lenmatch)+1; i++) {
       if (strncasecmp(s, match, lenmatch) == 0)
          return i;
       s++;
@@ -215,7 +215,7 @@ int String_indexOf_i(char* s, char* match, int lens) {
 /* deprecated */
 int String_indexOf(char* s, char* match, int lens) {
    int lenmatch = strlen(match);
-   for (int i = 0; i < lens-lenmatch+1; i++) {
+   for (int i = 0; i < (lens-lenmatch)+1; i++) {
       if (strncmp(s, match, lenmatch) == 0)
          return i;
       s++;

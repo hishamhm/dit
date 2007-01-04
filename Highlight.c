@@ -6,6 +6,7 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <regex.h>
+#include <stdbool.h>
 
 #include "Prototypes.h"
 //#needs Object
@@ -33,6 +34,12 @@ struct Highlight_ {
    HighlightContext* currentContext;
    // PatternMatcher* words;
    bool toLower;
+};
+
+struct ReadHighlightFileArgs_ {
+   Highlight* this;
+   const char* fileName;
+   const char* firstLine;
 };
 
 #ifndef isword
@@ -73,155 +80,12 @@ Highlight* Highlight_new(const char* fileName, const char* firstLine) {
 
    this->contexts = Vector_new(ClassAs(HighlightContext, Object), true, DEFAULT_SIZE);
    this->currentContext = NULL;
-   char highlightPath[4096];
-   snprintf(highlightPath, 4095, "%s/.dit/highlight", getenv("HOME"));
-   highlightPath[4095] = '\0';
-   DIR* dir = opendir(highlightPath);
-   while (dir) {
-      struct dirent* entry = readdir(dir);
-      if (!entry) break;
-      if (entry->d_name[0] == '.') continue;
-      snprintf(highlightPath, 4095, "%s/.dit/highlight/%s", getenv("HOME"), entry->d_name);
-      highlightPath[4095] = '\0';
-      FILE* file = fopen(highlightPath, "r");
-      if (!file) continue;
-
-      char buffer[4096];
-      int state = 1;
-      bool success = true;
-      this->mainContext = Highlight_addContext(this, NULL, NULL, NULL, NormalColor);
-      HighlightContext* context = this->mainContext;
-      Stack* contexts = Stack_new(ClassAs(HighlightContext, Object), false);
-      Stack_push(contexts, context, 0);
-      int lineno = 0;
-      this->toLower = false;
-      while (success && !feof(file)) {
-         fgets(buffer, 4095, file);
-         lineno++;
-         char* ch = strchr(buffer, '\n');
-         if (ch) *ch = '\0';
-         ch = buffer;
-         while (!(isalpha(*ch) || *ch == '\0')) ch++;
-         if (*ch == '\0') continue;
-
-         buffer[4095] = '\0';
-         char** tokens = String_split(buffer, ' ');
-         int ntokens;
-         for (ntokens = 0; tokens[ntokens]; ntokens++);
-         if (ntokens > 0 && tokens[0][0] != '#')
-         switch (state) {
-         case 1:
-         {
-            // Read FILES header
-            if (!String_eq(tokens[0], "FILES") && ntokens == 1)
-               success = false;
-            state = 2;
-            break;
-         }
-         case 2:
-         {
-            // Try to match FILES rule
-            const char* subject = NULL;
-            if (!fileName) {
-               success = false;
-               break;
-            }
-            if (String_eq(tokens[0],"name")) {
-               subject = fileName;
-               char* lastSlash = strrchr(subject, '/');
-               if (lastSlash)
-                  subject = lastSlash + 1;
-            } else if (String_eq(tokens[0], "firstline"))
-               subject = firstLine;
-            else
-               success = false;
-            if (success) {
-               if (String_eq(tokens[1], "prefix") && ntokens == 3) {
-                  if (String_startsWith(subject, tokens[2]))
-                     state = 3;
-               } else if (String_eq(tokens[1], "suffix") && ntokens == 3) {
-                  if (String_endsWith(subject, tokens[2]))
-                     state = 3;
-               } else if (String_eq(tokens[1], "regex") && ntokens == 3) {
-                  regex_t magic;
-                  regcomp(&magic, tokens[2], REG_EXTENDED | REG_NOSUB);
-                  if (regexec(&magic, firstLine, 0, NULL, 0) == 0)
-                     state = 3;
-                  regfree(&magic);
-               } else {
-                  success = false;
-               }
-            }
-            break;
-         }
-         case 3:
-         {
-            // FILES match succeeded. Skip over other FILES section,
-            // waiting for RULES section
-            if (String_eq(tokens[0], "RULES") && ntokens == 1) {
-               Script_loadExtensions(highlightPath);
-               state = 4;
-            }
-            break;
-         }
-         case 4:
-         {
-            // Read RULES section
-            if (String_eq(tokens[0], "context") && (ntokens == 4 || ntokens == 6)) {
-               char* open = tokens[1];
-               char* close = (String_eq(tokens[2], "`$") ? NULL : tokens[2]);
-               Color color;
-               if (ntokens == 6) {
-                  HighlightContext_addRule(context, open, Highlight_translateColor(tokens[3]));
-                  color = Highlight_translateColor(tokens[5]);
-               } else {
-                  color = Highlight_translateColor(tokens[3]);
-                  HighlightContext_addRule(context, open, color);
-               }
-               context = Highlight_addContext(this, open, close, Stack_peek(contexts, NULL), color);
-               if (close) {
-                  color = (ntokens == 6 ? Highlight_translateColor(tokens[4]) : color);
-                  HighlightContext_addRule(context, close, color);
-               }
-               Stack_push(contexts, context, 0);
-            } else if (String_eq(tokens[0], "/context") && ntokens == 1) {
-               if (contexts->size > 1) {
-                  Stack_pop(contexts, NULL);
-                  context = Stack_peek(contexts, NULL);
-               }
-            } else if (String_eq(tokens[0], "rule") && ntokens == 3) {
-               HighlightContext_addRule(context, tokens[1], Highlight_translateColor(tokens[2]));
-            } else if (String_eq(tokens[0], "insensitive") && ntokens == 1) {
-               this->toLower = true;
-            } else {
-               mvprintw(0,0,"Error reading %s: line %d: %s", highlightPath, lineno, buffer);
-               getch();
-               success = false;
-            }
-            break;
-         }
-         }
-         for (int i = 0; tokens[i]; i++)
-            free(tokens[i]);
-         free(tokens);
-      }
-      fclose(file);
-      if (contexts->size != 1) {
-         mvprintw(0,0,"Error reading %s: %d context%s still open", highlightPath, contexts->size - 1, contexts->size > 2 ? "s" : "");
-         getch();
-         success = false;
-      }
-      Stack_delete(contexts);
-      if (success && state == 4) {
-         this->currentContext = this->mainContext;
-         break;
-      } else {
-         Vector_prune(this->contexts);
-      }
-   }
-   if (dir) {
-      closedir(dir);
-   }
+   
+   ReadHighlightFileArgs args;
+   args.this = this;
+   args.fileName = fileName;
+   args.firstLine = firstLine;
+   Files_forEachInDir("highlight", (Method_Files_fileHandler)Highlight_readHighlightFile, &args);
    if (!this->currentContext) {
       this->mainContext = Highlight_addContext(this, NULL, NULL, NULL, NormalColor);
       this->currentContext = this->mainContext;
@@ -232,6 +96,147 @@ Highlight* Highlight_new(const char* fileName, const char* firstLine) {
 void Highlight_delete(Highlight* this) {
    Vector_delete(this->contexts);
    free(this);
+}
+
+bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
+   Highlight* this = args->this;
+   const char* fileName = args->fileName;
+   const char* firstLine = args->firstLine;
+   FILE* file = fopen(name, "r");
+   if (!file) return false;
+
+   char buffer[4096];
+   int state = 1;
+   bool success = true;
+   this->mainContext = Highlight_addContext(this, NULL, NULL, NULL, NormalColor);
+   HighlightContext* context = this->mainContext;
+   Stack* contexts = Stack_new(ClassAs(HighlightContext, Object), false);
+   Stack_push(contexts, context, 0);
+   int lineno = 0;
+   this->toLower = false;
+   while (success && !feof(file)) {
+      fgets(buffer, 4095, file);
+      lineno++;
+      char* ch = strchr(buffer, '\n');
+      if (ch) *ch = '\0';
+      ch = buffer;
+      while (!(isalpha(*ch) || *ch == '\0')) ch++;
+      if (*ch == '\0') continue;
+
+      buffer[4095] = '\0';
+      char** tokens = String_split(buffer, ' ');
+      int ntokens;
+      for (ntokens = 0; tokens[ntokens]; ntokens++);
+      if (ntokens > 0 && tokens[0][0] != '#')
+      switch (state) {
+      case 1:
+      {
+         // Read FILES header
+         if (!String_eq(tokens[0], "FILES") && ntokens == 1)
+            success = false;
+         state = 2;
+         break;
+      }
+      case 2:
+      {
+         // Try to match FILES rule
+         const char* subject = NULL;
+         if (!fileName) {
+            success = false;
+            break;
+         }
+         if (String_eq(tokens[0],"name")) {
+            subject = fileName;
+            char* lastSlash = strrchr(subject, '/');
+            if (lastSlash)
+               subject = lastSlash + 1;
+         } else if (String_eq(tokens[0], "firstline"))
+            subject = firstLine;
+         else
+            success = false;
+         if (success) {
+            if (String_eq(tokens[1], "prefix") && ntokens == 3) {
+               if (String_startsWith(subject, tokens[2]))
+                  state = 3;
+            } else if (String_eq(tokens[1], "suffix") && ntokens == 3) {
+               if (String_endsWith(subject, tokens[2]))
+                  state = 3;
+            } else if (String_eq(tokens[1], "regex") && ntokens == 3) {
+               regex_t magic;
+               regcomp(&magic, tokens[2], REG_EXTENDED | REG_NOSUB);
+               if (regexec(&magic, firstLine, 0, NULL, 0) == 0)
+                  state = 3;
+               regfree(&magic);
+            } else {
+               success = false;
+            }
+         }
+         break;
+      }
+      case 3:
+      {
+         // FILES match succeeded. Skip over other FILES section,
+         // waiting for RULES section
+         if (String_eq(tokens[0], "RULES") && ntokens == 1) {
+            Script_loadExtensions(name);
+            state = 4;
+         }
+         break;
+      }
+      case 4:
+      {
+         // Read RULES section
+         if (String_eq(tokens[0], "context") && (ntokens == 4 || ntokens == 6)) {
+            char* open = tokens[1];
+            char* close = (String_eq(tokens[2], "`$") ? NULL : tokens[2]);
+            Color color;
+            if (ntokens == 6) {
+               HighlightContext_addRule(context, open, Highlight_translateColor(tokens[3]));
+               color = Highlight_translateColor(tokens[5]);
+            } else {
+               color = Highlight_translateColor(tokens[3]);
+               HighlightContext_addRule(context, open, color);
+            }
+            context = Highlight_addContext(this, open, close, Stack_peek(contexts, NULL), color);
+            if (close) {
+               color = (ntokens == 6 ? Highlight_translateColor(tokens[4]) : color);
+               HighlightContext_addRule(context, close, color);
+            }
+            Stack_push(contexts, context, 0);
+         } else if (String_eq(tokens[0], "/context") && ntokens == 1) {
+            if (contexts->size > 1) {
+               Stack_pop(contexts, NULL);
+               context = Stack_peek(contexts, NULL);
+            }
+         } else if (String_eq(tokens[0], "rule") && ntokens == 3) {
+            HighlightContext_addRule(context, tokens[1], Highlight_translateColor(tokens[2]));
+         } else if (String_eq(tokens[0], "insensitive") && ntokens == 1) {
+            this->toLower = true;
+         } else {
+            mvprintw(0,0,"Error reading %s: line %d: %s", name, lineno, buffer);
+            getch();
+            success = false;
+         }
+         break;
+      }
+      }
+      for (int i = 0; tokens[i]; i++)
+         free(tokens[i]);
+      free(tokens);
+   }
+   fclose(file);
+   if (contexts->size != 1) {
+      mvprintw(0,0,"Error reading %s: %d context%s still open", name, contexts->size - 1, contexts->size > 2 ? "s" : "");
+      getch();
+      success = false;
+   }
+   Stack_delete(contexts);
+   if (success && state == 4) {
+      this->currentContext = this->mainContext;
+      return true;
+   }
+   Vector_prune(this->contexts);
+   return false;
 }
 
 HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close, HighlightContext* parent, Color color) {
