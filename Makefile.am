@@ -15,6 +15,8 @@ nobase_dist_pkgdata_DATA = bindings/default \
  highlight/make highlight/perl highlight/php highlight/python \
  highlight/shell highlight/xml
 
+EXTRA_DIST = scripts/GenHeaders
+
 dit_SOURCES = $(my_dit_C_sources) config.h debug.h \
  md5.c md5.h Prototypes.h Structures.h
 
