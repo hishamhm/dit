@@ -134,4 +134,5 @@ echo
 
 if ! diff -q "$new" "$old"
 then mv "$new" "$old"
+else touch "$old"
 fi
