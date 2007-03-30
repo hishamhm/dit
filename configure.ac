@@ -11,13 +11,24 @@ AM_INIT_AUTOMAKE
 AC_PROG_CC
 
 # Checks for libraries.
-AC_CHECK_LIB([m], [pow])
-AC_CHECK_LIB([ncurses], [use_default_colors])
+AC_CHECK_LIB([ncurses], [refresh], [], [missing_libraries="$missing_libraries libncurses"])
+AC_CHECK_LIB([m], [ceil], [], [missing_libraries="$missing_libraries libm"])
+
+if test ! -z "$missing_libraries"; then
+  AC_MSG_ERROR([missing libraries: $missing_libraries])
+fi
 
 # Checks for header files.
 AC_HEADER_DIRENT
 AC_HEADER_STDC
-AC_CHECK_HEADERS([limits.h stdint.h stdlib.h string.h strings.h sys/ioctl.h sys/param.h sys/time.h unistd.h])
+AC_CHECK_HEADERS([limits.h stdint.h stdlib.h string.h strings.h sys/ioctl.h sys/param.h sys/time.h unistd.h curses.h],[:],[
+  missing_headers="$missing_headers $ac_header"
+])
+
+if test ! -z "$missing_headers"; then
+  AC_MSG_ERROR([missing headers: $missing_headers])
+fi
+
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
