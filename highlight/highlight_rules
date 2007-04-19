@@ -16,6 +16,7 @@ context FILES RULES veryspecial veryspecial normal
    rule firstline bright
 /context
 rule rule bright
+rule eager_rule bright
 rule context bright
 rule insensitive bright
 

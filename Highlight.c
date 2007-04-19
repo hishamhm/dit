@@ -191,16 +191,16 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
             char* close = (String_eq(tokens[2], "`$") ? NULL : tokens[2]);
             Color color;
             if (ntokens == 6) {
-               HighlightContext_addRule(context, open, Highlight_translateColor(tokens[3]));
+               HighlightContext_addRule(context, open, Highlight_translateColor(tokens[3]), PM_RULE);
                color = Highlight_translateColor(tokens[5]);
             } else {
                color = Highlight_translateColor(tokens[3]);
-               HighlightContext_addRule(context, open, color);
+               HighlightContext_addRule(context, open, color, PM_RULE);
             }
             context = Highlight_addContext(this, open, close, Stack_peek(contexts, NULL), color);
             if (close) {
                color = (ntokens == 6 ? Highlight_translateColor(tokens[4]) : color);
-               HighlightContext_addRule(context, close, color);
+               HighlightContext_addRule(context, close, color, PM_RULE);
             }
             Stack_push(contexts, context, 0);
          } else if (String_eq(tokens[0], "/context") && ntokens == 1) {
@@ -209,7 +209,9 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
                context = Stack_peek(contexts, NULL);
             }
          } else if (String_eq(tokens[0], "rule") && ntokens == 3) {
-            HighlightContext_addRule(context, tokens[1], Highlight_translateColor(tokens[2]));
+            HighlightContext_addRule(context, tokens[1], Highlight_translateColor(tokens[2]), PM_RULE);
+         } else if (String_eq(tokens[0], "eager_rule") && ntokens == 3) {
+            HighlightContext_addRule(context, tokens[1], Highlight_translateColor(tokens[2]), PM_EAGER_RULE);
          } else if (String_eq(tokens[0], "insensitive") && ntokens == 1) {
             this->toLower = true;
          } else {
@@ -245,11 +247,11 @@ HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close,
    Vector_add(this->contexts, ctx);
    if (open) {
       assert(parent);
-      PatternMatcher_add(parent->follows, (unsigned char*) open, (int) ctx);
+      PatternMatcher_add(parent->follows, (unsigned char*) open, (int) ctx, PM_RULE);
    }
    if (close) {
       assert(parent);
-      PatternMatcher_add(ctx->follows, (unsigned char*) close, (int) parent);
+      PatternMatcher_add(ctx->follows, (unsigned char*) close, (int) parent, PM_RULE);
    } else {
       if (parent)
          ctx->nextLine = parent;
@@ -260,15 +262,16 @@ HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close,
 static inline int Highlight_tryMatch(Highlight* this, unsigned char* buffer, int* attrs, int at, GraphNode* rules, GraphNode* follows, Method_PatternMatcher_match match, HighlightContext** ctx, bool paintUnmatched) {
    unsigned char* here = buffer+at;
    int intColor;
-   int matchlen = match(rules, here, &intColor);
+   char endNode;
+   int matchlen = match(rules, here, &intColor, &endNode);
    Color color = (Color) intColor;
    assert(color >= 0 && color < Colors);
    int attr = CRT_colors[color];
-   if (matchlen && !(isword(here[matchlen-1]) && isword(here[matchlen]))) {
+   if (matchlen && (endNode == PM_EAGER_RULE || ( !(isword(here[matchlen-1]) && isword(here[matchlen]))))) {
       for (int i = at; i < at+matchlen; i++)
          attrs[i] = attr;
       int nextCtx = 0;
-      int followMatchlen = match(follows, here, &nextCtx);
+      int followMatchlen = match(follows, here, &nextCtx, &endNode);
       if (followMatchlen == matchlen) {
          assert(nextCtx);
          *ctx = (HighlightContext*) nextCtx;
@@ -331,6 +334,6 @@ void HighlightContext_delete(Object* cast) {
    free(this);
 }
 
-void HighlightContext_addRule(HighlightContext* this, char* rule, Color color) {
-   PatternMatcher_add(this->rules, (unsigned char*) rule, (int) color);
+void HighlightContext_addRule(HighlightContext* this, char* rule, Color color, char nodeType) {
+   PatternMatcher_add(this->rules, (unsigned char*) rule, (int) color, nodeType);
 }

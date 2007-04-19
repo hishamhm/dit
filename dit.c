@@ -399,7 +399,7 @@ static void Dit_refresh(Buffer* buffer, TabManager* tabs) {
 
 static void Dit_wordWrap(Buffer* buffer) {
    buffer->selecting = false;
-   Buffer_wordWrap(buffer, 80);
+   Buffer_wordWrap(buffer, 78);
 }
 
 static void Dit_closeCurrent(Buffer* buffer, TabManager* tabs) {
