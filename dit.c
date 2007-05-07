@@ -722,7 +722,7 @@ int main(int argc, char** argv) {
          case KEY_DOWN:    ch = KEY_S_DOWN;   break;
          case KEY_HOME:    ch = KEY_SHOME;    break;
          case KEY_END:     ch = KEY_SEND;     break;
-         default:          buffer->marking = false;
+         default:          if (keys[ch] != Buffer_toggleMarking) buffer->marking = false;
          }
       }
 
