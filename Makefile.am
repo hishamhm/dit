@@ -5,6 +5,7 @@ my_dit_C_sources = dit.c Buffer.c CRT.c Clipboard.c DebugMemory.c Field.c \
  FileReader.c FunctionBar.c Hashtable.c Highlight.c Line.c List.c Object.c \
  Panel.c PatternMatcher.c Pool.c RichString.c ScreenManager.c Script.c \
  Stack.c String.c StringBuffer.c TabManager.c Undo.c Vector.c Files.c
+BUILT_SOURCES = Prototypes.h Structures.h
 
 # find bindings terminals highlight | grep -v \\.svn
 nobase_dist_pkgdata_DATA = bindings/default \
@@ -17,8 +18,7 @@ nobase_dist_pkgdata_DATA = bindings/default \
 
 EXTRA_DIST = scripts/GenHeaders
 
-dit_SOURCES = $(my_dit_C_sources) config.h debug.h \
- md5.c md5.h Prototypes.h Structures.h
+dit_SOURCES = Prototypes.h Structures.h $(my_dit_C_sources) config.h debug.h md5.c md5.h
 
 Prototypes.h: $(my_dit_C_sources)
 	scripts/GenHeaders Prototypes.h

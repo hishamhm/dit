@@ -19,7 +19,6 @@ then
    do "$1" "$i"
    done
 else
-echo "Will process each"
    processed=( )
    for i in *.c
    do process "$i" "$1"
