@@ -80,8 +80,9 @@ void TabManager_add(TabManager* this, char* name, Buffer* buffer) {
 }
 
 void TabManager_removeCurrent(TabManager* this) {
+   assert(Vector_size(this->items) > 1);
    Vector_remove(this->items, this->currentPage);
-   TabManager_setPage(this, this->currentPage + 1);
+   TabManager_setPage(this, this->currentPage);
 }
 
 TabPage* TabManager_current(TabManager* this) {
@@ -199,4 +200,8 @@ char* TabManager_getPageName(TabManager* this, int i) {
    } else {
       return page->name;
    }
+}
+
+int TabManager_size(TabManager* this) {
+   return Vector_size(this->items);
 }

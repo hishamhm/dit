@@ -406,6 +406,8 @@ static void Dit_closeCurrent(Buffer* buffer, TabManager* tabs) {
    if (buffer && buffer->modified)
       if (!confirmClose(buffer, tabs, "Buffer was modified. Save before closing?"))
          return;
+   if (TabManager_size(tabs) == 1)
+      TabManager_add(tabs, NULL, NULL);
    TabManager_removeCurrent(tabs);
 }
 
@@ -722,7 +724,7 @@ int main(int argc, char** argv) {
          case KEY_DOWN:    ch = KEY_S_DOWN;   break;
          case KEY_HOME:    ch = KEY_SHOME;    break;
          case KEY_END:     ch = KEY_SEND;     break;
-         default:          if (keys[ch] != Buffer_toggleMarking) buffer->marking = false;
+         default:          if (keys[ch] != (Dit_Action) Buffer_toggleMarking) buffer->marking = false;
          }
       }
 
