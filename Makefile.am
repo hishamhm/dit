@@ -27,4 +27,4 @@ Structures.h: $(my_dit_C_sources)
 	scripts/GenHeaders Structures.h
 
 AM_CFLAGS = -std=c99
-AM_CPPFLAGS = -DPKGDATADIR=\"$(pkgdatadir)\"
+AM_CPPFLAGS = -DPKGDATADIR=\"$(pkgdatadir)\" -DSYSCONFDIR=\"$(sysconfdir)\"

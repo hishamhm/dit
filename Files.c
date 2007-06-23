@@ -12,12 +12,22 @@ typedef bool(*Method_Files_fileHandler)(void*, char*);
 FILE* Files_open(char* mode, char* picture, char* value) {
    char fileName[4097];
    char* dataDir = PKGDATADIR;
+   char* sysconfDir = SYSCONFDIR;
    FILE* fd = Files_openHome(mode, picture, value);
    if (fd) return fd;
-   snprintf(fileName, 4096, "%s/", dataDir);
+
+   snprintf(fileName, 4096, "%s/dit/", sysconfDir);
    int len = strlen(fileName);
    snprintf(fileName + len, 4096 - len, picture, value);
-   return fopen(fileName, mode);
+   fd = fopen(fileName, mode);
+   if (fd) return fd;
+
+   snprintf(fileName, 4096, "%s/", dataDir);
+   len = strlen(fileName);
+   snprintf(fileName + len, 4096 - len, picture, value);
+   fd = fopen(fileName, mode);
+
+   return fd;
 }
 
 FILE* Files_openHome(char* mode, char* picture, char* value) {
