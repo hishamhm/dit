@@ -24,11 +24,14 @@ struct TabManager_ {
    int currentPage;
    bool redrawBar;
    bool bufferModified;
+   int width;
 };
 
 extern TabPageClass TabPageType;
    
 }*/
+
+static const char* TabManager_Untitled = "*untitled*";
 
 TabPageClass TabPageType = {
    .super = {
@@ -63,6 +66,7 @@ TabManager* TabManager_new(int x, int y, int w, int h, int tabOffset) {
    this->w = w;
    this->h = h;
    this->tabOffset = tabOffset;
+   this->width = 0;
    this->items = Vector_new(ClassAs(TabPage, Object), true, DEFAULT_SIZE);
    this->currentPage = 0;
    this->redrawBar = true;
@@ -75,11 +79,25 @@ void TabManager_delete(TabManager* this) {
    free(this);
 }
 
+static inline int TabManager_nameLength(const char* name) {
+   int len;
+   if (name) {
+      char* base = strrchr(name, '/');
+      len = strlen(base) + 4;
+   } else {
+      len = strlen(TabManager_Untitled) + 4;
+   }
+   return len;
+}
+
 void TabManager_add(TabManager* this, char* name, Buffer* buffer) {
    Vector_add(this->items, TabPage_new(name, buffer));
+   this->width += TabManager_nameLength(name);
 }
 
 void TabManager_removeCurrent(TabManager* this) {
+   const char* name = TabManager_current(this)->name;
+   this->width -= TabManager_nameLength(name);
    assert(Vector_size(this->items) > 1);
    Vector_remove(this->items, this->currentPage);
    TabManager_setPage(this, this->currentPage);
@@ -89,13 +107,17 @@ TabPage* TabManager_current(TabManager* this) {
    return (TabPage*) Vector_get(this->items, this->currentPage);
 }
 
-static inline void TabManager_drawBar(TabManager* this) {
+static inline void TabManager_drawBar(TabManager* this, int width) {
    int items = Vector_size(this->items);
    int current = this->currentPage;
    assert(current < items);
    int x = this->x + this->tabOffset;
    attrset(CRT_colors[TabColor]);
    mvhline(LINES - 1, x, ' ', COLS - x);
+   char buffer[256];
+   int tabWidth = -1;
+   if (this->width + this->tabOffset > width + 1)
+      tabWidth = ((width - this->tabOffset) / items);
    for (int i = 0; i < items; i++) {
       TabPage* page = (TabPage*) Vector_get(this->items, i);
       if (i == current)
@@ -103,7 +125,7 @@ static inline void TabManager_drawBar(TabManager* this) {
       else
          attrset(CRT_colors[TabColor]);
       char modified;
-      char* label = "*untitled*";
+      const char* label = TabManager_Untitled;
       if (page->buffer) {
          modified = page->buffer->modified ? '*' : ' ';
          if (page->buffer->fileName)
@@ -115,14 +137,17 @@ static inline void TabManager_drawBar(TabManager* this) {
       }
       char* base = strrchr(label, '/');
       if (base) label = base + 1;
-      mvprintw(this->y + this->h - 1, x, " [%c]%s ", modified, label);
-      x += strlen(label) + 5;
+      if (i == current && tabWidth == -1)
+         mvprintw(this->y + this->h - 1, x, " ");
+      snprintf(buffer, 255, "[%c]%s ", modified, label);
+      mvaddnstr(this->y + this->h - 1, x+1, buffer, tabWidth);
+      x += (tabWidth == -1 ? strlen(label) + 4 : tabWidth);
    }
    attrset(CRT_colors[NormalColor]);
    this->redrawBar = false;
 }
 
-Buffer* TabManager_draw(TabManager* this) {
+Buffer* TabManager_draw(TabManager* this, int width) {
    TabPage* page = (TabPage*) Vector_get(this->items, this->currentPage);
    if (page->buffer) {
       if (page->buffer->modified != this->bufferModified) {
@@ -134,7 +159,7 @@ Buffer* TabManager_draw(TabManager* this) {
       this->bufferModified = false;
    }
    if (this->redrawBar)
-      TabManager_drawBar(this);
+      TabManager_drawBar(this, width);
    Buffer_draw(page->buffer);
    return page->buffer;
 }
@@ -199,6 +224,40 @@ char* TabManager_getPageName(TabManager* this, int i) {
       return page->buffer->fileName;
    } else {
       return page->name;
+   }
+}
+
+void TabManager_load(TabManager* this, const char* fileName, int limit) {
+   FILE* fd = Files_openHome("r", fileName, NULL);
+   if (fd) {
+      char line[4097];
+      while (!feof(fd)) {
+         char* ok = fgets(line, 4096, fd);
+         if (ok) {
+            char* enter = strrchr(line, '\n');
+            if (enter) *enter = '\0';
+            if (*line == '\0') continue;
+            if (!TabManager_find(this, line)) {
+               TabManager_add(this, line, NULL);
+               limit--;
+               if (!limit) break;
+            }
+         }
+      }
+      fclose(fd);
+   }
+}
+
+void TabManager_save(TabManager* this, const char* fileName) {
+   FILE* fd = Files_openHome("w", fileName, NULL);
+   if (fd) {
+      int items = Vector_size(this->items);
+      for (int i = 0; i < items; i++) {
+         char* name = TabManager_getPageName(this, i);
+         if (name)
+            fprintf(fd, "%s\n", name);
+      }
+      fclose(fd);
    }
 }
 
