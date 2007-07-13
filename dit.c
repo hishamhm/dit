@@ -107,43 +107,6 @@ static bool confirmClose(Buffer* buffer, TabManager* tabs, char* question) {
    return true;
 }
 
-static inline void restoreRecentHistory(TabManager* tabs, int items) {
-   FILE* fd = Files_openHome("r", "recent", NULL);
-   if (fd) {
-      char line[256];
-      while (!feof(fd)) {
-         char* ok = fgets(line, 255, fd);
-         if (ok) {
-            char* enter = strrchr(line, '\n');
-            if (enter) *enter = '\0';
-            if (*line == '\0') continue;
-            if (!TabManager_find(tabs, line)) {
-               TabManager_add(tabs, line, NULL);
-               items++;
-               if (items == 5)
-                  break;
-            }
-         }
-      }
-      fclose(fd);
-   }
-}
-
-static inline void storeRecentHistory(TabManager* tabs) {
-   FILE* fd = Files_openHome("w", "recent", NULL);
-   if (fd) {
-      int items = Vector_size(tabs->items);
-      for (int i = 0, j = 0; j < 5 && i < items; i++) {
-         char* name = TabManager_getPageName(tabs, i);
-         if (name) {
-            fprintf(fd, "%s\n", name);
-            j++;
-         }
-      }
-      fclose(fd);
-   }
-}
-
 static Clipboard* Dit_clipboard = NULL;
 
 static void Dit_cut(Buffer* buffer) {
@@ -296,6 +259,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             }
             case KEY_F(3):
             case KEY_CTRL('F'):
+            case KEY_CTRL('N'):
             {
                found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, true);
                searched = true;
@@ -332,6 +296,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                   bool quitMask[255] = {0};
                   quitMask[KEY_CTRL('R')] = true;
                   quitMask[KEY_CTRL('F')] = true;
+                  quitMask[KEY_CTRL('N')] = true;
                   quitMask[KEY_CTRL('P')] = true;
                   rch = Field_quickRun(Dit_replaceField, quitMask);
                   if (rch == 13 || rch == KEY_CTRL('R')) {
@@ -420,7 +385,7 @@ static void Dit_quit(Buffer* buffer, TabManager* tabs, int* ch, int* quit) {
       buffer = page->buffer;
    
       if (buffer && buffer->modified) {
-         TabManager_draw(tabs);
+         TabManager_draw(tabs, COLS);
          if (!confirmClose(buffer, tabs, "Buffer was modified. Save before exit?")) {
             reallyQuit = false;
             break;
@@ -679,11 +644,11 @@ int main(int argc, char** argv) {
       TabManager_add(tabs, NULL, NULL);
    }
 
-   restoreRecentHistory(tabs, 1);
+   TabManager_load(tabs, "recent", 10);
 
    bkgdset(NormalColor);
    
-   Buffer* buffer = TabManager_draw(tabs);
+   Buffer* buffer = TabManager_draw(tabs, COLS);
    if (jump > 0)
       Buffer_goto(buffer, 0, jump - 1);
 
@@ -694,7 +659,7 @@ int main(int argc, char** argv) {
       attrset(CRT_colors[TabColor]);
       mvhline(LINES - 1, 0, ' ', tabs->tabOffset);
 
-      Buffer* buffer = TabManager_draw(tabs);
+      Buffer* buffer = TabManager_draw(tabs, COLS);
       Script_setCurrentBuffer(buffer);
       getyx(stdscr, y, x);
 
@@ -758,7 +723,7 @@ int main(int argc, char** argv) {
       Field_delete(Dit_findField);
    if (Dit_replaceField)
       Field_delete(Dit_replaceField);
-   storeRecentHistory(tabs);
+   TabManager_save(tabs, "recent");
    TabManager_delete(tabs);
    debug_done();
    return 0;

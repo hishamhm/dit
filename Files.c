@@ -9,7 +9,7 @@ typedef bool(*Method_Files_fileHandler)(void*, char*);
   
 }*/
 
-FILE* Files_open(char* mode, char* picture, char* value) {
+FILE* Files_open(const char* mode, const char* picture, const char* value) {
    char fileName[4097];
    char* dataDir = PKGDATADIR;
    char* sysconfDir = SYSCONFDIR;
@@ -30,7 +30,7 @@ FILE* Files_open(char* mode, char* picture, char* value) {
    return fd;
 }
 
-FILE* Files_openHome(char* mode, char* picture, char* value) {
+FILE* Files_openHome(const char* mode, const char* picture, const char* value) {
    FILE* fd;
    char fileName[4097];
    char* homeDir = getenv("HOME");
