@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "Prototypes.h"
 
@@ -27,6 +28,12 @@ FileReader* FileReader_new(char* filename, bool command) {
    if (command) {
       this->fd = popen(filename, "r");
    } else {
+      struct stat st = {0};
+      stat(filename, &st);
+      if (S_ISDIR(st.st_mode)) {
+         free(this);
+         return NULL;
+      }
       this->fd = fopen(filename, "r");
    }
    if (this->fd == NULL) {
