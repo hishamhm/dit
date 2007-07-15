@@ -237,7 +237,7 @@ void TabManager_load(TabManager* this, const char* fileName, int limit) {
             char* enter = strrchr(line, '\n');
             if (enter) *enter = '\0';
             if (*line == '\0') continue;
-            if (!TabManager_find(this, line)) {
+            if (!TabManager_find(this, line) && access(line, F_OK) == 0) {
                TabManager_add(this, line, NULL);
                limit--;
                if (!limit) break;
