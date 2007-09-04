@@ -548,6 +548,8 @@ static void Dit_loadHardcodedBindings(Dit_Action* keys) {
    keys[KEY_DC]        = (Dit_Action) Buffer_deleteChar;
    keys['\177']        = (Dit_Action) Buffer_backwardDeleteChar;
    keys[KEY_BACKSPACE] = (Dit_Action) Buffer_backwardDeleteChar;
+   keys[KEY_SF]        = (Dit_Action) Dit_selectDownLine;
+   keys[KEY_SR]        = (Dit_Action) Dit_selectUpLine;
 }
 
 static void Dit_parseBindings(Dit_Action* keys) {
