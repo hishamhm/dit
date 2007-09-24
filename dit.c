@@ -86,22 +86,12 @@ void Dit_saveAs(Buffer* buffer, TabManager* tabs) {
 }
 
 static bool confirmClose(Buffer* buffer, TabManager* tabs, char* question) {
-   attrset(CRT_colors[StatusColor]);
-   mvprintw(LINES - 1, 0, "%s [y/n/c]", question);
-   clrtoeol();
-   attrset(CRT_colors[NormalColor]);
-   refresh();
-   int opt;
-   do {
-      beep();
-      opt = getch();
-   } while (opt != 'y' && opt != 'n' && opt != 'c');
-   if (opt == 'y')
+   int opt = TabManager_question(tabs, question, "ync");
+   if (opt == 0)
       if (!Dit_save(buffer, tabs)) {
          return false;
       }
-   if (opt == 'c') {
-      TabManager_refreshCurrent(tabs);
+   if (opt == 2) {
       return false;
    }
    return true;
@@ -367,6 +357,15 @@ static void Dit_wordWrap(Buffer* buffer) {
    Buffer_wordWrap(buffer, 78);
 }
 
+static void Dit_undo(Buffer* buffer, TabManager* tabs) {
+   if (Buffer_checkDiskState(buffer)) {
+      int answer = TabManager_question(tabs, "Undo past save point?", "yn");
+      if (answer == 1)
+         return;
+   }
+   Buffer_undo(buffer);
+}
+
 static void Dit_closeCurrent(Buffer* buffer, TabManager* tabs) {
    if (buffer && buffer->modified)
       if (!confirmClose(buffer, tabs, "Buffer was modified. Save before closing?"))
@@ -477,6 +476,7 @@ static void Dit_registerActions() {
    Hashtable_putString(Dit_actions, "Dit_selectSlideDownLine", (void*)(long) Dit_selectSlideDownLine);
    Hashtable_putString(Dit_actions, "Dit_selectSlideUpLine", (void*)(long) Dit_selectSlideUpLine);
    Hashtable_putString(Dit_actions, "Dit_selectUpLine", (void*)(long) Dit_selectUpLine);
+   Hashtable_putString(Dit_actions, "Dit_undo", (void*)(long) Dit_undo);
    Hashtable_putString(Dit_actions, "Dit_wordWrap", (void*)(long) Dit_wordWrap);
 }
 
@@ -501,7 +501,7 @@ static void Dit_loadHardcodedBindings(Dit_Action* keys) {
    /* Ctrl R is FREE */
    keys[KEY_CTRL('S')] = (Dit_Action) Dit_save;
    keys[KEY_CTRL('T')] = (Dit_Action) Buffer_toggleTabCharacters;
-   keys[KEY_CTRL('U')] = (Dit_Action) Buffer_undo;
+   keys[KEY_CTRL('U')] = (Dit_Action) Dit_undo;
    keys[KEY_CTRL('V')] = (Dit_Action) Dit_paste;
    keys[KEY_CTRL('W')] = (Dit_Action) Dit_closeCurrent;
    keys[KEY_CTRL('X')] = (Dit_Action) Dit_cut;

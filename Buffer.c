@@ -414,17 +414,21 @@ void Buffer_select(Buffer* this, void(*motion)(Buffer*)) {
    this->panel->needsRedraw = true;
 }
 
+bool Buffer_checkDiskState(Buffer* this) {
+   return Undo_checkDiskState(this->undo);
+}
+
 void Buffer_undo(Buffer* this) {
    int ux = this->x;
    int uy = this->y;
-   Undo_undo(this->undo, &ux, &uy);
+   bool modified = Undo_undo(this->undo, &ux, &uy);
    this->x = ux;
    Panel_setSelected(this->panel, uy);
    this->line = (Line*) Panel_getSelected(this->panel);
    this->panel->needsRedraw = true;
    this->savedX = Line_widthUntil(this->line, this->x);
    this->selecting = false;
-   this->modified = true;
+   this->modified = modified;
 }
 
 inline void Buffer_breakIndenting(Buffer* this, int indent) {

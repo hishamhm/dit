@@ -264,3 +264,19 @@ void TabManager_save(TabManager* this, const char* fileName) {
 int TabManager_size(TabManager* this) {
    return Vector_size(this->items);
 }
+
+int TabManager_question(TabManager* this, char* question, char* options) {
+   attrset(CRT_colors[StatusColor]);
+   mvprintw(LINES - 1, 0, "%s [%s]", question, options);
+   clrtoeol();
+   attrset(CRT_colors[NormalColor]);
+   refresh();
+   int opt;
+   char* which;
+   do {
+      beep();
+      opt = getch();
+   } while (!(which = strchr(options, opt)));
+   TabManager_refreshCurrent(this);
+   return which - options;
+}

@@ -25,6 +25,7 @@ typedef enum UndoActionKind_ {
    UndoUnindent,
    UndoBeginGroup,
    UndoEndGroup,
+   UndoDiskState
 } UndoActionKind;
 
 struct UndoActionClass_ {
@@ -38,6 +39,10 @@ struct UndoAction_ {
    int y;
    union {
       char c;
+      struct {
+         char* fileName;
+         char* md5;
+      } diskState;
       struct {
          char* buf;
          int len;
@@ -95,6 +100,9 @@ void UndoAction_delete(Object* cast) {
       free(this->data.str.buf);
    } else if (this->kind == UndoUnindent) {
       free(this->data.unindent.buf);
+   } else if (this->kind == UndoDiskState) {
+      free(this->data.diskState.fileName);
+      free(this->data.diskState.md5);
    }
    free(this);
 }
@@ -213,15 +221,34 @@ void Undo_insertBlanks(Undo* this, int x, int y, int len) {
    Stack_push(this->actions, action, 0);
 }
 
-void Undo_undo(Undo* this, int* x, int* y) {
+void Undo_diskState(Undo* this, int x, int y, char* md5, char* fileName) {
+   UndoAction* action = UndoAction_new(UndoDiskState, x, y);
+   action->data.diskState.md5 = malloc(16);
+   action->data.diskState.fileName = strdup(fileName);
+   memcpy(action->data.diskState.md5, md5, 16);
+   Stack_push(this->actions, action, 0);
+}
+
+bool Undo_checkDiskState(Undo* this) {
+   UndoAction* action = (UndoAction*) Stack_peek(this->actions, NULL);
+   return (action->kind == UndoDiskState);
+}
+
+bool Undo_undo(Undo* this, int* x, int* y) {
    assert(x); assert(y);
+   bool modified = true;
    UndoAction* action = (UndoAction*) Stack_pop(this->actions, NULL);
    if (!action)
-      return;
+      return false;
    *x = action->x;
    *y = action->y;
    Line* line = (Line*) List_get(this->list, action->y);
    switch (action->kind) {
+   case UndoDiskState:
+   {
+      UndoAction_delete((Object*)action);
+      return Undo_undo(this, x, y);
+   }
    case UndoBeginGroup:
    {
       this->group++;
@@ -295,8 +322,20 @@ void Undo_undo(Undo* this, int* x, int* y) {
    }
    }
    UndoAction_delete((Object*)action);
+   action = (UndoAction*) Stack_peek(this->actions, NULL);
+   if (action->kind == UndoDiskState) {
+      FILE* fd = fopen(action->data.diskState.fileName, "r");
+      if (fd) {
+         char md5[32];
+         md5_stream(fd, md5);
+         fclose(fd);
+         if (memcmp(md5, action->data.diskState.md5, 16) == 0)
+            modified = false;
+      }
+   }
    if (this->group)
-      Undo_undo(this, x, y);
+      return Undo_undo(this, x, y);
+   return modified;
 }
 
 static void Undo_makeFileName(Undo* this, char* fileName, char* undoFileName) {
@@ -331,6 +370,7 @@ void Undo_store(Undo* this, char* fileName) {
       switch(action->kind) {
       case UndoBeginGroup:
       case UndoEndGroup:
+      case UndoDiskState:
          break;
       case UndoIndent:
          fwrite(&action->data.indent.lines, sizeof(int), 1, ufd);
@@ -387,9 +427,9 @@ void Undo_restore(Undo* this, char* fileName) {
    int items;
    read = fread(&items, sizeof(int), 1, ufd);
    if (read < 1) { fclose(ufd); return; }
+   int x, y;
    for (int i = items - 1; i >= 0; i--) {
       UndoActionKind kind;
-      int x, y;
       read = fread(&kind, sizeof(UndoActionKind), 1, ufd);
       if (read < 1) { fclose(ufd); return; }
       read = fread(&x, sizeof(int), 1, ufd);
@@ -446,5 +486,6 @@ void Undo_restore(Undo* this, char* fileName) {
       }
       Stack_push(this->actions, action, 0);
    }
+   Undo_diskState(this, x, y, md5curr, fileName);
    fclose(ufd);
 }
