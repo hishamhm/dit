@@ -222,6 +222,17 @@ void Undo_insertBlanks(Undo* this, int x, int y, int len) {
 }
 
 void Undo_diskState(Undo* this, int x, int y, char* md5, char* fileName) {
+   char md5buffer[32];
+   if (!fileName)
+      return;
+   if (!md5) {
+      FILE* fd = fopen(fileName, "r");
+      if (!fd)
+         return;
+      md5_stream(fd, md5buffer);
+      fclose(fd);
+      md5 = md5buffer;
+   }
    UndoAction* action = UndoAction_new(UndoDiskState, x, y);
    action->data.diskState.md5 = malloc(16);
    action->data.diskState.fileName = strdup(fileName);
@@ -231,6 +242,8 @@ void Undo_diskState(Undo* this, int x, int y, char* md5, char* fileName) {
 
 bool Undo_checkDiskState(Undo* this) {
    UndoAction* action = (UndoAction*) Stack_peek(this->actions, NULL);
+   if (!action)
+      return false;
    return (action->kind == UndoDiskState);
 }
 
@@ -323,7 +336,7 @@ bool Undo_undo(Undo* this, int* x, int* y) {
    }
    UndoAction_delete((Object*)action);
    action = (UndoAction*) Stack_peek(this->actions, NULL);
-   if (action->kind == UndoDiskState) {
+   if (action && action->kind == UndoDiskState && action->data.diskState.fileName) {
       FILE* fd = fopen(action->data.diskState.fileName, "r");
       if (fd) {
          char md5[32];
@@ -362,11 +375,16 @@ void Undo_store(Undo* this, char* fileName) {
    int items = this->actions->size;
    items = MIN(items, 1000);
    fwrite(&items, sizeof(int), 1, ufd);
+   if (Undo_checkDiskState(this))
+      UndoAction_delete(Stack_pop(this->actions, NULL));
+   int x, y;
    for (int i = items - 1; i >= 0; i--) {
       UndoAction* action = (UndoAction*) Stack_peekAt(this->actions, i, NULL);
       fwrite(&action->kind, sizeof(UndoActionKind), 1, ufd);
       fwrite(&action->x, sizeof(int), 1, ufd);
       fwrite(&action->y, sizeof(int), 1, ufd);
+      x = action->x; 
+      y = action->y;
       switch(action->kind) {
       case UndoBeginGroup:
       case UndoEndGroup:
@@ -404,6 +422,7 @@ void Undo_store(Undo* this, char* fileName) {
       }
    }
    fclose(ufd);
+   Undo_diskState(this, x, y, NULL, fileName);
 }
 
 void Undo_restore(Undo* this, char* fileName) {
@@ -440,6 +459,10 @@ void Undo_restore(Undo* this, char* fileName) {
       switch(action->kind) {
       case UndoBeginGroup:
       case UndoEndGroup:
+         break;
+      case UndoDiskState:
+         action->data.diskState.fileName = NULL;
+         action->data.diskState.md5 = NULL;
          break;
       case UndoIndent:
          read = fread(&action->data.indent.lines, sizeof(int), 1, ufd);
