@@ -12,7 +12,7 @@ CTRL_P Dit_pushPull
 CTRL_Q Dit_quit
 CTRL_S Dit_save
 CTRL_T Buffer_toggleTabCharacters
-CTRL_U Buffer_undo
+CTRL_U Dit_undo
 CTRL_V Dit_paste
 CTRL_W Dit_closeCurrent
 CTRL_X Dit_cut

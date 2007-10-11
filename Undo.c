@@ -510,5 +510,6 @@ void Undo_restore(Undo* this, char* fileName) {
       Stack_push(this->actions, action, 0);
    }
    Undo_diskState(this, x, y, md5curr, fileName);
+   assert(Undo_checkDiskState(this));
    fclose(ufd);
 }
