@@ -372,11 +372,11 @@ void Undo_store(Undo* this, char* fileName) {
    if (!ufd)
       return;
    fwrite(md5buf, 16, 1, ufd);
+   if (Undo_checkDiskState(this))
+      UndoAction_delete(Stack_pop(this->actions, NULL));
    int items = this->actions->size;
    items = MIN(items, 1000);
    fwrite(&items, sizeof(int), 1, ufd);
-   if (Undo_checkDiskState(this))
-      UndoAction_delete(Stack_pop(this->actions, NULL));
    int x, y;
    for (int i = items - 1; i >= 0; i--) {
       UndoAction* action = (UndoAction*) Stack_peekAt(this->actions, i, NULL);
