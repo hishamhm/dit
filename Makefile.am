@@ -16,7 +16,7 @@ nobase_dist_pkgdata_DATA = bindings/default \
  highlight/make highlight/perl highlight/php highlight/python \
  highlight/shell highlight/xml
 
-EXTRA_DIST = scripts/GenHeaders
+EXTRA_DIST = scripts/GenHeaders extras/dit.keytab
 
 dit_SOURCES = Prototypes.h Structures.h $(my_dit_C_sources) config.h debug.h md5.c md5.h
 
@@ -28,3 +28,7 @@ Structures.h: $(my_dit_C_sources)
 
 AM_CFLAGS = -std=c99
 AM_CPPFLAGS = -DPKGDATADIR=\"$(pkgdatadir)\" -DSYSCONFDIR=\"$(sysconfdir)\"
+
+install-data-local:
+	$(mkinstalldirs) "$(DESTDIR)$(datadir)/apps/konsole/"
+	$(INSTALL_DATA) "$(srcdir)/extras/dit.keytab" "$(DESTDIR)$(datadir)/apps/konsole/dit.keytab"
