@@ -1,68 +1,53 @@
-# [xterm.keytab] Konsole Keyboard Table (XTerm emulation)
-# Supports XTerm escape codes such as "^[[1;2C" for shift-right
-# -- Hisham Muhammad <hisham at inf.puc-rio.br>
-#
-# --------------------------------------------------------------
-
-keyboard "XTerm (Xorg with shift-arrows)"
+# [README.default.Keytab] Buildin Keyboard Table
 
 # --------------------------------------------------------------
 #
-# This configuration table allows to customize the
-# meaning of the keys.
+# This file is used to create the buildin keyboard table.
+# It is included for reference purpose with the *.keytab
+# files that are loaded dynamically.
 #
-# The syntax is that each entry has the form : 
+# Modifying it does not have any effect (unless you
+# derive the default.keytab.h and recompile konsole).
 #
-#   "key" Keyname { ("+"|"-") Modename } ":" (String|Operation)
-#
-# Keynames are those defined in <qnamespace.h> with the
-# "Qt::Key_" removed. (We'd better insert the list here)
-#
-# Mode names are : 
-#
-# - Shift
-# - Alt
-# - Control
-#
-#   The VT100 emulation has two modes that can affect the
-#   sequences emitted by certain keys. These modes are
-#   under control of the client program.
-#   
-# - Newline     : effects Return and Enter key.
-# - Application : effects Up and Down key.
-#
-# - Ansi        : effects Up and Down key (This is for VT52, really).
-#
-# Operations are
-#
-# - scrollUpLine
-# - scrollUpPage
-# - scrollDownLine
-# - scrollDownPage
-#
-# - emitSelection
-#
-# If the key is not found here, the text of the
-# key event as provided by QT is emitted, possibly
-# preceeded by ESC if the Alt key is pressed.
+# To customize your keyboard, copy this file to something
+# ending with .keytab and change it to meet you needs.
+# Please read the README.KeyTab and the README.keyboard
+# in this case.
 #
 # --------------------------------------------------------------
 
-key Escape : "\E"
-key Tab    : "\t"
+keyboard "XTerm with shift arrows (Xorg 7.x)"
 
-# VT100 can add an extra \n after return.
-# The NewLine mode is set by an escape sequence.
+# --------------------------------------------------------------
+#
+# Note that this particular table is a "risc" version made to
+# ease customization without bothering with obsolete details.
+# See VT100.keytab for the more hairy stuff.
+#
+# --------------------------------------------------------------
 
-key Return-NewLine : "\r"  
-key Return+NewLine : "\r\n"
+# common keys
 
-# Konsole's vt100 mode tries to "save ^H",
-# but XTerm only does that after a 'reset' on the command line.
+key Escape             : "\E"
 
-key Backspace : "\x7f"
+key Tab   -Shift       : "\t"
+key Tab   +Shift+Ansi  : "\E[Z"
+key Tab   +Shift-Ansi  : "\t"
+key Backtab     +Ansi  : "\E[Z"
+key Backtab     -Ansi  : "\t"
+
+key Return-Shift-NewLine : "\r"
+key Return-Shift+NewLine : "\r\n"
+
+key Return+Shift         : "\EOM"
+
+# Backspace and Delete codes are preserving CTRL-H.
+
+key Backspace      : "\x7f"
 
 # Arrow keys in VT52 mode
+# shift up/down are reserved for scrolling.
+# shift left/right are reserved for switching between tabs (this is hardcoded).
 
 key Up   -Shift-Ansi : "\EA"
 key Down -Shift-Ansi : "\EB"
@@ -70,6 +55,86 @@ key Right-Shift-Ansi : "\EC"
 key Left -Shift-Ansi : "\ED"
 
 # Arrow keys in ANSI mode with Application - and Normal Cursor Mode)
+
+key Up    -Shift-AnyMod+Ansi+AppCuKeys           : "\EOA"
+key Down  -Shift-AnyMod+Ansi+AppCuKeys           : "\EOB"
+key Right -Shift-AnyMod+Ansi+AppCuKeys           : "\EOC"
+key Left  -Shift-AnyMod+Ansi+AppCuKeys           : "\EOD"
+
+key Up    -Shift-AnyMod+Ansi-AppCuKeys           : "\E[A"
+key Down  -Shift-AnyMod+Ansi-AppCuKeys           : "\E[B"
+key Right -Shift-AnyMod+Ansi-AppCuKeys           : "\E[C"
+key Left  -Shift-AnyMod+Ansi-AppCuKeys           : "\E[D"
+
+key Up    -Shift+AnyMod+Ansi                     : "\E[1;*A"
+key Down  -Shift+AnyMod+Ansi                     : "\E[1;*B"
+key Right -Shift+AnyMod+Ansi                     : "\E[1;*C"
+key Left  -Shift+AnyMod+Ansi                     : "\E[1;*D"
+
+# other grey PC keys
+
+key Enter+NewLine : "\r\n"
+key Enter-NewLine : "\r"
+
+key Home        -AnyMod     -AppCuKeys           : "\E[H"  
+key End         -AnyMod     -AppCuKeys           : "\E[F"  
+key Home        -AnyMod     +AppCuKeys           : "\EOH"  
+key End         -AnyMod     +AppCuKeys           : "\EOF"  
+key Home        +AnyMod                          : "\E[1;*H"
+key End         +AnyMod                          : "\E[1;*F"
+
+key Insert      -AnyMod                          : "\E[2~"
+key Delete      -AnyMod                          : "\E[3~"
+key Insert      +AnyMod                          : "\E[2;*~"
+key Delete      +AnyMod                          : "\E[3;*~"
+
+key Prior -Shift-AnyMod                          : "\E[5~"
+key Next  -Shift-AnyMod                          : "\E[6~"
+key Prior -Shift+AnyMod                          : "\E[5;*~"
+key Next  -Shift+AnyMod                          : "\E[6;*~"
+
+# Function keys
+key F1          -AnyMod                          : "\EOP"
+key F2          -AnyMod                          : "\EOQ"
+key F3          -AnyMod                          : "\EOR"
+key F4          -AnyMod                          : "\EOS"
+key F5          -AnyMod                          : "\E[15~"
+key F6          -AnyMod                          : "\E[17~"
+key F7          -AnyMod                          : "\E[18~"
+key F8          -AnyMod                          : "\E[19~"
+key F9          -AnyMod                          : "\E[20~"
+key F10         -AnyMod                          : "\E[21~"
+key F11         -AnyMod                          : "\E[23~"
+key F12         -AnyMod                          : "\E[24~"
+
+key F1          +AnyMod                          : "\EO*P"
+key F2          +AnyMod                          : "\EO*Q"
+key F3          +AnyMod                          : "\EO*R"
+key F4          +AnyMod                          : "\EO*S"
+key F5          +AnyMod                          : "\E[15;*~"
+key F6          +AnyMod                          : "\E[17;*~"
+key F7          +AnyMod                          : "\E[18;*~"
+key F8          +AnyMod                          : "\E[19;*~"
+key F9          +AnyMod                          : "\E[20;*~"
+key F10         +AnyMod                          : "\E[21;*~"
+key F11         +AnyMod                          : "\E[23;*~"
+key F12         +AnyMod                          : "\E[24;*~"
+
+# Work around dead keys
+
+key Space +Control : "\x00"
+
+# Some keys are used by konsole to cause operations.
+# The scroll* operations refer to the history buffer.
+
+#key Up    +Shift-AppScreen  : scrollLineUp
+key Prior +Shift-AppScreen  : scrollPageUp
+#key Down  +Shift-AppScreen  : scrollLineDown
+key Next  +Shift-AppScreen  : scrollPageDown
+
+key ScrollLock     : scrollLock
+
+# keypad characters are not offered differently by Qt.
 
 key Up   -Shift+Ansi+AppCuKeys : "\EOA"
 key Down -Shift+Ansi+AppCuKeys : "\EOB"
@@ -96,8 +161,8 @@ key Home  +Shift-Control-Alt+Ansi : "\E[1;2H"
 key End   +Shift-Control-Alt+Ansi : "\E[1;2F"
 key Delete+Shift-Control-Alt+Ansi : "\E[3;2~"
 key Insert+Shift-Control-Alt+Ansi : "\E[2;2~"
-#key Prior +Shift-Control-Alt+Ansi : "\E[5;2~"
-#key Next  +Shift-Control-Alt+Ansi : "\E[6;2~"
+key Prior +Shift-Control-Alt+Ansi+AppScreen : "\E[5;2~"
+key Next  +Shift-Control-Alt+Ansi+AppScreen : "\E[6;2~"
 
 key Up    -Shift-Control+Alt+Ansi : "\E[1;3A"
 key Down  -Shift-Control+Alt+Ansi : "\E[1;3B"
@@ -164,55 +229,3 @@ key Delete+Shift+Control+Alt+Ansi : "\E[3;8~"
 key Insert+Shift+Control+Alt+Ansi : "\E[2;8~"
 key Prior +Shift+Control+Alt+Ansi : "\E[5;8~"
 key Next  +Shift+Control+Alt+Ansi : "\E[6;8~"
-
-# function keys (FIXME: make pf1-pf4)
-
-key F1     : "\E[11~"
-key F2     : "\E[12~"
-key F3     : "\E[13~"
-key F4     : "\E[14~"
-
-# 'read' on the shell returns these values:
-#
-#key F1     : "\E[OP"
-#key F2     : "\E[OQ"
-#key F3     : "\E[OR"
-#key F4     : "\E[OS"
-
-key F5     : "\E[15~"
-
-key F6     : "\E[17~" 
-key F7     : "\E[18~" 
-key F8     : "\E[19~" 
-key F9     : "\E[20~" 
-key F10    : "\E[21~" 
-key F11    : "\E[23~" 
-key F12    : "\E[24~" 
-
-# Keypad-Enter. See comment on Return above.
-
-key Enter+NewLine : "\r\n"
-key Enter-NewLine : "\r"  
-
-key Space +Control : "\x00"
-
-# some of keys are used by konsole.
-
-#key Up    +Shift   : scrollLineUp
-key Prior +Shift   : scrollPageUp
-#key Down  +Shift   : scrollLineDown
-key Next  +Shift   : scrollPageDown
-#key Insert+Shift -Control  : emitClipboard
-#key Insert+Shift +Control  : emitSelection
-
-key ScrollLock     : scrollLock
-
-
-#----------------------------------------------------------
-
-# keypad characters as offered by Qt
-# cannot be recognized as such.
-
-#----------------------------------------------------------
-
-# Following other strings as emitted by konsole.
