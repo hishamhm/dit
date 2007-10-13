@@ -273,8 +273,8 @@ int TabManager_question(TabManager* this, char* question, char* options) {
    refresh();
    int opt;
    char* which;
+   beep();
    do {
-      beep();
       opt = getch();
    } while (!(which = strchr(options, opt)));
    TabManager_refreshCurrent(this);
