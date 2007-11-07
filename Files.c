@@ -1,5 +1,8 @@
 
+#define _GNU_SOURCE
 #include <stdio.h>
+#include <limits.h>
+#include <stdlib.h>
 
 #include "Prototypes.h"
 
@@ -30,25 +33,55 @@ FILE* Files_open(const char* mode, const char* picture, const char* value) {
    return fd;
 }
 
-FILE* Files_openHome(const char* mode, const char* picture, const char* value) {
-   FILE* fd;
-   char fileName[4097];
+static void Files_nameHome(char* fileName, const char* picture, const char* value) {
    char* homeDir = getenv("HOME");
    snprintf(fileName, 4096, "%s/.dit/", homeDir);
    int len = strlen(fileName);
    snprintf(fileName + len, 4096 - len, picture, value);
-   fd = fopen(fileName, mode);
-   return fd;
+}
+
+bool Files_existsHome(const char* picture, const char* value) {
+   char fileName[4097];
+   Files_nameHome(fileName, picture, value);
+   return (access(fileName, F_OK) == 0);
+}
+
+FILE* Files_openHome(const char* mode, const char* picture, const char* value) {
+   char fileName[4097];
+   Files_nameHome(fileName, picture, value);
+   return fopen(fileName, mode);
+}
+
+int Files_deleteHome(const char* picture, const char* value) {
+   char fileName[4097];
+   Files_nameHome(fileName, picture, value);
+   return unlink(fileName);
+}
+
+void Files_encodePathInFileName(char* fileName, char* encodedFileName) {
+   char rpath[4097];
+   realpath(fileName, rpath);
+   for(char *c = rpath; *c; c++)
+      if (*c == '/')
+         *c = ':';
+   strncpy(encodedFileName, rpath, 4096);
+   encodedFileName[4095] = '\0';
 }
 
 void Files_makeHome() {
+   static const char* dirs[] = {
+      "%s/.dit",
+      "%s/.dit/undo",
+      "%s/.dit/lock",
+      NULL
+   };
    char fileName[4097];
-   snprintf(fileName, 4096, "%s/.dit", getenv("HOME"));
-   fileName[4095] = '\0';
-   mkdir(fileName, 0755);
-   snprintf(fileName, 4096, "%s/.dit/undo", getenv("HOME"));
-   fileName[4095] = '\0';
-   mkdir(fileName, 0755);
+   const char* home = getenv("HOME");
+   for (int i = 0; dirs[i]; i++) {
+      snprintf(fileName, 4096, dirs[i], home);
+      fileName[4095] = '\0';
+      mkdir(fileName, 0700);
+   }
 }
 
 void Files_forEachInDir(char* dirName, Method_Files_fileHandler fileHandler, void* data) {

@@ -104,7 +104,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command) {
    if (fileName) {
       this->fileName = String_copy(fileName);
       this->readOnly = (access(fileName, R_OK) == 0 && access(fileName, W_OK) != 0);
-      
+     
       FileReader* file = FileReader_new(fileName, command);
       int i = 0;
       if (file && !FileReader_eof(file)) {

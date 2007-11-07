@@ -3,8 +3,6 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <limits.h>
-#include <stdlib.h>
 
 #include "Prototypes.h"
 //#needs Object
@@ -351,19 +349,9 @@ bool Undo_undo(Undo* this, int* x, int* y) {
    return modified;
 }
 
-static void Undo_makeFileName(Undo* this, char* fileName, char* undoFileName) {
-   char rpath[4097];
-   realpath(fileName, rpath);
-   for(char *c = rpath; *c; c++)
-      if (*c == '/')
-         *c = ':';
-   strncpy(undoFileName, rpath, 4096);
-   undoFileName[4095] = '\0';
-}
-
 void Undo_store(Undo* this, char* fileName) {
    char undoFileName[4097];
-   Undo_makeFileName(this, fileName, undoFileName);
+   Files_encodePathInFileName(fileName, undoFileName);
    FILE* fd = fopen(fileName, "r");
    char md5buf[32];
    md5_stream(fd, &md5buf);
@@ -427,7 +415,7 @@ void Undo_store(Undo* this, char* fileName) {
 
 void Undo_restore(Undo* this, char* fileName) {
    char undoFileName[4097];
-   Undo_makeFileName(this, fileName, undoFileName);
+   Files_encodePathInFileName(fileName, undoFileName);
    FILE* fd = fopen(fileName, "r");
    if (!fd)
       return;
