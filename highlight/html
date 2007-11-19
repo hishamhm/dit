@@ -180,9 +180,15 @@ context <ol > alt
    rule style brightalt
    rule class brightalt
 /context
-rule </ol> altse
+rule </ol> alt
 
-rule <pre> alt
+context <pre > alt
+   context " " diff
+   /context
+   rule = bright
+   rule style brightalt
+   rule class brightalt
+/context
 rule </pre> alt
 
 context <p > alt
