@@ -213,9 +213,12 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
       int ch = Field_run(Dit_findField, false, &handled);
       if (!handled) {
          if ((ch >= 32 && ch <= 255) || ch == 9 || ch == CTRL('T')) {
-            if (ch == 9)
-               ch = Buffer_currentLine(buffer)[buffer->x];
-            else if (ch == CTRL('T'))
+            if (ch == 9) {
+               if (buffer->x < buffer->line->len)
+                  ch = buffer->line->text[buffer->x];
+               else
+                  continue;
+            } else if (ch == CTRL('T'))
                ch = 9;
             Field_insertChar(Dit_findField, ch);
             wrapped = false;                  
