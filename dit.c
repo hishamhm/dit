@@ -212,7 +212,11 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
       Field_printfLabel(Dit_findField, "Lin=%d Col=%d (%c)Case %sFind:", buffer->y + 1, buffer->x + 1, caseSensitive ? '*' : ' ', wrapped ? "Wrapped " : "");
       int ch = Field_run(Dit_findField, false, &handled);
       if (!handled) {
-         if (ch == 9 || (ch >= 32 && ch <= 255)) {
+         if ((ch >= 32 && ch <= 255) || ch == 9 || ch == CTRL('T')) {
+            if (ch == 9)
+               ch = Buffer_currentLine(buffer)[buffer->x];
+            else if (ch == CTRL('T'))
+               ch = 9;
             Field_insertChar(Dit_findField, ch);
             wrapped = false;                  
             firstX = -1;
