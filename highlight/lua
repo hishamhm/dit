@@ -93,3 +93,24 @@ context [[ ]] alt
    rule ]] alt
 /context
 
+context [=[ ]=] alt
+   rule \\ brightalt
+   rule \n brightalt
+   rule \t brightalt
+   rule ]=] alt
+/context
+
+context [==[ ]==] alt
+   rule \\ brightalt
+   rule \n brightalt
+   rule \t brightalt
+   rule ]==] alt
+/context
+
+context [===[ ]===] alt
+   rule \\ brightalt
+   rule \n brightalt
+   rule \t brightalt
+   rule ]===] alt
+/context
+
