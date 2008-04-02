@@ -673,9 +673,10 @@ int main(int argc, char** argv) {
       getyx(stdscr, y, x);
 
       attrset(CRT_colors[TabColor]);
-      mvprintw(LINES - 1, 0, "L:%d C:%d %s",
+      mvprintw(LINES - 1, 0, "L:%d C:%d %s%s",
                              buffer->y + 1, buffer->x + 1,
-                             (buffer->tabCharacters ? " TABS" : ""));
+                             (buffer->tabCharacters ? " TABS" : ""),
+                             (buffer->dosLineBreaks ? " DOS" : ""));
 
       attrset(A_NORMAL);
       buffer->lastKey = ch;

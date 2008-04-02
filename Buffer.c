@@ -55,6 +55,8 @@ struct Buffer_ {
    int lastKey;
    // document uses tab characters
    int tabCharacters;
+   // document uses DOS-style ctrl-M
+   int dosLineBreaks;
    int indentSpaces;
    // time tracker to disable auto-indent when pasting;
    double lastTime;
@@ -89,6 +91,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command) {
    this->lastKey = 0;
    this->modified = false;
    this->tabCharacters = false;
+   this->dosLineBreaks = false;
    this->indentSpaces = 3;
    
    /* Hack to disable auto-indent when pasting through X11, part 1 */
@@ -112,7 +115,8 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command) {
          int len = 0;
          char* text = FileReader_readLine(file, &len);
          this->hl = Highlight_new(fileName, text);
-         if (strchr(text, '\t')) this->tabCharacters = true;
+         if (!this->tabCharacters && strchr(text, '\t')) this->tabCharacters = true;
+         if (!this->dosLineBreaks && strchr(text, '\015')) this->dosLineBreaks = true;
          Line* line = Line_new(p->items, text, len, this->hl->mainContext);
          Panel_set(p, i, (ListItem*) line);
          while (!FileReader_eof(file)) {
@@ -450,6 +454,11 @@ void Buffer_breakLine(Buffer* this) {
       Buffer_deleteBlock(this);
    }
 
+   if (this->dosLineBreaks) {
+      Undo_beginGroup(this->undo, this->x, this->y);
+      Buffer_defaultKeyHandler(this, '\015');
+   }
+
    int indent = Buffer_getIndentSize(this);
 
    /* Hack to disable auto-indent when pasting through X11, part 2 */
@@ -467,6 +476,10 @@ void Buffer_breakLine(Buffer* this) {
    this->y++;
    this->panel->needsRedraw = true;
    this->modified = true;
+
+   if (this->dosLineBreaks) {
+      Undo_endGroup(this->undo, this->x, this->y);
+   }
 
    Script_hook("onBreakLine");
 
@@ -890,7 +903,7 @@ void Buffer_indent(Buffer* this) {
 }
       
 void Buffer_defaultKeyHandler(Buffer* this, int ch) {
-   if ((ch >= 32 && ch <= 255) || ch == '\t') {
+   if ((ch >= 32 && ch <= 255) || ch == '\t' || ch == '\015') {
       if (this->selecting) {
          Buffer_deleteBlock(this);
       }
