@@ -18,6 +18,10 @@
 #define isword(x) (isalpha(x) || x == '_')
 #endif
 
+#ifndef last_x
+#define last_x(this) (this->dosLineBreaks ? this->line->len - 1 : this->line->len)
+#endif
+
 struct Buffer_ {
    char* fileName;
    bool modified;
@@ -237,7 +241,7 @@ void Buffer_goto(Buffer* this, int x, int y) {
    Panel_setSelected(this->panel, y);
    this->line = (Line*) Panel_getSelected(this->panel);
    this->y = Panel_getSelectedIndex(this->panel);
-   this->x = MIN(x, this->line->len);
+   this->x = MIN(x, last_x(this));
    this->panel->scrollV = MAX(0, this->y - (this->panel->h / 2));
    this->panel->needsRedraw = true;
 }
@@ -257,8 +261,8 @@ void Buffer_draw(Buffer* this) {
       p->needsRedraw = true;
    this->savedContext = this->line->context;
       
-   if (this->x > this->line->len)
-      this->x = this->line->len;
+   if (this->x > last_x(this))
+      this->x = last_x(this);
 
    /* actual X position (expanding tabs, etc) */
    int screenX = Line_widthUntil(this->line, this->x);
@@ -312,7 +316,7 @@ static inline bool Buffer_matchBracket(char ch, char* oth, int* dir) {
 }
 
 inline void Buffer_highlightBracket(Buffer* this) {
-   assert (this->x >= 0 && this->x <= this->line->len);
+   assert (this->x >= 0 && this->x <= last_x(this));
    if (this->bracketY > -1 && this->bracketY != this->y) {
       this->panel->needsRedraw = true;
    }
@@ -436,7 +440,7 @@ void Buffer_undo(Buffer* this) {
 }
 
 inline void Buffer_breakIndenting(Buffer* this, int indent) {
-   indent = MIN(indent, this->line->len);
+   indent = MIN(indent, last_x(this));
    Undo_breakAt(this->undo, this->x, this->y, indent);
    Line_breakAt(this->line, this->x, indent);
 }
@@ -487,7 +491,7 @@ void Buffer_breakLine(Buffer* this) {
 }
 
 void Buffer_forwardChar(Buffer* this) {
-   if (this->x < this->line->len) {
+   if (this->x < last_x(this)) {
       this->x++;
    } else if (this->line->super.next) {
       this->x = 0;
@@ -499,8 +503,8 @@ void Buffer_forwardChar(Buffer* this) {
 }
 
 void Buffer_forwardWord(Buffer* this) {
-   if (this->x < this->line->len) {
-      this->x = String_forwardWord(this->line->text, this->line->len, this->x);
+   if (this->x < last_x(this)) {
+      this->x = String_forwardWord(this->line->text, last_x(this), this->x);
    } else if (this->line->super.next) {
       this->x = 0;
       Panel_onKey(this->panel, KEY_DOWN);
@@ -512,11 +516,11 @@ void Buffer_forwardWord(Buffer* this) {
 
 void Buffer_backwardWord(Buffer* this) {
    if (this->x > 0) {
-      this->x = String_backwardWord(this->line->text, this->line->len, this->x);
+      this->x = String_backwardWord(this->line->text, last_x(this), this->x);
    } else if (this->y > 0) {
       Panel_onKey(this->panel, KEY_UP);
       this->line = (Line*) Panel_getSelected(this->panel);
-      this->x = this->line->len;
+      this->x = last_x(this);
       this->y--;
    }
    this->savedX = Line_widthUntil(this->line, this->x);
@@ -529,7 +533,7 @@ void Buffer_backwardChar(Buffer* this) {
    } else if (this->y > 0) {
       Panel_onKey(this->panel, KEY_UP);
       this->line = (Line*) Panel_getSelected(this->panel);
-      this->x = this->line->len;
+      this->x = last_x(this);
       this->y--;
    }
    this->savedX = Line_widthUntil(this->line, this->x);
@@ -549,7 +553,7 @@ void Buffer_beginningOfLine(Buffer* this) {
 }
 
 void Buffer_endOfLine(Buffer* this) {
-   this->x = this->line->len;
+   this->x = last_x(this);
    this->savedX = Line_widthUntil(this->line, this->x);
    this->selecting = false;
 }
@@ -582,7 +586,11 @@ void Buffer_nextPage(Buffer* this) {
 void Buffer_wordWrap(Buffer* this, int wrap) {
    Undo_beginGroup(this->undo, this->x, this->y);
    while (this->line->super.next && ((Line*)this->line->super.next)->len > 0) {
-      this->x = this->line->len;
+      this->x = last_x(this);
+      if (this->dosLineBreaks) {
+         Undo_deleteCharAt(this->undo, this->x, this->y, Line_charAt(this->line, this->x));
+         Line_deleteChars(this->line, this->x, 1);
+      }
       if (this->line->text[this->x-1] != ' ')
          Buffer_defaultKeyHandler(this, ' ');
       Undo_joinNext(this->undo, this->x, this->y, false);
@@ -593,7 +601,7 @@ void Buffer_wordWrap(Buffer* this, int wrap) {
       this->line = (Line*) Panel_getSelected(this->panel);
       Buffer_wordWrap(this, wrap);
    }
-   while (this->line->len > wrap) {
+   while (last_x(this) > wrap) {
       Line* oldLine = this->line;
       for(int i = wrap; i > 0; i--) {
          if (this->line->text[i] == ' ') {
@@ -683,7 +691,7 @@ void Buffer_deleteChar(Buffer* this) {
       Buffer_deleteBlock(this);
       return;
    }
-   if (this->x < this->line->len) {
+   if (this->x < last_x(this)) {
       Undo_deleteCharAt(this->undo, this->x, this->y, Line_charAt(this->line, this->x));
       Line_deleteChars(this->line, this->x, 1);
    } else {
@@ -711,8 +719,8 @@ void Buffer_pullText(Buffer* this) {
    int end = this->x;
    
    while (end > 0 && this->line->text[end] != ' ') end--;
-   while (end < this->line->len && this->line->text[end] == ' ') end++;
-   if (end == this->line->len) return;
+   while (end < last_x(this) && this->line->text[end] == ' ') end++;
+   if (end == last_x(this)) return;
    int at = end;
    if (at > 0) {
       do {
@@ -754,8 +762,8 @@ void Buffer_pushText(Buffer* this) {
       while (start > 0 && this->line->text[start] != ' ')
          start--;
 
-   while (start < this->line->len && this->line->text[start] == ' ') start++;
-   if (start == this->line->len) return;
+   while (start < last_x(this) && this->line->text[start] == ' ') start++;
+   if (start == last_x(this)) return;
    int at = start;
    if (ref->len > at) {
       if (ref->len > at && ref->text[at] != ' ')
@@ -789,6 +797,9 @@ void Buffer_backwardDeleteChar(Buffer* this) {
       Line_deleteChars(this->line, this->x, 1);
    } else {
       if (this->line->super.prev) {
+         if (this->dosLineBreaks) {
+            Undo_beginGroup(this->undo, this->x, this->y);
+         }
          Line* prev = (Line*) this->line->super.prev;
          this->x = prev->len;
          Undo_joinNext(this->undo, this->x, this->y - 1, true);
@@ -796,6 +807,10 @@ void Buffer_backwardDeleteChar(Buffer* this) {
          Panel_onKey(this->panel, KEY_UP);
          this->line = (Line*) Panel_getSelected(this->panel);
          this->y--;
+         if (this->dosLineBreaks) {
+            Buffer_backwardDeleteChar(this);
+            Undo_endGroup(this->undo, this->x, this->y);
+         }
       }
       this->panel->needsRedraw = true;
    }
@@ -831,13 +846,13 @@ void Buffer_slideDownLine(Buffer* this) {
 
 void Buffer_correctPosition(Buffer* this) {
    this->line = (Line*) Panel_getSelected(this->panel);
-   this->x = MIN(this->x, this->line->len);
+   this->x = MIN(this->x, last_x(this));
    int screenX = Line_widthUntil(this->line, this->x);
    if (screenX > this->savedX) {
       while (this->x > 0 && Line_widthUntil(this->line, this->x) > this->savedX)
          this->x--;
    } else if (screenX < this->savedX) {
-      while (this->x < this->line->len && Line_widthUntil(this->line, this->x) < this->savedX)
+      while (this->x < last_x(this) && Line_widthUntil(this->line, this->x) < this->savedX)
          this->x++;
    }
    this->y = Panel_getSelectedIndex(this->panel);
@@ -921,7 +936,7 @@ void Buffer_defaultKeyHandler(Buffer* this, int ch) {
 char Buffer_currentChar(Buffer* this) {
    assert(this->line);
    char* text = this->line->text;
-   int len = this->line->len;
+   int len = last_x(this);
    int offset = MIN(this->x, len);
    if (this->x < len) {
       return text[offset];
@@ -934,7 +949,7 @@ int Buffer_currentWord(Buffer* this, char* result, int resultLen) {
 
    assert(this->line);
    char* text = this->line->text;
-   int len = this->line->len;
+   int len = last_x(this);
    int offset = MIN(this->x, len);
    int at = 0;
    int saveOffset = offset;
