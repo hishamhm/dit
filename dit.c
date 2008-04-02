@@ -455,6 +455,7 @@ static void Dit_registerActions() {
    Hashtable_putString(Dit_actions, "Buffer_slideUpLine", (void*)(long) Buffer_slideUpLine);
    Hashtable_putString(Dit_actions, "Buffer_toggleMarking", (void*)(long) Buffer_toggleMarking);
    Hashtable_putString(Dit_actions, "Buffer_toggleTabCharacters", (void*)(long) Buffer_toggleTabCharacters);
+   Hashtable_putString(Dit_actions, "Buffer_toggleDosLineBreaks", (void*)(long) Buffer_toggleDosLineBreaks);
    Hashtable_putString(Dit_actions, "Buffer_undo", (void*)(long) Buffer_undo);
    Hashtable_putString(Dit_actions, "Buffer_unindent", (void*)(long) Buffer_unindent);
    Hashtable_putString(Dit_actions, "Buffer_upLine", (void*)(long) Buffer_upLine);
@@ -491,7 +492,7 @@ static void Dit_loadHardcodedBindings(Dit_Action* keys) {
    keys[KEY_CTRL('A')] = (Dit_Action) Buffer_beginningOfLine;
    keys[KEY_CTRL('B')] = (Dit_Action) Buffer_toggleMarking;
    keys[KEY_CTRL('C')] = (Dit_Action) Dit_copy;
-   /* Ctrl D is FREE */
+   keys[KEY_CTRL('D')] = (Dit_Action) Buffer_toggleDosLineBreaks;
    keys[KEY_CTRL('E')] = (Dit_Action) Buffer_endOfLine;
    keys[KEY_CTRL('F')] = (Dit_Action) Dit_find;
    keys[KEY_CTRL('G')] = (Dit_Action) Dit_goto;

@@ -1085,3 +1085,7 @@ void Buffer_toggleMarking(Buffer* this) {
 void Buffer_toggleTabCharacters(Buffer* this) {
    this->tabCharacters = !this->tabCharacters;
 }
+
+void Buffer_toggleDosLineBreaks(Buffer* this) {
+   this->dosLineBreaks = !this->dosLineBreaks;
+}
