@@ -666,10 +666,13 @@ char* Buffer_copyBlock(Buffer* this, int *len) {
 }
 
 void Buffer_pasteBlock(Buffer* this, char* block, int len) {
+   Undo_beginGroup(this->undo, this->x, this->y);
    if (this->selecting)
       Buffer_deleteBlock(this);
-   if (len == 0)
+   if (len == 0) {
+      Undo_endGroup(this->undo, this->x, this->y);
       return;
+   }
    int newX;
    int newY = this->y;
    Undo_insertBlock(this->undo, this->x, this->y, block, len);
@@ -681,7 +684,8 @@ void Buffer_pasteBlock(Buffer* this, char* block, int len) {
    this->line = (Line*) Panel_getSelected(this->panel);
    this->savedX = Line_widthUntil(this->line, this->x);
    this->panel->needsRedraw = true;
-
+   
+   Undo_endGroup(this->undo, this->x, this->y);
    this->selecting = false;
    this->modified = true;
 }

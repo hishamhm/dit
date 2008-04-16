@@ -298,7 +298,6 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                   rch = Field_quickRun(Dit_replaceField, quitMask);
                   if (rch == 13 || rch == KEY_CTRL('R')) {
                      if (buffer->selecting) {
-                        Buffer_deleteChar(buffer);
                         Buffer_pasteBlock(buffer, Dit_replaceField->current->text, strlen(Dit_replaceField->current->text));
                         buffer->selecting = false;
                         Buffer_draw(buffer);
