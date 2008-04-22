@@ -211,6 +211,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
       bool handled;
       Field_printfLabel(Dit_findField, "Lin=%d Col=%d (%c)Case %sFind:", buffer->y + 1, buffer->x + 1, caseSensitive ? '*' : ' ', wrapped ? "Wrapped " : "");
       int ch = Field_run(Dit_findField, false, &handled);
+      int lastY = buffer->y + 1;
       if (!handled) {
          if ((ch >= 32 && ch <= 255) || ch == 9 || ch == CTRL('T')) {
             if (ch == 9) {
@@ -260,6 +261,18 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             {
                found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, true);
                searched = true;
+               break;
+            }
+            case KEY_CTRL('G'):
+            {
+               int y = atoi(Dit_findField->current->text);
+               if (y > 0)
+                  y--;
+               if (y != lastY) {
+                  Buffer_goto(buffer, 0, y);
+                  Buffer_draw(buffer);
+                  lastY = y;
+               }
                break;
             }
             case KEY_CTRL('P'):
