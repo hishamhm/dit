@@ -148,6 +148,8 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command) {
    }
 
    this->savedContext = this->hl->mainContext;
+   
+   //Buffer_getMarks(this);
 
    return this;
 }
@@ -392,6 +394,8 @@ void Buffer_delete(Buffer* this) {
 
    Undo_delete(this->undo);
    Highlight_delete(this->hl);
+   if (this->marks)
+      free(this->marks);
    free(this);
 }
 
@@ -414,30 +418,35 @@ void Buffer_refreshHighlight(Buffer* this) {
    this->panel->needsRedraw = true;
 }
 
-static inline void Buffer_getMarks(Buffer* this) {
+void Buffer_getMarks(Buffer* this) {
    if (this->marks) {
       free(this->marks);
    }
-   char* command = malloc(strlen("./highlight_errors.sh ") + strlen(this->fileName) + 2);
-   sprintf(command, "./highlight_errors.sh %s", this->fileName);
+   char* command = malloc(strlen("dit_get_marks ") + strlen(this->fileName) + 2);
+   sprintf(command, "dit_get_marks %s", this->fileName);
    FILE* cmd = popen(command, "r");
    int* marks = malloc(sizeof(int) * 255);
    this->marks = marks;
-   int x = 0;
+   int marked = 0;
    while (!feof(cmd)) {
       int n = fscanf(cmd, "%d %d", marks, marks+1);
       if (n < 2)
          break;
       marks += 2;
-      x++;
+      marked++;
+   }
+   if (marked == 0) {
+      free(marks);
+      this->marks = NULL;
+   } else {
+      marks[0] = 0;
+      marks[1] = 0;
    }
 /*
-mvprintw(LINES - 1, 0, "%d", marks[0]);
+mvprintw(0,0,"%d %d", this->marks[0], this->marks[1]);
 refresh();
 CRT_readKey();
 */
-   marks[0] = 0;
-   marks[1] = 0;
    fclose(cmd);
    this->panel->needsRedraw = true;
 }
@@ -1103,7 +1112,7 @@ bool Buffer_save(Buffer* this) {
    Undo_store(this->undo, this->fileName);
    this->modified = false;
    this->readOnly = false;
-   // Buffer_getMarks(this);
+   //Buffer_getMarks(this);
    return true;
 }
 
