@@ -259,14 +259,29 @@ HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close,
    return ctx;
 }
 
-static inline int Highlight_tryMatch(Highlight* this, unsigned char* buffer, int* attrs, int at, GraphNode* rules, GraphNode* follows, Method_PatternMatcher_match match, HighlightContext** ctx, bool paintUnmatched) {
-   unsigned char* here = buffer+at;
+static inline int Highlight_tryMatch(Highlight* this, unsigned char* buffer, int* attrs, int at, GraphNode* rules, GraphNode* follows, Method_PatternMatcher_match match, HighlightContext** ctx, bool paintUnmatched, int y, int* marks) {
+   unsigned char* here = buffer + at;
    int intColor;
    char endNode;
    int matchlen = match(rules, here, &intColor, &endNode);
    Color color = (Color) intColor;
    assert(color >= 0 && color < Colors);
-   int attr = CRT_colors[color];
+   int attr;
+   if (matchlen)
+      attr = CRT_colors[color];
+   else
+      attr = CRT_colors[(*ctx)->defaultColor];
+   if (marks) {
+      for (int i = 0; marks[i]; i += 2) {
+         int my = marks[i];
+         int mx = marks[i+1];
+         if (my == y && (mx == at || mx == -1)) {
+            attr = CRT_colors[VerySpecialColor];
+            paintUnmatched = true;
+            break;
+         }
+      }
+   }
    if (matchlen && (endNode == PM_EAGER_RULE || ( !(isword(here[matchlen-1]) && isword(here[matchlen]))))) {
       for (int i = at; i < at+matchlen; i++)
          attrs[i] = attr;
@@ -278,19 +293,18 @@ static inline int Highlight_tryMatch(Highlight* this, unsigned char* buffer, int
       }
       at += matchlen;
    } else if (paintUnmatched) {
-      int defaultAttr = CRT_colors[(*ctx)->defaultColor];
       int word = isword(*here);
       if (word) {
          while (isword(buffer[at]))
-            attrs[at++] = defaultAttr;
+            attrs[at++] = attr;
       } else {
-         attrs[at++] = defaultAttr;
+         attrs[at++] = attr;
       }
    }
    return at;
 }
 
-void Highlight_setAttrs(Highlight* this, unsigned char* buffer, int* attrs, int len) {
+void Highlight_setAttrs(Highlight* this, unsigned char* buffer, int* attrs, int len, int y, int* marks) {
    HighlightContext* ctx = this->currentContext;
    int at = 0;
    Method_PatternMatcher_match match;
@@ -301,10 +315,10 @@ void Highlight_setAttrs(Highlight* this, unsigned char* buffer, int* attrs, int 
    if (ctx->rules->lineStart) {
       if (!ctx->follows->lineStart)
          ctx->follows->lineStart = GraphNode_new();
-      at = Highlight_tryMatch(this, buffer, attrs, at, ctx->rules->lineStart, ctx->follows->lineStart, match, &ctx, false);
+      at = Highlight_tryMatch(this, buffer, attrs, at, ctx->rules->lineStart, ctx->follows->lineStart, match, &ctx, false, y, marks);
    }
    while (at < len) {
-      at = Highlight_tryMatch(this, buffer, attrs, at, ctx->rules->start, ctx->follows->start, match, &ctx, true);
+      at = Highlight_tryMatch(this, buffer, attrs, at, ctx->rules->start, ctx->follows->start, match, &ctx, true, y, marks);
    }
    this->currentContext = ctx->nextLine;
 }

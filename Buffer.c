@@ -64,6 +64,8 @@ struct Buffer_ {
    int indentSpaces;
    // time tracker to disable auto-indent when pasting;
    double lastTime;
+   // marks for error highlighting
+   int* marks;
 };
 
 struct FilePosition_ {
@@ -97,6 +99,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command) {
    this->tabCharacters = false;
    this->dosLineBreaks = false;
    this->indentSpaces = 3;
+   this->marks = NULL;
    
    /* Hack to disable auto-indent when pasting through X11, part 1 */
    struct timeval tv;
@@ -407,6 +410,35 @@ void Buffer_refreshHighlight(Buffer* this) {
       Line* line = (Line*) Panel_get(this->panel, i);
       line->context = hl->mainContext;
    }
+   
+   this->panel->needsRedraw = true;
+}
+
+static inline void Buffer_getMarks(Buffer* this) {
+   if (this->marks) {
+      free(this->marks);
+   }
+   char* command = malloc(strlen("./highlight_errors.sh ") + strlen(this->fileName) + 2);
+   sprintf(command, "./highlight_errors.sh %s", this->fileName);
+   FILE* cmd = popen(command, "r");
+   int* marks = malloc(sizeof(int) * 255);
+   this->marks = marks;
+   int x = 0;
+   while (!feof(cmd)) {
+      int n = fscanf(cmd, "%d %d", marks, marks+1);
+      if (n < 2)
+         break;
+      marks += 2;
+      x++;
+   }
+/*
+mvprintw(LINES - 1, 0, "%d", marks[0]);
+refresh();
+CRT_readKey();
+*/
+   marks[0] = 0;
+   marks[1] = 0;
+   fclose(cmd);
    this->panel->needsRedraw = true;
 }
 
@@ -1071,6 +1103,7 @@ bool Buffer_save(Buffer* this) {
    Undo_store(this->undo, this->fileName);
    this->modified = false;
    this->readOnly = false;
+   // Buffer_getMarks(this);
    return true;
 }
 

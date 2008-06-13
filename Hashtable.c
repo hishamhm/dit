@@ -175,6 +175,22 @@ void Hashtable_putString(Hashtable* this, char* key, void* value) {
    *bucket = HashtableItem_newString(key, value);
 }
 
+void Hashtable_putInt(Hashtable* this, int key, void* value) {
+   HashtableKey hk;
+   hk.i = key;
+   int index = Hashtable_intHash(this, hk);
+   HashtableItem** bucket;
+   for (bucket = &(this->buckets[index]); *bucket; bucket = &((*bucket)->next) ) {
+      if (Hashtable_intEq(this, (*bucket)->key, hk)) {
+         if (this->owner)
+            free((*bucket)->value);
+         (*bucket)->value = value;
+         return;
+      }
+   }
+   *bucket = HashtableItem_new(hk, value);
+}
+
 void* Hashtable_take(Hashtable* this, HashtableKey key) {
    int index = this->hash(this, key);
    HashtableItem** bucket; 
@@ -219,6 +235,18 @@ void* Hashtable_getString(Hashtable* this, char* key) {
 
    for(bucket = this->buckets[index]; bucket; bucket = bucket->next)
       if (Hashtable_stringEq(this, bucket->key, hk))
+         return bucket->value;
+   return NULL;
+}
+
+void* Hashtable_getInt(Hashtable* this, int key) {
+   HashtableKey hk;
+   hk.i = key;
+   int index = Hashtable_intHash(this, hk);
+   HashtableItem* bucket;
+
+   for(bucket = this->buckets[index]; bucket; bucket = bucket->next)
+      if (Hashtable_intEq(this, bucket->key, hk))
          return bucket->value;
    return NULL;
 }
