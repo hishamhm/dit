@@ -139,6 +139,22 @@ int Hashtable_size(Hashtable* this) {
    return this->items;
 }
 
+void Hashtable_putInt(Hashtable* this, int key, void* value) {
+   HashtableKey hk;
+   hk.i = key;
+   int index = Hashtable_intHash(this, hk);
+   HashtableItem** bucket;
+   for (bucket = &(this->buckets[index]); *bucket; bucket = &((*bucket)->next) ) {
+      if (Hashtable_intEq(this, (*bucket)->key, hk)) {
+         if (this->owner)
+            free((*bucket)->value);
+         (*bucket)->value = value;
+         return;
+      }
+   }
+   *bucket = HashtableItem_new(hk, value);
+}
+
 void Hashtable_put(Hashtable* this, HashtableKey key, void* value) {
    if (this->type == Hashtable_STR) {
       Hashtable_putString(this, key.str, value);
@@ -173,22 +189,6 @@ void Hashtable_putString(Hashtable* this, char* key, void* value) {
       }
    }
    *bucket = HashtableItem_newString(key, value);
-}
-
-void Hashtable_putInt(Hashtable* this, int key, void* value) {
-   HashtableKey hk;
-   hk.i = key;
-   int index = Hashtable_intHash(this, hk);
-   HashtableItem** bucket;
-   for (bucket = &(this->buckets[index]); *bucket; bucket = &((*bucket)->next) ) {
-      if (Hashtable_intEq(this, (*bucket)->key, hk)) {
-         if (this->owner)
-            free((*bucket)->value);
-         (*bucket)->value = value;
-         return;
-      }
-   }
-   *bucket = HashtableItem_new(hk, value);
 }
 
 void* Hashtable_take(Hashtable* this, HashtableKey key) {
@@ -227,18 +227,6 @@ void* Hashtable_get(Hashtable* this, HashtableKey key) {
    return NULL;
 }
 
-void* Hashtable_getString(Hashtable* this, char* key) {
-   HashtableKey hk;
-   hk.str = key;
-   int index = Hashtable_stringHash(this, hk);
-   HashtableItem* bucket;
-
-   for(bucket = this->buckets[index]; bucket; bucket = bucket->next)
-      if (Hashtable_stringEq(this, bucket->key, hk))
-         return bucket->value;
-   return NULL;
-}
-
 void* Hashtable_getInt(Hashtable* this, int key) {
    HashtableKey hk;
    hk.i = key;
@@ -247,6 +235,18 @@ void* Hashtable_getInt(Hashtable* this, int key) {
 
    for(bucket = this->buckets[index]; bucket; bucket = bucket->next)
       if (Hashtable_intEq(this, bucket->key, hk))
+         return bucket->value;
+   return NULL;
+}
+
+void* Hashtable_getString(Hashtable* this, char* key) {
+   HashtableKey hk;
+   hk.str = key;
+   int index = Hashtable_stringHash(this, hk);
+   HashtableItem* bucket;
+
+   for(bucket = this->buckets[index]; bucket; bucket = bucket->next)
+      if (Hashtable_stringEq(this, bucket->key, hk))
          return bucket->value;
    return NULL;
 }
