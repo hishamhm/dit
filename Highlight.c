@@ -266,23 +266,20 @@ static inline int Highlight_tryMatch(Highlight* this, unsigned char* buffer, int
    int matchlen = match(rules, here, &intColor, &endNode);
    Color color = (Color) intColor;
    assert(color >= 0 && color < Colors);
-   int attr;
-   if (matchlen)
-      attr = CRT_colors[color];
-   else
-      attr = CRT_colors[(*ctx)->defaultColor];
+   bool paintMarks = false;
    if (marks) {
       for (int i = 0; marks[i]; i += 2) {
          int my = marks[i];
          int mx = marks[i+1];
          if (my == y && (mx == at || mx == -1)) {
-            attr = CRT_colors[VerySpecialColor];
             paintUnmatched = true;
+            paintMarks = true;
             break;
          }
       }
    }
    if (matchlen && (endNode == PM_EAGER_RULE || ( !(isword(here[matchlen-1]) && isword(here[matchlen]))))) {
+      int attr = CRT_colors[paintMarks ? VerySpecialColor : color];
       for (int i = at; i < at+matchlen; i++)
          attrs[i] = attr;
       int nextCtx = 0;
@@ -293,6 +290,7 @@ static inline int Highlight_tryMatch(Highlight* this, unsigned char* buffer, int
       }
       at += matchlen;
    } else if (paintUnmatched) {
+      int attr = CRT_colors[paintMarks ? VerySpecialColor : (*ctx)->defaultColor];
       int word = isword(*here);
       if (word) {
          while (isword(buffer[at]))
