@@ -1,5 +1,6 @@
 FILES
 firstline prefix <?xml
+name suffix .xml
 RULES
 
 context < > alt
