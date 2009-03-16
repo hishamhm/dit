@@ -23,15 +23,22 @@ rule long bright
 rule short bright
 rule static bright
 rule class bright
+rule package bright
 rule private bright
 rule protected bright
 rule public bright
 rule native bright
-
+rule try bright
+rule catch bright
+rule finally bright
+rule throw bright
+rule throws bright
+rule interface bright
 rule import bright
 rule instanceof bright
 rule true bright
 rule false bright
+rule abstract bright
 
 rule ! brightsymbol
 rule < brightsymbol

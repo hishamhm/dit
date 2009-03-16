@@ -1,22 +1,30 @@
 FILES
 firstline prefix <?xml
+firstline prefix <?xsl
 name suffix .xml
+name suffix .xsl
 RULES
 
-context < > alt
+context < > brightalt
    context " " diff
    /context
-   rule = symbol
-/context
-
-context <! > brightalt
-   context " " brightdiff
+   context ' ' diff
    /context
    rule = symbol
 /context
 
-context <? ?> brightalt
+context <![CDATA[ ]]> veryspecial  veryspecial dim
    context " " brightdiff
+   /context
+   context ' ' brightdiff
+   /context
+   rule = symbol
+/context
+
+context <? ?> alt
+   context " " brightdiff
+   /context
+   context ' ' brightdiff
    /context
    rule = symbol
 /context
