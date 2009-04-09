@@ -64,3 +64,4 @@ BACKSPACE Buffer_backwardDeleteChar
 NPAGE Buffer_nextPage
 PPAGE Buffer_previousPage
 BACK_TAB Buffer_unindent
+F8 Dit_deleteLine

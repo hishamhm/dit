@@ -286,6 +286,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                int rch = 0;
                if (!Dit_replaceField)
                   Dit_replaceField = Field_new("Replace with:", 0, LINES - 1, MIN(100, COLS - 20));
+               Field_start(Dit_replaceField);
                while (true) {
                   if (searched) {
                      if (found) {
@@ -308,7 +309,8 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                   quitMask[KEY_CTRL('F')] = true;
                   quitMask[KEY_CTRL('N')] = true;
                   quitMask[KEY_CTRL('P')] = true;
-                  rch = Field_quickRun(Dit_replaceField, quitMask);
+                  bool handled;
+                  rch = Field_run(Dit_replaceField, quitMask, &handled);
                   if (rch == 13 || rch == KEY_CTRL('R')) {
                      if (buffer->selecting) {
                         Buffer_pasteBlock(buffer, Dit_replaceField->current->text, strlen(Dit_replaceField->current->text));
@@ -323,6 +325,15 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                   } else if (rch == 27) {
                      break;
                   } else {
+                     if (rch == 9) {
+                        if (buffer->x < buffer->line->len)
+                           rch = buffer->line->text[buffer->x];
+                        else
+                           continue;
+                     } else if (rch == CTRL('T'))
+                        rch = 9;
+                     Field_insertChar(Dit_replaceField, rch);
+
                      found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, true);
                      searched = true;
                   }
@@ -414,6 +425,13 @@ static void Dit_quit(Buffer* buffer, TabManager* tabs, int* ch, int* quit) {
       *quit = 1;
 }
 
+static void Dit_deleteLine(Buffer* buffer) {
+   Buffer_beginningOfLine(buffer);
+   Buffer_goto(buffer, 0, Buffer_y(buffer));
+   Buffer_select(buffer, Buffer_downLine);
+   Buffer_deleteBlock(buffer);
+}
+
 static void Dit_breakLine(Buffer* buffer) {
    Buffer_breakLine(buffer);
    buffer->selecting = false;
@@ -460,6 +478,7 @@ static void Dit_registerActions() {
    Hashtable_putString(Dit_actions, "Buffer_endOfLine", (void*)(long) Buffer_endOfLine);
    Hashtable_putString(Dit_actions, "Buffer_forwardChar", (void*)(long) Buffer_forwardChar);
    Hashtable_putString(Dit_actions, "Buffer_forwardWord", (void*)(long) Buffer_forwardWord);
+   Hashtable_putString(Dit_actions, "Buffer_getMarks", (void*)(long) Buffer_getMarks);
    Hashtable_putString(Dit_actions, "Buffer_indent", (void*)(long) Buffer_indent);
    Hashtable_putString(Dit_actions, "Buffer_nextPage", (void*)(long) Buffer_nextPage);
    Hashtable_putString(Dit_actions, "Buffer_previousPage", (void*)(long) Buffer_previousPage);
@@ -475,6 +494,7 @@ static void Dit_registerActions() {
    Hashtable_putString(Dit_actions, "Dit_closeCurrent", (void*)(long) Dit_closeCurrent);
    Hashtable_putString(Dit_actions, "Dit_copy", (void*)(long) Dit_copy);
    Hashtable_putString(Dit_actions, "Dit_cut", (void*)(long) Dit_cut);
+   Hashtable_putString(Dit_actions, "Dit_deleteLine", (void*)(long) Dit_deleteLine);
    Hashtable_putString(Dit_actions, "Dit_find", (void*)(long) Dit_find);
    Hashtable_putString(Dit_actions, "Dit_goto", (void*)(long) Dit_goto);
    Hashtable_putString(Dit_actions, "Dit_nextTabPage", (void*)(long) Dit_nextTabPage);
@@ -532,6 +552,7 @@ static void Dit_loadHardcodedBindings(Dit_Action* keys) {
    keys[KEY_SIC]       = (Dit_Action) Dit_paste;
    keys[KEY_CS_INSERT] = (Dit_Action) Dit_paste;
    keys[KEY_SDC]       = (Dit_Action) Dit_cut;
+   keys[KEY_F(8)]      = (Dit_Action) Dit_deleteLine;
    keys[KEY_F(10)]     = (Dit_Action) Dit_quit;
    keys[0x0d]          = (Dit_Action) Dit_breakLine;
    keys[KEY_ENTER]     = (Dit_Action) Dit_breakLine;

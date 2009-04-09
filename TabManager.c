@@ -119,7 +119,7 @@ static inline void TabManager_drawBar(TabManager* this, int width) {
    char buffer[256];
    int tabWidth = -1;
    if (this->width + this->tabOffset > width + 1)
-      tabWidth = ((width - this->tabOffset) / items);
+      tabWidth = MAX(((width - this->tabOffset) / items), 15);
    for (int i = 0; i < items; i++) {
       TabPage* page = (TabPage*) Vector_get(this->items, i);
       if (i == current)
