@@ -426,10 +426,14 @@ static void Dit_quit(Buffer* buffer, TabManager* tabs, int* ch, int* quit) {
 }
 
 static void Dit_deleteLine(Buffer* buffer) {
-   Buffer_beginningOfLine(buffer);
-   Buffer_goto(buffer, 0, Buffer_y(buffer));
+   int saveX = buffer->x;
+   buffer->selecting = false;
+   buffer->x = 0;
+   buffer->savedX = 0;
    Buffer_select(buffer, Buffer_downLine);
    Buffer_deleteBlock(buffer);
+   Buffer_move(buffer, saveX);
+   buffer->savedX = saveX;
 }
 
 static void Dit_breakLine(Buffer* buffer) {

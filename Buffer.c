@@ -251,6 +251,11 @@ void Buffer_goto(Buffer* this, int x, int y) {
    this->panel->needsRedraw = true;
 }
 
+void Buffer_move(Buffer* this, int x) {
+   this->x = MIN(x, last_x(this));
+   this->panel->needsRedraw = true;
+}
+
 void Buffer_draw(Buffer* this) {
    Panel* p = this->panel;
 
