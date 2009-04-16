@@ -309,8 +309,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                   quitMask[KEY_CTRL('F')] = true;
                   quitMask[KEY_CTRL('N')] = true;
                   quitMask[KEY_CTRL('P')] = true;
-                  bool handled;
-                  rch = Field_run(Dit_replaceField, quitMask, &handled);
+                  rch = Field_quickRun(Dit_replaceField, quitMask);
                   if (rch == 13 || rch == KEY_CTRL('R')) {
                      if (buffer->selecting) {
                         Buffer_pasteBlock(buffer, Dit_replaceField->current->text, strlen(Dit_replaceField->current->text));
@@ -332,7 +331,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                            continue;
                      } else if (rch == CTRL('T'))
                         rch = 9;
-                     Field_insertChar(Dit_replaceField, rch);
+                     //Field_insertChar(Dit_replaceField, rch);
 
                      found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, true);
                      searched = true;
