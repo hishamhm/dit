@@ -150,7 +150,7 @@ void CRT_parseTerminalFile(char* term) {
 }
 
 void CRT_init() {
-
+   
    char* term = getenv("TERM");
 
    if (strcmp(term, "xterm") == 0) {

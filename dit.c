@@ -109,7 +109,7 @@ static void copyOrCut(Buffer* buffer, bool cut) {
    if (block) {
       if (xclipOk) {
          if (getenv("DISPLAY")) {
-            FILE* xclip = popen("xclip 2> /dev/null", "w");
+            FILE* xclip = popen("xclip -i 2> /dev/null", "w");
             if (xclip) {
                xclipOk = 1;
                fwrite(block, 1, blockLen, xclip);
