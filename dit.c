@@ -99,26 +99,41 @@ static bool confirmClose(Buffer* buffer, TabManager* tabs, char* question) {
 
 static Clipboard* Dit_clipboard = NULL;
 
-static void Dit_cut(Buffer* buffer) {
+static int xclipOk = -1;
+
+static void copyOrCut(Buffer* buffer, bool cut) {
    if (!Dit_clipboard)
       Dit_clipboard = Clipboard_new();
    int blockLen;
    char* block = Buffer_copyBlock(buffer, &blockLen);
    if (block) {
+      if (xclipOk) {
+         if (getenv("DISPLAY")) {
+            FILE* xclip = popen("xclip 2> /dev/null", "w");
+            if (xclip) {
+               xclipOk = 1;
+               fwrite(block, 1, blockLen, xclip);
+               pclose(xclip);
+            } else {
+               xclipOk = 0;
+            }
+         } else {
+            xclipOk = 0;
+         }
+      }
       Clipboard_set(Dit_clipboard, block, blockLen);
-      Buffer_deleteBlock(buffer);
+      if (cut)
+         Buffer_deleteBlock(buffer);
    }
    buffer->selecting = false;
 }
 
-static void Dit_copy(Buffer* buffer) {
-   if (!Dit_clipboard)
-      Dit_clipboard = Clipboard_new();
-   int blockLen;
-   char* block = Buffer_copyBlock(buffer, &blockLen);
-   if (block)
-      Clipboard_set(Dit_clipboard, block, blockLen);
-   buffer->selecting = false;
+static void Dit_cut(Buffer* buffer, bool cut) {
+   copyOrCut(buffer, true);
+}
+
+static void Dit_copy(Buffer* buffer, bool cut) {
+   copyOrCut(buffer, false);
 }
 
 static void Dit_paste(Buffer* buffer) {
