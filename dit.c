@@ -228,15 +228,26 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
       int ch = Field_run(Dit_findField, false, &handled);
       int lastY = buffer->y + 1;
       if (!handled) {
-         if ((ch >= 32 && ch <= 255) || ch == 9 || ch == CTRL('T')) {
+         if ((ch >= 32 && ch <= 255) || ch == 9 || ch == KEY_CTRL('T')) {
             if (ch == 9) {
-               if (buffer->x < buffer->line->len)
-                  ch = buffer->line->text[buffer->x];
-               else
-                  continue;
-            } else if (ch == CTRL('T'))
+               bool inserted = false;
+               int at = buffer->x;
+               while (at < buffer->line->len) {
+                  ch = buffer->line->text[at];
+                  if (isword(ch)) {
+                     Field_insertChar(Dit_findField, ch);
+                     at++;
+                     inserted = true;
+                  } else {
+                     break;
+                  }
+               }
+            } else if (ch == KEY_CTRL('T')) {
                ch = 9;
-            Field_insertChar(Dit_findField, ch);
+               Field_insertChar(Dit_findField, ch);
+            } else {
+               Field_insertChar(Dit_findField, ch);
+            }
             wrapped = false;                  
             firstX = -1;
             firstY = -1;
@@ -344,7 +355,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                            rch = buffer->line->text[buffer->x];
                         else
                            continue;
-                     } else if (rch == CTRL('T'))
+                     } else if (rch == KEY_CTRL('T'))
                         rch = 9;
                      //Field_insertChar(Dit_replaceField, rch);
 
