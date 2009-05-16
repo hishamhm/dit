@@ -8,6 +8,10 @@
 #ifdef __linux
 #include <sys/ioctl.h>
 #endif
+#ifdef __CYGWIN__
+#include <sys/ioctl.h>
+#include <sys/termios.h>
+#endif
 
 #include "Prototypes.h"
 
@@ -497,13 +501,16 @@ void CRT_handleSIGTERM(int signal) {
 int CRT_getCharacter() {
    refresh();
    int ch = getch();
+   #if defined __linux || defined __CYGWIN__
    if (ch == KEY_LEFT || ch == KEY_RIGHT || ch == KEY_UP || ch == KEY_DOWN
        || ch == KEY_HOME || ch == KEY_END || ch == KEY_IC || ch == KEY_DC || ch == '\t') {
+      #ifndef __CYGWIN__
       unsigned char modifiers = 6;
-      #ifdef __linux
+      #else
+      unsigned int modifiers = 6;
+      #endif
       int err = ioctl(0, TIOCLINUX, &modifiers);
       if (err) return ch;
-      #endif
       switch (modifiers) {
       case SHIFT_MASK:
          switch (ch) {
@@ -545,5 +552,6 @@ int CRT_getCharacter() {
          }
       }
    }
+   #endif
    return ch;
 }
