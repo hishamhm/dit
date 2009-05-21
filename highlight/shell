@@ -75,8 +75,6 @@ rule while           bright
 rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightalt
 ### rule ${`[a`-z`|A`-Z`|0`-9`|_[]%#-:/*@`]`+} brightalt
 
-rule \" brightdiff
-
 context ${ } brightalt
    rule :- symbol
    rule `[[]%@#/*`] symbol
@@ -111,6 +109,8 @@ rule &2 brightdiff
 
 rule $`[0`-9!@#$*?_`] brightdiff
 rule \' brightdiff
+rule \" brightdiff
+rule \`` brightdiff
 
 context #! `$ veryspecial
 /context
