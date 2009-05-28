@@ -211,7 +211,7 @@ static Field* Dit_replaceField = NULL;
 static void Dit_find(Buffer* buffer, TabManager* tabs) {
    clearStatusBar();
    if (!Dit_findField)
-      Dit_findField = Field_new("Find:", 0, LINES - 1, MIN(100, COLS - 20));
+      Dit_findField = Field_new("Find:", 0, LINES - 1, COLS - 3);
    Field_start(Dit_findField);
    bool quit = false;
    int saveX = buffer->x;
@@ -220,11 +220,12 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
    int firstX = -1;
    int firstY = -1;
    bool caseSensitive = false;
+   bool wholeWord = false;
    bool searched = false;
    bool found = false;
    while (!quit) {
       bool handled;
-      Field_printfLabel(Dit_findField, "Lin=%d Col=%d (%c)Case %sFind:", buffer->y + 1, buffer->x + 1, caseSensitive ? '*' : ' ', wrapped ? "Wrapped " : "");
+      Field_printfLabel(Dit_findField, "L:%d C:%d [%c%c] %sFind:", buffer->y + 1, buffer->x + 1, caseSensitive ? 'C' : ' ', wholeWord ? 'W' : ' ', wrapped ? "Wrapped " : "");
       int ch = Field_run(Dit_findField, false, &handled);
       int lastY = buffer->y + 1;
       if (!handled) {
@@ -251,7 +252,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             wrapped = false;                  
             firstX = -1;
             firstY = -1;
-            found = Buffer_find(buffer, Dit_findField->current->text, false, caseSensitive, true);
+            found = Buffer_find(buffer, Dit_findField->current->text, false, caseSensitive, wholeWord, true);
             searched = true;
          } else {
             switch (ch) {
@@ -277,15 +278,22 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             }
             case KEY_CTRL('I'):
             case KEY_CTRL('C'):
-            case KEY_F(2):
+            case KEY_F(5):
             {
                caseSensitive = !caseSensitive;
+               break;
+            }
+            case KEY_CTRL('W'):
+            case KEY_F(6):
+            {
+               wholeWord = !wholeWord;
+               break;
             }
             case KEY_F(3):
             case KEY_CTRL('F'):
             case KEY_CTRL('N'):
             {
-               found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, true);
+               found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, wholeWord, true);
                searched = true;
                break;
             }
@@ -303,7 +311,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             }
             case KEY_CTRL('P'):
             {
-               found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, false);
+               found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, wholeWord, false);
                searched = true;
                break;
             }
@@ -341,11 +349,11 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                         Buffer_pasteBlock(buffer, Dit_replaceField->current->text, strlen(Dit_replaceField->current->text));
                         buffer->selecting = false;
                         Buffer_draw(buffer);
-                        found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, true);
+                        found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, wholeWord, true);
                         searched = true;
                      }
                   } else if (rch == KEY_CTRL('P')) {
-                     found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, false);
+                     found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, wholeWord, false);
                      searched = true;
                   } else if (rch == 27) {
                      break;
@@ -359,7 +367,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                         rch = 9;
                      //Field_insertChar(Dit_replaceField, rch);
 
-                     found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, true);
+                     found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, wholeWord, true);
                      searched = true;
                   }
                }
@@ -377,7 +385,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             wrapped = false;
             firstX = -1;
             firstY = -1;
-            found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, true);
+            found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, wholeWord, true);
             searched = true;
          }
       }

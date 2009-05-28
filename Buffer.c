@@ -1018,7 +1018,7 @@ int Buffer_currentWord(Buffer* this, char* result, int resultLen) {
    return at;
 }
 
-bool Buffer_find(Buffer* this, char* needle, bool findNext, bool caseSensitive, bool forward) {
+bool Buffer_find(Buffer* this, char* needle, bool findNext, bool caseSensitive, bool wholeWord, bool forward) {
    assert(this->line);
    if (this->selecting && !findNext)
       this->x = this->selectXfrom;
@@ -1039,10 +1039,21 @@ bool Buffer_find(Buffer* this, char* needle, bool findNext, bool caseSensitive, 
    }
    do {
       int at;
+      // FIXME backward search inside a line
       if (caseSensitive)
          at = String_indexOf(haystack, needle, haystackLen);
       else
          at = String_indexOf_i(haystack, needle, haystackLen);
+      if (wholeWord && at != -1) {
+         if ((at > 0 && isword(haystack[at-1])) || (at < haystackLen - needleLen && isword(haystack[at+needleLen]))) {
+            // FIXME only works for forward search
+            int skip = at + needleLen;
+            haystack += skip;
+            haystackLen -= skip;
+            offset += skip;
+            continue;
+         }
+      }
       if (at != -1) {
          int x = at + offset;
          this->selectXfrom = x;
