@@ -1058,7 +1058,7 @@ bool Buffer_find(Buffer* this, char* needle, bool findNext, bool caseSensitive, 
          }
       }
       if (wholeWord && found) {
-         if ((found > haystack && isword(*(haystack-1))) || (isword(*(found+needleLen)))) {
+         if ((found > haystack && isword(*(found-1))) || (isword(*(found+needleLen)))) {
             if (forward)
                x = (found - haystack) + needleLen;
             continue;

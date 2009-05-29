@@ -323,7 +323,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             {
                int rch = 0;
                if (!Dit_replaceField)
-                  Dit_replaceField = Field_new("Replace with:", 0, LINES - 1, MIN(100, COLS - 20));
+                  Dit_replaceField = Field_new("Replace with:", 0, LINES - 1, COLS - 3);
                Field_start(Dit_replaceField);
                while (true) {
                   if (searched) {
