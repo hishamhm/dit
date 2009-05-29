@@ -1020,42 +1020,52 @@ int Buffer_currentWord(Buffer* this, char* result, int resultLen) {
 
 bool Buffer_find(Buffer* this, char* needle, bool findNext, bool caseSensitive, bool wholeWord, bool forward) {
    assert(this->line);
-   if (this->selecting && !findNext)
+   if (this->selecting && (!findNext || !forward) )
       this->x = this->selectXfrom;
    Line* line = this->line;
    Line* start = line;
    int needleLen = strlen(needle);
    int y = this->y;
+   int x = this->x;
    char* haystack = line->text;
    int haystackLen = line->len;
    assert(line->text[line->len] == '\0');
-   int offset = 0;
-   if (forward) {
-      offset = MIN(this->x, strlen(line->text));
-      haystack += offset;
-      haystackLen -= offset;
-   } else {
-      haystackLen = MAX(this->x - needleLen, 0);
-   }
-   do {
-      int at;
-      // FIXME backward search inside a line
-      if (caseSensitive)
-         at = String_indexOf(haystack, needle, haystackLen);
-      else
-         at = String_indexOf_i(haystack, needle, haystackLen);
-      if (wholeWord && at != -1) {
-         if ((at > 0 && isword(haystack[at-1])) || (at < haystackLen - needleLen && isword(haystack[at+needleLen]))) {
-            // FIXME only works for forward search
-            int skip = at + needleLen;
-            haystack += skip;
-            haystackLen -= skip;
-            offset += skip;
+   bool last = false;
+   for (;;) {
+      char* found = NULL;
+      if (forward) {
+         if (haystackLen - x >= needleLen) {
+            if (caseSensitive)
+               found = strstr(haystack+x, needle);
+            else
+               found = strcasestr(haystack+x, needle);
+         }
+      } else {
+         if (x >= needleLen) {
+            x -= needleLen;
+            while (x >= 0) {
+               int cmp;
+               if (caseSensitive)
+                  cmp = strncmp(haystack+x, needle, needleLen);
+               else
+                  cmp = strncasecmp(haystack+x, needle, needleLen);
+               if (cmp == 0) {
+                  found = haystack+x;
+                  break;
+               }
+               x--;
+            }
+         }
+      }
+      if (wholeWord && found) {
+         if ((found > haystack && isword(*(haystack-1))) || (isword(*(found+needleLen)))) {
+            if (forward)
+               x = (found - haystack) + needleLen;
             continue;
          }
       }
-      if (at != -1) {
-         int x = at + offset;
+      if (found) {
+         int x = found - haystack;
          this->selectXfrom = x;
          this->selectYfrom = y;
          this->selectXto = x + needleLen;
@@ -1081,32 +1091,17 @@ bool Buffer_find(Buffer* this, char* needle, bool findNext, bool caseSensitive, 
             y = this->panel->items->size - 1;
          }
       }
-      offset = 0;
       haystack = line->text;
       haystackLen = line->len;
-   } while (line != start);
-   if (this->x > 0) {
-      if (!forward) {
-         offset = MIN(this->x, strlen(line->text));
-         haystack += offset;
-         haystackLen -= offset;
-      }
-      int at;
-      if (caseSensitive)
-         at = String_indexOf(haystack, needle, haystackLen);
+      if (forward)
+         x = 0;
       else
-         at = String_indexOf_i(haystack, needle, haystackLen);
-      if (at != -1) {
-         int x = at + offset;
-         if (x < this->x + (findNext ? needleLen : 0)) {
-            this->selectXfrom = x;
-            this->selectYfrom = y;
-            this->selectXto = x + strlen(needle);
-            this->selectYto = y;
-            this->selecting = true;
-            Buffer_goto(this, x, y);
-            return true;
-         }
+         x = haystackLen;
+      if (last) {
+         break;
+      } else {
+         if (line == start)
+            last = true;
       }
    }
    return false;

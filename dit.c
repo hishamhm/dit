@@ -281,12 +281,16 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             case KEY_F(5):
             {
                caseSensitive = !caseSensitive;
+               found = Buffer_find(buffer, Dit_findField->current->text, false, caseSensitive, wholeWord, true);
+               searched = true;
                break;
             }
             case KEY_CTRL('W'):
             case KEY_F(6):
             {
                wholeWord = !wholeWord;
+               found = Buffer_find(buffer, Dit_findField->current->text, false, caseSensitive, wholeWord, true);
+               searched = true;
                break;
             }
             case KEY_F(3):
