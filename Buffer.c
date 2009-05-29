@@ -1020,11 +1020,13 @@ int Buffer_currentWord(Buffer* this, char* result, int resultLen) {
 
 bool Buffer_find(Buffer* this, char* needle, bool findNext, bool caseSensitive, bool wholeWord, bool forward) {
    assert(this->line);
+   int needleLen = strlen(needle);
+   if (needleLen == 0)
+      return false;
    if (this->selecting && (!findNext || !forward) )
       this->x = this->selectXfrom;
    Line* line = this->line;
    Line* start = line;
-   int needleLen = strlen(needle);
    int y = this->y;
    int x = this->x;
    char* haystack = line->text;
