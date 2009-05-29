@@ -99,7 +99,7 @@ static bool confirmClose(Buffer* buffer, TabManager* tabs, char* question) {
 
 static Clipboard* Dit_clipboard = NULL;
 
-static int xclipOk = -1;
+static int xclipOk = 0;
 
 static void copyOrCut(Buffer* buffer, bool cut) {
    if (!Dit_clipboard)
