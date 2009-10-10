@@ -662,11 +662,15 @@ static void Dit_parseBindings(Dit_Action* keys) {
 int main(int argc, char** argv) {
 
    int jump = 0;
+   int tabWidth = 8;
    
    char* name = argv[1];
    if (argc > 1) {
       if (String_eq(argv[1], "--version")) {
          printVersionFlag();
+      } else if (String_eq(argv[1], "-t")) {
+         tabWidth = atoi(argv[2]);
+         name = argv[3];
       } else if (argv[1][0] == '+') {
          argv[1]++;
          jump = atoi(argv[1]);
@@ -715,6 +719,7 @@ int main(int argc, char** argv) {
    Script_init();
    
    TabManager* tabs = TabManager_new(0, 0, COLS, LINES, 20);
+   tabs->defaultTabWidth = tabWidth;
 
    if (name) {
       char rpath[4097];

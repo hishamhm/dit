@@ -9,8 +9,6 @@
 
 /*{
 
-#define TAB_WIDTH 8
-
 struct LineClass_ {
    ListItemClass super;
 };
@@ -75,7 +73,8 @@ void Line_display(Object* cast, RichString* str) {
    int outIndex = 0;
    int textIndex = 0;
    Highlight* hl = buffer->hl;
-   int outSize = (len+1) * TAB_WIDTH;
+   int tabWidth = buffer->tabWidth;
+   int outSize = (len+1) * tabWidth;
    unsigned char out[outSize];
    int inAttrs[len];
    int attrs[outSize];
@@ -91,7 +90,7 @@ void Line_display(Object* cast, RichString* str) {
       unsigned char curr = this->text[textIndex];
       attrs[outIndex] = inAttrs[textIndex];
       if (curr == '\t') {
-         int tabSize = TAB_WIDTH - (outIndex % TAB_WIDTH);
+         int tabSize = tabWidth - (outIndex % tabWidth);
          for (int i = 0; i < tabSize; i++) {
             attrs[outIndex] = inAttrs[textIndex];
             out[outIndex++] = ' ';
@@ -127,16 +126,16 @@ void Line_display(Object* cast, RichString* str) {
          }
       
          if (y == yFrom && y == yTo) {
-            from = Line_widthUntil(this, xFrom);
-            to = Line_widthUntil(this, xTo);
+            from = Line_widthUntil(this, xFrom, tabWidth);
+            to = Line_widthUntil(this, xTo, tabWidth);
          } else if (y == yFrom && y < yTo) {
-            from = Line_widthUntil(this, xFrom);
+            from = Line_widthUntil(this, xFrom, tabWidth);
             out[outIndex++] = ' ';
             out[outIndex] = '\0';
             to = outIndex;
          } else if (y > yFrom && y == yTo) {
             from = 0;
-            to = Line_widthUntil(this, xTo);
+            to = Line_widthUntil(this, xTo, tabWidth);
          } else { // if (y > yFrom && y < yTo) {
             from = 0;
             out[outIndex++] = ' ';
@@ -162,13 +161,13 @@ inline char Line_charAt(Line* this, int at) {
    return this->text[at];
 }
 
-int Line_widthUntil(Line* this, int n) {
+int Line_widthUntil(Line* this, int n, int tabWidth) {
    int width = 0;
    n = MIN(n, this->len);
    for (int i = 0; i < n; i++) {
       char curr = this->text[i];
       if (curr == '\t')
-         width += TAB_WIDTH - (width % TAB_WIDTH);
+         width += tabWidth - (width % tabWidth);
       else
          width++;
    }
@@ -214,11 +213,11 @@ inline int Line_getIndentChars(Line* this) {
    return count;
 }
 
-inline int Line_getIndentWidth(Line* this) {
+inline int Line_getIndentWidth(Line* this, int tabWidth) {
    int indentWidth = 0;
    for (int i = 0; i < this->len && isblank(this->text[i]); i++) {
       if (this->text[i] == '\t')
-         indentWidth += TAB_WIDTH - (indentWidth % TAB_WIDTH);
+         indentWidth += tabWidth - (indentWidth % tabWidth);
       else
          indentWidth++;
    }

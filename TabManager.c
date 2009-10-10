@@ -25,6 +25,8 @@ struct TabManager_ {
    bool redrawBar;
    bool bufferModified;
    int width;
+   // Default width for Tab key
+   int defaultTabWidth;
 };
 
 extern TabPageClass TabPageType;
@@ -162,6 +164,7 @@ Buffer* TabManager_draw(TabManager* this, int width) {
          page->name = NULL;
       }
       page->buffer = Buffer_new(this->x, this->y, this->w, this->h-1, page->name, false);
+      page->buffer->tabWidth = this->defaultTabWidth;
       this->bufferModified = false;
    }
    if (this->redrawBar)
