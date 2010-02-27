@@ -68,6 +68,7 @@ struct Buffer_ {
    int* marks;
    // width of Tab keys (\t)
    int tabWidth;
+   // 
 };
 
 struct FilePosition_ {

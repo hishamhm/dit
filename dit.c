@@ -221,9 +221,9 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
    int firstY = -1;
    bool caseSensitive = false;
    bool wholeWord = false;
-   bool searched = false;
-   bool found = false;
    while (!quit) {
+      bool searched = false;
+      bool found = false;
       bool handled;
       Field_printfLabel(Dit_findField, "L:%d C:%d [%c%c] %sFind:", buffer->y + 1, buffer->x + 1, caseSensitive ? 'C' : ' ', wholeWord ? 'W' : ' ', wrapped ? "Wrapped " : "");
       int ch = Field_run(Dit_findField, false, &handled);
@@ -323,7 +323,8 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             {
                int rch = 0;
                if (!Dit_replaceField)
-                  Dit_replaceField = Field_new("Replace with:", 0, LINES - 1, COLS - 3);
+                  Dit_replaceField = Field_new("", 0, LINES - 1, COLS - 3);
+               Field_printfLabel(Dit_replaceField, "L:%d C:%d [%c%c] %sReplace with:", buffer->y + 1, buffer->x + 1, caseSensitive ? 'C' : ' ', wholeWord ? 'W' : ' ', wrapped ? "Wrapped " : "");
                Field_start(Dit_replaceField);
                while (true) {
                   if (searched) {
@@ -332,8 +333,15 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                            firstX = buffer->x;
                            firstY = buffer->y;
                         } else {
-                           if (buffer->y == firstY && buffer->x == firstX)
-                              wrapped = true;
+                           if (buffer->y == firstY && buffer->x == firstX) {
+                              if (!wrapped) {
+                                 wrapped = true;
+                                 Buffer_draw(buffer);
+                                 int answer = TabManager_question(tabs, "Search wrapped. Continue replacing?", "yn");
+                                 if (answer == 1)
+                                    break;
+                              }
+                           }
                         }
                         Dit_findField->fieldColor = CRT_colors[FieldColor];
                         Buffer_draw(buffer);
@@ -396,8 +404,15 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                firstX = buffer->x;
                firstY = buffer->y;
             } else {
-               if (buffer->y == firstY && buffer->x == firstX)
-                  wrapped = true;
+               if (buffer->y == firstY && buffer->x == firstX) {
+                  if (!quit && !wrapped) {
+                     wrapped = true;
+                     Buffer_draw(buffer);
+                     int answer = TabManager_question(tabs, "Search wrapped. Continue?", "yn");
+                     if (answer == 1)
+                        break;
+                  }
+               }
             }
             Dit_findField->fieldColor = CRT_colors[FieldColor];
             Buffer_draw(buffer);
