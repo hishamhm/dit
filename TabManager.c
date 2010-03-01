@@ -120,9 +120,14 @@ static inline void TabManager_drawBar(TabManager* this, int width) {
    mvhline(LINES - 1, x, ' ', COLS - x);
    char buffer[256];
    int tabWidth = -1;
-   if (this->width + this->tabOffset > width + 1)
+   int i = 0;
+   if (this->width + this->tabOffset > width + 1) {
       tabWidth = MAX(((width - this->tabOffset) / items), 15);
-   for (int i = 0; i < items; i++) {
+      int fit = (width - this->tabOffset) / tabWidth;
+      if (current >= fit - 2)
+         i+= (current - fit) + 2;
+   }
+   for (; i < items; i++) {
       TabPage* page = (TabPage*) Vector_get(this->items, i);
       if (i == current)
          attrset(CRT_colors[CurrentTabColor]);

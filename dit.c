@@ -749,7 +749,7 @@ int main(int argc, char** argv) {
       TabManager_add(tabs, NULL, NULL);
    }
 
-   TabManager_load(tabs, "recent", 10);
+   TabManager_load(tabs, "recent", 15);
 
    bkgdset(NormalColor);
    

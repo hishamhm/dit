@@ -85,8 +85,6 @@ void Files_makeHome() {
 }
 
 void Files_forEachInDir(char* dirName, Method_Files_fileHandler fileHandler, void* data) {
-   bool result = false;
-   FILE* fd;
    char homeName[4097];
    char* homeDir = getenv("HOME");
    snprintf(homeName, 4096, "%s/.dit/", homeDir);
