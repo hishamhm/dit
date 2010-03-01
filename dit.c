@@ -324,6 +324,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                int rch = 0;
                if (!Dit_replaceField)
                   Dit_replaceField = Field_new("", 0, LINES - 1, COLS - 3);
+               Dit_replaceField->fieldColor = CRT_colors[FieldColor];
                Field_printfLabel(Dit_replaceField, "L:%d C:%d [%c%c] %sReplace with:", buffer->y + 1, buffer->x + 1, caseSensitive ? 'C' : ' ', wholeWord ? 'W' : ' ', wrapped ? "Wrapped " : "");
                Field_start(Dit_replaceField);
                while (true) {
@@ -338,16 +339,19 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                                  wrapped = true;
                                  Buffer_draw(buffer);
                                  int answer = TabManager_question(tabs, "Search wrapped. Continue replacing?", "yn");
-                                 if (answer == 1)
+                                 if (answer == 1) {
+                                    quit = 1;
                                     break;
+                                 }
                               }
                            }
                         }
                         Dit_findField->fieldColor = CRT_colors[FieldColor];
+                        Dit_replaceField->fieldColor = CRT_colors[FieldColor];
                         Buffer_draw(buffer);
                      } else {
                         Dit_findField->fieldColor = CRT_colors[FieldFailColor];
-                        break;
+                        Dit_replaceField->fieldColor = CRT_colors[FieldFailColor];
                      }
                   }
                   bool quitMask[255] = {0};
