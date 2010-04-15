@@ -80,15 +80,14 @@ context // `$ dim
    rule FIXME veryspecial
 /context
 context " " alt
-   rule \\ brightalt
-   rule \" brightalt
-   rule \n brightalt
-   rule \t brightalt
-   rule \`[0`-3`]`[0`-7`]`[0`-7`] brightalt
+   eager_rule \\ brightalt
+   eager_rule \" brightalt
+   eager_rule \`[abcfnrtv`] brightalt
+   eager_rule \`[0`-3`]`[0`-7`]`[0`-7`] brightalt
 /context
 context ' ' brightalt
-   rule \\ brightalt
-   rule \' brightalt
+   eager_rule \\ brightalt
+   eager_rule \' brightalt
 /context
 context # `$ brightspecial
    ### rule \`$ veryspecial ### need to handle these special breaks later

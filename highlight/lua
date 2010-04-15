@@ -73,44 +73,38 @@ context -- `$ dim
 context " " alt
    rule \\ brightalt
    rule \" brightalt
-   eager_rule \n brightalt
-   eager_rule \t brightalt
+   eager_rule \`[abcfnrtv`] brightalt
    rule " alt
 /context
 
 context ' ' alt
    rule \\ brightalt
    rule \' brightalt
-   eager_rule \n brightalt
-   eager_rule \t brightalt
+   eager_rule \`[abcfnrtv`] brightalt
    rule ' alt
 /context
 
 context [[ ]] alt
    rule \\ brightalt
-   rule \n brightalt
-   rule \t brightalt
+   eager_rule \`[abcfnrtv`] brightalt
    rule ]] alt
 /context
 
 context [=[ ]=] alt
    rule \\ brightalt
-   rule \n brightalt
-   rule \t brightalt
+   eager_rule \`[abcfnrtv`] brightalt
    rule ]=] alt
 /context
 
 context [==[ ]==] alt
    rule \\ brightalt
-   rule \n brightalt
-   rule \t brightalt
+   eager_rule \`[abcfnrtv`] brightalt
    rule ]==] alt
 /context
 
 context [===[ ]===] alt
    rule \\ brightalt
-   rule \n brightalt
-   rule \t brightalt
+   eager_rule \`[abcfnrtv`] brightalt
    rule ]===] alt
 /context
 

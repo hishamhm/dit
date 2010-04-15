@@ -58,19 +58,47 @@ rule ) symbol
 rule : symbol
 rule , symbol
 rule ; brightdiff
+
+rule /** dim
 rule /* dim
+context /** */ dim
+   rule @author brightspecial
+   rule @version brightspecial
+   rule @since brightspecial
+   rule @see brightspecial
+   rule @param`[`s`t`]`[a`-zA`-Z0`-9_`]`* brightspecial
+   rule @param brightspecial
+   rule @return brightspecial
+   rule @exception brightspecial
+   rule @throws brightspecial
+   rule @deprecated veryspecial
+   rule @inheritDoc brightspecial
+   rule @link brightspecial
+   rule @value brightspecial
+   rule TODO veryspecial
+   rule XXX veryspecial
+   rule FIXME veryspecial
+   rule */ dim
+/context
+
 context /* */ dim
+   rule TODO veryspecial
+   rule XXX veryspecial
+   rule FIXME veryspecial
    rule */ dim
 /context
 rule // dim
 context // `$ dim
+   rule TODO veryspecial
+   rule XXX veryspecial
+   rule FIXME veryspecial
 /context
+
 rule " alt
 context " " alt
    rule \\ brightalt
    rule \" brightalt
-   rule \n brightalt
-   rule \t brightalt
+   eager_rule \`[abcfnrtv`] brightalt
    rule \`[0`-3`]`[0`-7`]`[0`-7`] brightalt
    rule " alt
 /context
