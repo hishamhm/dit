@@ -338,6 +338,7 @@ void CRT_init() {
       snprintf(ctrlkey, 7, "CTRL_%c", k);
       Hashtable_putString(CRT_keys, ctrlkey, (void*) KEY_CTRL(k));
    }
+   Hashtable_putString(CRT_keys, "ESC", (void*) 27);
    Hashtable_putString(CRT_keys, "A1", (void*) KEY_A1);
    Hashtable_putString(CRT_keys, "A3", (void*) KEY_A3);
    Hashtable_putString(CRT_keys, "B2", (void*) KEY_B2);
