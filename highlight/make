@@ -19,7 +19,7 @@ context `[+?`]`?= `$ brightdiff normal alt
 context `t `$ veryspecial normal normal
    context # `$ dim
    /context
-   rule \ alt
+   rule \ bright
    rule $(`[A`-Za`-z_0`-9`]`+) brightalt
    rule ${`[A`-Za`-z_0`-9`]`+} special
    context " " diff
