@@ -297,6 +297,10 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             case KEY_CTRL('F'):
             case KEY_CTRL('N'):
             {
+               if (Dit_findField->current->text[0] == '\0') {
+                  Field_previousInHistory(Dit_findField);
+                  break;
+               }
                found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, wholeWord, true);
                searched = true;
                break;

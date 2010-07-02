@@ -105,6 +105,16 @@ void Field_start(Field* this) {
    this->cursor = 0;
 }
 
+FieldItem* Field_previousInHistory(Field* this) {
+   FieldItem* curr = this->current;
+   if (curr->super.prev) {
+      curr = (FieldItem*) curr->super.prev;
+      this->current = curr;
+      this->cursor = curr->len;
+   }
+   return curr;
+}
+
 int Field_run(Field* this, bool setCursor, bool* handled) {
    int cursorX, cursorY;
    getyx(stdscr, cursorY, cursorX);
@@ -148,11 +158,7 @@ int Field_run(Field* this, bool setCursor, bool* handled) {
          this->cursor++;
       break;
    case KEY_UP:
-      if (curr->super.prev) {
-         curr = (FieldItem*) curr->super.prev;
-         this->current = curr;
-         this->cursor = curr->len;
-      }
+      curr = Field_previousInHistory(this);
       break;
    case KEY_DOWN:
       if (curr->super.next) {
