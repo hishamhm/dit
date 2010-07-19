@@ -14,6 +14,7 @@ rule boolean bright
 rule continue bright
 rule return bright
 rule inline bright
+rule final bright
 rule for bright
 rule do bright
 rule double bright
@@ -22,6 +23,7 @@ rule int bright
 rule long bright
 rule short bright
 rule static bright
+rule synchronized bright
 rule class bright
 rule package bright
 rule private bright
