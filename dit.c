@@ -49,7 +49,12 @@ static bool saveAs(Field* saveAsField, Buffer* buffer, char* name) {
    int ch = Field_quickRun(saveAsField, quitMask);
    if (ch == 13) {
       free(buffer->fileName);
-      buffer->fileName = Field_getValue(saveAsField);
+      char* name = Field_getValue(saveAsField);
+      char rpath[4097];
+      realpath(name, rpath);
+      rpath[4096] = '\0';
+      free(name);
+      buffer->fileName = strdup(rpath);
    } else
       return false;
    return true;
