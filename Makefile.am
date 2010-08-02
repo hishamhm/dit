@@ -19,15 +19,14 @@ nobase_dist_pkgdata_DATA = bindings/default \
 EXTRA_DIST = scripts/GenHeaders extras/dit.keytab
 
 dit_SOURCES = Prototypes.h Structures.h $(my_dit_C_sources) config.h debug.h md5.c md5.h
+dit_CFLAGS = -std=c99  -DPKGDATADIR=\"$(pkgdatadir)\" -DSYSCONFDIR=\"$(sysconfdir)\" $(LUA_INCLUDE)
+dit_LDADD = $(LUA_LIB)
 
 Prototypes.h: $(my_dit_C_sources)
 	scripts/GenHeaders Prototypes.h
 
 Structures.h: $(my_dit_C_sources)
 	scripts/GenHeaders Structures.h
-
-AM_CFLAGS = -std=c99
-AM_CPPFLAGS = -DPKGDATADIR=\"$(pkgdatadir)\" -DSYSCONFDIR=\"$(sysconfdir)\"
 
 install-data-local:
 	$(mkinstalldirs) "$(DESTDIR)$(datadir)/apps/konsole/"

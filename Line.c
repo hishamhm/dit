@@ -68,7 +68,6 @@ void Line_display(Object* cast, RichString* str) {
    Buffer* buffer = (Buffer*)(this->super.list->data);
    int scrollH = buffer->panel->scrollH;
    int y = buffer->panel->displaying;
-   int* marks = buffer->marks;
    int len = this->len;
    int outIndex = 0;
    int textIndex = 0;
@@ -84,7 +83,7 @@ void Line_display(Object* cast, RichString* str) {
                              : hl->mainContext;
    Highlight_setContext(hl, context);
 
-   Highlight_setAttrs(hl, (unsigned char*) this->text, inAttrs, len, y + 1, marks);
+   Highlight_setAttrs(hl, (unsigned char*) this->text, inAttrs, len, y + 1);
   
    while (textIndex < this->len) {
       unsigned char curr = this->text[textIndex];

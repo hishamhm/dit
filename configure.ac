@@ -9,6 +9,7 @@ AM_INIT_AUTOMAKE
 
 # Checks for programs.
 AC_PROG_CC
+AM_PROG_CC_C_O
 
 # Checks for libraries.
 AC_CHECK_LIB([ncurses], [refresh], [], [missing_libraries="$missing_libraries libncurses"])
@@ -46,6 +47,12 @@ AC_FUNC_REALLOC
 AC_TYPE_SIGNAL
 AC_FUNC_STAT
 AC_CHECK_FUNCS([gettimeofday memchr memmove memset mkdir putenv realpath regcomp strchr strdup strncasecmp strrchr strstr])
+
+AX_LUA_HEADERS
+AX_LUA_LIBS
+AX_LUA_LIB_VERSION([501], [502])
+AC_SUBST([LUA_INCLUDE])
+AC_SUBST([LUA_LIB])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

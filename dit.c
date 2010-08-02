@@ -544,7 +544,6 @@ static void Dit_registerActions() {
    Hashtable_putString(Dit_actions, "Buffer_endOfLine", (void*)(long) Buffer_endOfLine);
    Hashtable_putString(Dit_actions, "Buffer_forwardChar", (void*)(long) Buffer_forwardChar);
    Hashtable_putString(Dit_actions, "Buffer_forwardWord", (void*)(long) Buffer_forwardWord);
-   Hashtable_putString(Dit_actions, "Buffer_getMarks", (void*)(long) Buffer_getMarks);
    Hashtable_putString(Dit_actions, "Buffer_indent", (void*)(long) Buffer_indent);
    Hashtable_putString(Dit_actions, "Buffer_nextPage", (void*)(long) Buffer_nextPage);
    Hashtable_putString(Dit_actions, "Buffer_previousPage", (void*)(long) Buffer_previousPage);

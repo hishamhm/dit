@@ -1,7 +1,8 @@
 #!/bin/sh
 
-aclocal
+aclocal -I aclocal
 automake --add --copy
 autoheader
 autoconf
-automake
+automake --add-missing
+

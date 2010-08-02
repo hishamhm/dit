@@ -9,10 +9,14 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <lua.h>
+#include <lauxlib.h>
 
 #include "Prototypes.h"
 
 /*{
+
+#include <lua.h>
 
 #ifndef isword
 #define isword(x) (isalpha(x) || x == '_')
@@ -64,11 +68,10 @@ struct Buffer_ {
    int indentSpaces;
    // time tracker to disable auto-indent when pasting;
    double lastTime;
-   // marks for error highlighting
-   int* marks;
    // width of Tab keys (\t)
    int tabWidth;
-   // 
+   // Lua state
+   lua_State* L;
 };
 
 struct FilePosition_ {
@@ -102,8 +105,8 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command) {
    this->tabCharacters = false;
    this->dosLineBreaks = false;
    this->indentSpaces = 3;
-   this->marks = NULL;
    this->tabWidth = 8;
+   this->L = luaL_newstate();
    
    /* Hack to disable auto-indent when pasting through X11, part 1 */
    struct timeval tv;
@@ -152,8 +155,6 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command) {
    }
 
    this->savedContext = this->hl->mainContext;
-   
-   //Buffer_getMarks(this);
 
    return this;
 }
@@ -403,8 +404,7 @@ void Buffer_delete(Buffer* this) {
 
    Undo_delete(this->undo);
    Highlight_delete(this->hl);
-   if (this->marks)
-      free(this->marks);
+   lua_close(this->L);
    free(this);
 }
 
@@ -424,39 +424,6 @@ void Buffer_refreshHighlight(Buffer* this) {
       line->context = hl->mainContext;
    }
    
-   this->panel->needsRedraw = true;
-}
-
-void Buffer_getMarks(Buffer* this) {
-   if (this->marks) {
-      free(this->marks);
-   }
-   char* command = malloc(strlen("dit_get_marks ") + strlen(this->fileName) + 2);
-   sprintf(command, "dit_get_marks %s", this->fileName);
-   FILE* cmd = popen(command, "r");
-   int* marks = malloc(sizeof(int) * 255);
-   this->marks = marks;
-   int marked = 0;
-   while (!feof(cmd)) {
-      int n = fscanf(cmd, "%d %d", marks, marks+1);
-      if (n < 2)
-         break;
-      marks += 2;
-      marked++;
-   }
-   if (marked == 0) {
-      free(marks);
-      this->marks = NULL;
-   } else {
-      marks[0] = 0;
-      marks[1] = 0;
-   }
-/*
-mvprintw(0,0,"%d %d", this->marks[0], this->marks[1]);
-refresh();
-CRT_readKey();
-*/
-   fclose(cmd);
    this->panel->needsRedraw = true;
 }
 
@@ -1127,7 +1094,6 @@ bool Buffer_save(Buffer* this) {
    Undo_store(this->undo, this->fileName);
    this->modified = false;
    this->readOnly = false;
-   //Buffer_getMarks(this);
    return true;
 }
 
