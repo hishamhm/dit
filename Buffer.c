@@ -87,6 +87,32 @@ struct FilePosition_ {
 
 char* realpath(const char* path, char* resolved_path);
 
+inline void Buffer_restorePosition(Buffer* this) {
+   char rpath[256];
+   realpath(this->fileName, rpath);
+   
+   FILE* fd = Files_openHome("r", "filepos", NULL);
+   if (fd) {
+      int x, y;
+      char line[256];
+      while (!feof(fd)) {
+         fscanf(fd, "%d %d %255[^\n]\n", &x, &y, line);
+         if (strcmp(line, rpath) == 0) {
+         
+            Line* line = (Line*) this->panel->items->head;
+            for (int i = 0; line && i <= y; i++) {
+               Line_display((Object*)line, NULL);
+               line = (Line*) line->super.next;
+            }
+         
+            Buffer_goto(this, x, y);
+            break;
+         }
+      }
+      fclose(fd);
+   }
+}
+
 Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command) {
    Buffer* this = (Buffer*) malloc(sizeof(Buffer));
 
@@ -160,32 +186,6 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command) {
    this->savedContext = this->hl->mainContext;
 
    return this;
-}
-
-inline void Buffer_restorePosition(Buffer* this) {
-   char rpath[256];
-   realpath(this->fileName, rpath);
-   
-   FILE* fd = Files_openHome("r", "filepos", NULL);
-   if (fd) {
-      int x, y;
-      char line[256];
-      while (!feof(fd)) {
-         fscanf(fd, "%d %d %255[^\n]\n", &x, &y, line);
-         if (strcmp(line, rpath) == 0) {
-         
-            Line* line = (Line*) this->panel->items->head;
-            for (int i = 0; line && i <= y; i++) {
-               Line_display((Object*)line, NULL);
-               line = (Line*) line->super.next;
-            }
-         
-            Buffer_goto(this, x, y);
-            break;
-         }
-      }
-      fclose(fd);
-   }
 }
 
 inline void Buffer_storePosition(Buffer* this) {
@@ -264,63 +264,6 @@ void Buffer_move(Buffer* this, int x) {
    this->panel->needsRedraw = true;
 }
 
-void Buffer_draw(Buffer* this) {
-   Panel* p = this->panel;
-
-   if (this->wasSelecting && !this->selecting)
-      p->needsRedraw = true;
-
-   this->y = Panel_getSelectedIndex(p);
-   this->line = (Line*) Panel_getSelected(p);
-   
-   Line_updateContext(this->line);
-   
-   if (this->line->context != this->savedContext)
-      p->needsRedraw = true;
-   this->savedContext = this->line->context;
-      
-   if (this->x > last_x(this))
-      this->x = last_x(this);
-
-   /* actual X position (expanding tabs, etc) */
-   int screenX = Line_widthUntil(this->line, this->x, this->tabWidth);
-
-   if (screenX - p->scrollH >= p->w) {
-      p->scrollH = screenX - p->w + 1;
-      p->needsRedraw = true;
-   } else if (screenX < p->scrollH) {
-      p->scrollH = screenX;
-      p->needsRedraw = true;
-   }
-
-   Buffer_highlightBracket(this);
-   
-   p->cursorX = screenX - p->scrollH;
-   Panel_draw(p);
-   
-   this->wasSelecting = this->selecting;
-}
-
-int Buffer_y(Buffer* this) {
-   return this->y;
-}
-
-char* Buffer_currentLine(Buffer* this) {
-   return this->line->text;
-}
-
-inline char* Buffer_getLine(Buffer* this, int i) {
-   Line* line = (Line*) Panel_get(this->panel, i);
-   if (line) 
-      return line->text;
-   else
-      return NULL;
-}
-
-char* Buffer_previousLine(Buffer* this) {
-   return Buffer_getLine(this, this->y - 1);
-}
-
 static inline bool Buffer_matchBracket(char ch, char* oth, int* dir) {
    switch (ch) {
    case '(': *oth = ')'; *dir = 1; return true;
@@ -396,6 +339,63 @@ inline void Buffer_highlightBracket(Buffer* this) {
       }
       x += dir;
    }
+}
+
+void Buffer_draw(Buffer* this) {
+   Panel* p = this->panel;
+
+   if (this->wasSelecting && !this->selecting)
+      p->needsRedraw = true;
+
+   this->y = Panel_getSelectedIndex(p);
+   this->line = (Line*) Panel_getSelected(p);
+   
+   Line_updateContext(this->line);
+   
+   if (this->line->context != this->savedContext)
+      p->needsRedraw = true;
+   this->savedContext = this->line->context;
+      
+   if (this->x > last_x(this))
+      this->x = last_x(this);
+
+   /* actual X position (expanding tabs, etc) */
+   int screenX = Line_widthUntil(this->line, this->x, this->tabWidth);
+
+   if (screenX - p->scrollH >= p->w) {
+      p->scrollH = screenX - p->w + 1;
+      p->needsRedraw = true;
+   } else if (screenX < p->scrollH) {
+      p->scrollH = screenX;
+      p->needsRedraw = true;
+   }
+
+   Buffer_highlightBracket(this);
+   
+   p->cursorX = screenX - p->scrollH;
+   Panel_draw(p);
+   
+   this->wasSelecting = this->selecting;
+}
+
+int Buffer_y(Buffer* this) {
+   return this->y;
+}
+
+char* Buffer_currentLine(Buffer* this) {
+   return this->line->text;
+}
+
+inline char* Buffer_getLine(Buffer* this, int i) {
+   Line* line = (Line*) Panel_get(this->panel, i);
+   if (line) 
+      return line->text;
+   else
+      return NULL;
+}
+
+char* Buffer_previousLine(Buffer* this) {
+   return Buffer_getLine(this, this->y - 1);
 }
 
 void Buffer_delete(Buffer* this) {

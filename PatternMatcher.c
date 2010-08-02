@@ -60,6 +60,29 @@ void PatternMatcher_delete(PatternMatcher* this) {
    free(this);
 }
 
+inline GraphNode* GraphNode_follow(GraphNode* this, unsigned char c) {
+   if (c < this->min || c > this->max) {
+      return NULL;
+   }
+   if (this->min == this->max) {
+      assert(c == this->min);
+      return this->u.simple;
+   } else {
+      int id = c - this->min;
+      int ptrid = this->u.l.links[id];
+      if (ptrid == 0)
+         return NULL;
+      assert(ptrid >= 1 && ptrid <= this->u.l.nptrs);
+      if (this->u.l.nptrs == 1) {
+         assert(this->u.l.p.single);
+         return this->u.l.p.single;
+      } else {
+         assert(this->u.l.p.list[ptrid - 1]);
+         return this->u.l.p.list[ptrid - 1];
+      }
+   }
+}
+
 void GraphNode_build(GraphNode* current, unsigned char* input, unsigned char* special, int value, char nodeType) {
 #define SPECIAL(c) (*special && *input == c)
 #define NEXT do { special++; input++; } while (0)
@@ -305,29 +328,6 @@ void GraphNode_delete(GraphNode* this, GraphNode* prev) {
       assert (!this->u.l.p.list);
    }
    free(this);
-}
-
-inline GraphNode* GraphNode_follow(GraphNode* this, unsigned char c) {
-   if (c < this->min || c > this->max) {
-      return NULL;
-   }
-   if (this->min == this->max) {
-      assert(c == this->min);
-      return this->u.simple;
-   } else {
-      int id = c - this->min;
-      int ptrid = this->u.l.links[id];
-      if (ptrid == 0)
-         return NULL;
-      assert(ptrid >= 1 && ptrid <= this->u.l.nptrs);
-      if (this->u.l.nptrs == 1) {
-         assert(this->u.l.p.single);
-         return this->u.l.p.single;
-      } else {
-         assert(this->u.l.p.list[ptrid - 1]);
-         return this->u.l.p.list[ptrid - 1];
-      }
-   }
 }
 
 void GraphNode_link(GraphNode* this, unsigned char* mask, GraphNode* next) {

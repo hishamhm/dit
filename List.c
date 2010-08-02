@@ -39,6 +39,14 @@ ListItemClass ListItemType = {
    }
 };
 
+inline void List_reset(List* this) {
+   this->head = NULL;
+   this->tail = NULL;
+   this->size = 0;
+   this->atPtr = NULL;
+   this->atCtr = 0;
+}
+
 List* List_new(ListItemClass* type, void* data) {
    List* this = (List*) malloc(sizeof(List));
    this->type = type;
@@ -46,14 +54,6 @@ List* List_new(ListItemClass* type, void* data) {
    List_reset(this);
    this->pool = Pool_new((ObjectClass*)type);
    return this;
-}
-
-inline void List_reset(List* this) {
-   this->head = NULL;
-   this->tail = NULL;
-   this->size = 0;
-   this->atPtr = NULL;
-   this->atCtr = 0;
 }
 
 void List_resetIterator(List* this) {

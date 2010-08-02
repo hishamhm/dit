@@ -25,11 +25,6 @@ void RichString_prune(RichString* this) {
    this->len = 0;
 }
 
-void RichString_write(RichString* this, unsigned char* data) {
-   this->len = 0;
-   RichString_append(this, data, strlen((char*)data));
-}
-
 inline void RichString_append(RichString* this, unsigned char* data, int len) {
    int maxToWrite = RICHSTRING_SIZE - this->len;
    int wrote = MIN(maxToWrite, len);
@@ -37,6 +32,11 @@ inline void RichString_append(RichString* this, unsigned char* data, int len) {
       this->chstr[this->len + i] = data[i];
    this->len += wrote;
    this->chstr[this->len] = 0;
+}
+
+void RichString_write(RichString* this, unsigned char* data) {
+   this->len = 0;
+   RichString_append(this, data, strlen((char*)data));
 }
 
 inline void RichString_appendChar(RichString* this, int attrs, char data) {

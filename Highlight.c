@@ -75,6 +75,18 @@ static Color Highlight_translateColor(char* color) {
    return NormalColor;
 }
 
+void Highlight_initScript(Highlight* this, const char* fileName) {
+   if (!this->hasScript)
+      return;
+   lua_getglobal(this->L, "highlight_file");
+   if (!lua_isfunction(this->L, -1))
+      return;
+   lua_pushstring(this->L, fileName);
+   int err = lua_pcall(this->L, 1, 0, 0);
+   // TODO ignore errors for now
+   lua_pop(this->L, lua_gettop(this->L));
+}
+
 Highlight* Highlight_new(const char* fileName, const char* firstLine, lua_State* L) {
    Highlight* this = (Highlight*) malloc(sizeof(Highlight));
    this->L = L;
@@ -99,50 +111,6 @@ Highlight* Highlight_new(const char* fileName, const char* firstLine, lua_State*
 void Highlight_delete(Highlight* this) {
    Vector_delete(this->contexts);
    free(this);
-}
-
-void Highlight_loadScript(Highlight* this, const char* scriptName) {
-   this->hasScript = false;
-   int dirEndsAt;
-   char* foundFile = Files_findFile("scripts/%s", scriptName, &dirEndsAt);
-   if (!foundFile) {
-      return;
-   }
-   char* foundDir = strdup(foundFile);
-   foundDir[dirEndsAt] = '\0';   
-
-   lua_getglobal(this->L, "package");
-   lua_getfield(this->L, -1, "path");
-   int len;
-   const char* oldPackagePath = lua_tolstring(this->L, -1, &len);
-   len += strlen(foundDir) + 18; // ";scripts/?.lua\0"
-   char newPackagePath[len];
-   snprintf(newPackagePath, len-1, "%s;%sscripts/?.lua", oldPackagePath, foundDir);
-   lua_pop(this->L, 1);
-   lua_pushstring(this->L, newPackagePath);
-   lua_setfield(this->L, -2, "path");
-   free(foundDir);
-   
-   int err = luaL_dofile(this->L, foundFile);
-   free(foundFile);
-   if (err != 0) {
-      mvprintw(0,0,"Error loading script %s", lua_tostring(this->L, -1));
-      getch();
-      return;
-   }
-   this->hasScript = true;
-}
-
-void Highlight_initScript(Highlight* this, const char* fileName) {
-   if (!this->hasScript)
-      return;
-   lua_getglobal(this->L, "highlight_file");
-   if (!lua_isfunction(this->L, -1))
-      return;
-   lua_pushstring(this->L, fileName);
-   int err = lua_pcall(this->L, 1, 0, 0);
-   // TODO ignore errors for now
-   lua_pop(this->L, lua_gettop(this->L));
 }
 
 bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
@@ -261,8 +229,9 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
          } else if (String_eq(tokens[0], "insensitive") && ntokens == 1) {
             this->toLower = true;
          } else if (String_eq(tokens[0], "script") && ntokens == 2) {
-            Highlight_loadScript(this, tokens[1]);
+            this->hasScript = Script_load(this->L, tokens[1]);
          } else {
+            clear();
             mvprintw(0,0,"Error reading %s: line %d: %s", name, lineno, buffer);
             getch();
             success = false;
@@ -276,6 +245,7 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
    }
    fclose(file);
    if (contexts->size != 1) {
+      clear();
       mvprintw(0,0,"Error reading %s: %d context%s still open", name, contexts->size - 1, contexts->size > 2 ? "s" : "");
       getch();
       success = false;
@@ -347,7 +317,7 @@ void Highlight_runLineThroughScript(Highlight* this, unsigned char* buffer, int*
       return;
    }
    lua_pushstring(this->L, buffer);
-   lua_pushinteger(this->L, y + 1);
+   lua_pushinteger(this->L, y);
    int err = lua_pcall(this->L, 2, 1, 0);
    if (err == 0) {
       if (lua_isstring(this->L, -1)) {
