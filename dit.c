@@ -743,8 +743,6 @@ int main(int argc, char** argv) {
    Dit_registerActions();
    Dit_parseBindings(keys);
    Hashtable_delete(Dit_actions);
-
-   Script_init();
    
    TabManager* tabs = TabManager_new(0, 0, COLS, LINES, 20);
    tabs->defaultTabWidth = tabWidth;
@@ -774,7 +772,6 @@ int main(int argc, char** argv) {
       mvhline(LINES - 1, 0, ' ', tabs->tabOffset);
 
       Buffer* buffer = TabManager_draw(tabs, COLS);
-      Script_setCurrentBuffer(buffer);
       getyx(stdscr, y, x);
 
       attrset(CRT_colors[TabColor]);

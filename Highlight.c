@@ -178,7 +178,6 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
          // FILES match succeeded. Skip over other FILES section,
          // waiting for RULES section
          if (String_eq(tokens[0], "RULES") && ntokens == 1) {
-            Script_loadExtensions(name);
             state = 4;
          }
          break;

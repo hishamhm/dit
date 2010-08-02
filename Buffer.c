@@ -535,8 +535,6 @@ void Buffer_breakLine(Buffer* this) {
       Undo_endGroup(this->undo, this->x, this->y);
    }
 
-   Script_hook("onBreakLine");
-
    this->lastKey = 0;
 }
 
