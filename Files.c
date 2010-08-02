@@ -40,6 +40,26 @@ static void Files_nameHome(char* fileName, const char* picture, const char* valu
    snprintf(fileName + len, 4096 - len, picture, value);
 }
 
+static char* tryToFind(const char* dir, const char* pattern, const char* picture, const char* value, int* dirEndsAt) {
+   char fileName[4097];
+   snprintf(fileName, 4096, pattern, dir);
+   int len = strlen(fileName);
+   if (dirEndsAt) *dirEndsAt = len;
+   snprintf(fileName + len, 4096 - len, picture, value);
+   if (access(fileName, R_OK) == 0) return strdup(fileName);
+   return NULL;
+}
+
+char* Files_findFile(const char* picture, const char* value, int* dirEndsAt) {
+   char* found = tryToFind(getenv("HOME"), "%s/.dit/", picture, value, dirEndsAt);
+   if (found) return found;
+   found = tryToFind(SYSCONFDIR, "%s/dit/", picture, value, dirEndsAt);
+   if (found) return found;
+   found = tryToFind(PKGDATADIR, "%s/", picture, value, dirEndsAt);
+   if (found) return found;
+   return NULL;
+}
+
 bool Files_existsHome(const char* picture, const char* value) {
    char fileName[4097];
    Files_nameHome(fileName, picture, value);

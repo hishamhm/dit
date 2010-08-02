@@ -9,7 +9,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/time.h>
+
 #include <lua.h>
+#include <lualib.h>
 #include <lauxlib.h>
 
 #include "Prototypes.h"
@@ -107,6 +109,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command) {
    this->indentSpaces = 3;
    this->tabWidth = 8;
    this->L = luaL_newstate();
+   luaL_openlibs(this->L);
    
    /* Hack to disable auto-indent when pasting through X11, part 1 */
    struct timeval tv;
@@ -128,7 +131,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command) {
          newFile = false;
          int len = 0;
          char* text = FileReader_readLine(file, &len);
-         this->hl = Highlight_new(fileName, text);
+         this->hl = Highlight_new(fileName, text, this->L);
          if (!this->tabCharacters && strchr(text, '\t')) this->tabCharacters = true;
          if (!this->dosLineBreaks && strchr(text, '\015')) this->dosLineBreaks = true;
          Line* line = Line_new(p->items, text, len, this->hl->mainContext);
@@ -150,7 +153,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command) {
       this->readOnly = false;
    }
    if (newFile) {
-      this->hl = Highlight_new(fileName, "");
+      this->hl = Highlight_new(fileName, "", this->L);
       Panel_set(p, 0, (ListItem*) Line_new(p->items, String_copy(""), 0, this->hl->mainContext));
    }
 
@@ -416,7 +419,7 @@ void Buffer_refreshHighlight(Buffer* this) {
       firstText = firstLine->text;
    else
       firstText = "";
-   Highlight* hl = Highlight_new(this->fileName, firstText);
+   Highlight* hl = Highlight_new(this->fileName, firstText, this->L);
    this->hl = hl;
    int size = Panel_size(this->panel);
    for (int i = 0; i < size; i++) {

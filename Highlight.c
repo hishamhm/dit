@@ -32,8 +32,9 @@ struct Highlight_ {
    Vector* contexts;
    HighlightContext* mainContext;
    HighlightContext* currentContext;
-   // PatternMatcher* words;
    bool toLower;
+   lua_State* L;
+   bool hasScript;
 };
 
 struct ReadHighlightFileArgs_ {
@@ -74,9 +75,10 @@ static Color Highlight_translateColor(char* color) {
    return NormalColor;
 }
 
-Highlight* Highlight_new(const char* fileName, const char* firstLine) {
+Highlight* Highlight_new(const char* fileName, const char* firstLine, lua_State* L) {
    Highlight* this = (Highlight*) malloc(sizeof(Highlight));
-   // this->words = PatternMatcher_new();
+   this->L = L;
+   this->hasScript = false;
 
    this->contexts = Vector_new(ClassAs(HighlightContext, Object), true, DEFAULT_SIZE);
    this->currentContext = NULL;
@@ -90,12 +92,57 @@ Highlight* Highlight_new(const char* fileName, const char* firstLine) {
       this->mainContext = Highlight_addContext(this, NULL, NULL, NULL, NormalColor);
       this->currentContext = this->mainContext;
    }
+   Highlight_initScript(this, fileName);
    return this;
 }
 
 void Highlight_delete(Highlight* this) {
    Vector_delete(this->contexts);
    free(this);
+}
+
+void Highlight_loadScript(Highlight* this, const char* scriptName) {
+   this->hasScript = false;
+   int dirEndsAt;
+   char* foundFile = Files_findFile("scripts/%s", scriptName, &dirEndsAt);
+   if (!foundFile) {
+      return;
+   }
+   char* foundDir = strdup(foundFile);
+   foundDir[dirEndsAt] = '\0';   
+
+   lua_getglobal(this->L, "package");
+   lua_getfield(this->L, -1, "path");
+   int len;
+   const char* oldPackagePath = lua_tolstring(this->L, -1, &len);
+   len += strlen(foundDir) + 18; // ";scripts/?.lua\0"
+   char newPackagePath[len];
+   snprintf(newPackagePath, len-1, "%s;%sscripts/?.lua", oldPackagePath, foundDir);
+   lua_pop(this->L, 1);
+   lua_pushstring(this->L, newPackagePath);
+   lua_setfield(this->L, -2, "path");
+   free(foundDir);
+   
+   int err = luaL_dofile(this->L, foundFile);
+   free(foundFile);
+   if (err != 0) {
+      mvprintw(0,0,"Error loading script %s", lua_tostring(this->L, -1));
+      getch();
+      return;
+   }
+   this->hasScript = true;
+}
+
+void Highlight_initScript(Highlight* this, const char* fileName) {
+   if (!this->hasScript)
+      return;
+   lua_getglobal(this->L, "highlight_file");
+   if (!lua_isfunction(this->L, -1))
+      return;
+   lua_pushstring(this->L, fileName);
+   int err = lua_pcall(this->L, 1, 0, 0);
+   // TODO ignore errors for now
+   lua_pop(this->L, lua_gettop(this->L));
 }
 
 bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
@@ -213,6 +260,8 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
             HighlightContext_addRule(context, tokens[1], Highlight_translateColor(tokens[2]), PM_EAGER_RULE);
          } else if (String_eq(tokens[0], "insensitive") && ntokens == 1) {
             this->toLower = true;
+         } else if (String_eq(tokens[0], "script") && ntokens == 2) {
+            Highlight_loadScript(this, tokens[1]);
          } else {
             mvprintw(0,0,"Error reading %s: line %d: %s", name, lineno, buffer);
             getch();
@@ -289,6 +338,33 @@ static inline int Highlight_tryMatch(Highlight* this, unsigned char* buffer, int
    return at;
 }
 
+void Highlight_runLineThroughScript(Highlight* this, unsigned char* buffer, int* attrs, int len, int y) {
+   if (!this->hasScript)
+      return;
+   lua_getglobal(this->L, "highlight_line");
+   if (!lua_isfunction(this->L, -1)) {
+      this->hasScript = false;
+      return;
+   }
+   lua_pushstring(this->L, buffer);
+   lua_pushinteger(this->L, y + 1);
+   int err = lua_pcall(this->L, 2, 1, 0);
+   if (err == 0) {
+      if (lua_isstring(this->L, -1)) {
+         const char* ret = lua_tostring(this->L, -1);
+         int attr = CRT_colors[VerySpecialColor];
+         for (int i = 0; ret[i] && i < len; i++) {
+            if (ret[i] == 'X') {
+               attrs[i] = attr;
+            }
+         }
+      }
+   } else {
+      // TODO ignore errors for now
+   }
+   lua_pop(this->L, lua_gettop(this->L));
+}
+
 void Highlight_setAttrs(Highlight* this, unsigned char* buffer, int* attrs, int len, int y) {
    HighlightContext* ctx = this->currentContext;
    int at = 0;
@@ -305,6 +381,7 @@ void Highlight_setAttrs(Highlight* this, unsigned char* buffer, int* attrs, int 
    while (at < len) {
       at = Highlight_tryMatch(this, buffer, attrs, at, ctx->rules->start, ctx->follows->start, match, &ctx, true, y);
    }
+   Highlight_runLineThroughScript(this, buffer, attrs, len, y);
    this->currentContext = ctx->nextLine;
 }
 
