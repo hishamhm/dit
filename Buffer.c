@@ -74,6 +74,8 @@ struct Buffer_ {
    int tabWidth;
    // Lua state
    lua_State* L;
+   bool onChange;
+   bool onSave;
 };
 
 struct FilePosition_ {
@@ -134,7 +136,11 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command) {
    this->dosLineBreaks = false;
    this->indentSpaces = 3;
    this->tabWidth = 8;
+   
    this->L = luaL_newstate();
+   this->onChange = true;
+   this->onSave = true;
+   
    luaL_openlibs(this->L);
    
    /* Hack to disable auto-indent when pasting through X11, part 1 */
@@ -450,6 +456,7 @@ void Buffer_undo(Buffer* this) {
    int ux = this->x;
    int uy = this->y;
    bool modified = Undo_undo(this->undo, &ux, &uy);
+   Script_onChange(this);
    this->x = ux;
    Panel_setSelected(this->panel, uy);
    this->line = (Line*) Panel_getSelected(this->panel);
@@ -463,6 +470,7 @@ inline void Buffer_breakIndenting(Buffer* this, int indent) {
    indent = MIN(indent, last_x(this));
    Undo_breakAt(this->undo, this->x, this->y, indent);
    Line_breakAt(this->line, this->x, indent);
+   Script_onChange(this);
 }
 
 char Buffer_getLastKey(Buffer* this) {
@@ -634,6 +642,7 @@ void Buffer_wordWrap(Buffer* this, int wrap) {
    }
    this->panel->needsRedraw = true;
    Undo_endGroup(this->undo, this->x, this->y);
+   Script_onChange(this);
    Buffer_endOfLine(this);
 }
 
@@ -657,6 +666,7 @@ void Buffer_deleteBlock(Buffer* this) {
    assert (len > 0);
    char* block = StringBuffer_deleteGet(str);
    Undo_deleteBlock(this->undo, this->x, this->y, block, len);
+   Script_onChange(this);
    this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
    this->selecting = false;
    this->modified = true;
@@ -704,6 +714,7 @@ void Buffer_pasteBlock(Buffer* this, char* block, int len) {
    this->panel->needsRedraw = true;
    
    Undo_endGroup(this->undo, this->x, this->y);
+   Script_onChange(this);
    this->selecting = false;
    this->modified = true;
 }
@@ -716,10 +727,12 @@ void Buffer_deleteChar(Buffer* this) {
    if (this->x < last_x(this)) {
       Undo_deleteCharAt(this->undo, this->x, this->y, Line_charAt(this->line, this->x));
       Line_deleteChars(this->line, this->x, 1);
+      Script_onChange(this);
    } else {
       if (this->line->super.next) {
          Undo_joinNext(this->undo, this->x, this->y, false);
          Line_joinNext(this->line);
+         Script_onChange(this);
          this->line = (Line*) Panel_getSelected(this->panel);
          this->y--;
       }
@@ -761,6 +774,7 @@ void Buffer_pullText(Buffer* this) {
    assert(amt == StringBuffer_len(str));
    char* block = StringBuffer_deleteGet(str);
    Undo_deleteBlock(this->undo, at, this->y, block, amt);
+   Script_onChange(this);
 
    if (at < this->x) {
       this->x = at;
@@ -803,6 +817,7 @@ void Buffer_pushText(Buffer* this) {
    
    Undo_insertBlanks(this->undo, start, this->y, amt);
    Line_insertStringAt(this->line, start, blanks, amt);
+   Script_onChange(this);
 
    this->modified = true;
    this->selecting = false;
@@ -817,6 +832,7 @@ void Buffer_backwardDeleteChar(Buffer* this) {
       this->x--;
       Undo_backwardDeleteCharAt(this->undo, this->x, this->y, Line_charAt(this->line, this->x));
       Line_deleteChars(this->line, this->x, 1);
+      Script_onChange(this);
    } else {
       if (this->line->super.prev) {
          if (this->dosLineBreaks) {
@@ -826,6 +842,7 @@ void Buffer_backwardDeleteChar(Buffer* this) {
          this->x = prev->len;
          Undo_joinNext(this->undo, this->x, this->y - 1, true);
          Line_joinNext(prev);
+         Script_onChange(this);
          Panel_onKey(this->panel, KEY_UP);
          this->line = (Line*) Panel_getSelected(this->panel);
          this->y--;
@@ -833,8 +850,8 @@ void Buffer_backwardDeleteChar(Buffer* this) {
             Buffer_backwardDeleteChar(this);
             Undo_endGroup(this->undo, this->x, this->y);
          }
+         this->panel->needsRedraw = true;
       }
-      this->panel->needsRedraw = true;
    }
    this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
    this->modified = true;
@@ -910,6 +927,7 @@ void Buffer_unindent(Buffer* this) {
    Buffer_blockOperation(this, &firstLine, &yStart, &lines);
    int* unindented = Line_unindent(firstLine, lines, spaces);
    Undo_unindent(this->undo, this->x, yStart, unindented, lines, this->tabCharacters);
+   Script_onChange(this);
    if (unindented[0] > 0 && this->y >= yStart && this->y <= (yStart + lines - 1))
       this->x = MAX(0, this->x - move);
    this->panel->needsRedraw = true;
@@ -933,6 +951,7 @@ void Buffer_indent(Buffer* this) {
    Buffer_blockOperation(this, &firstLine, &yStart, &lines);
    Undo_indent(this->undo, this->x, yStart, lines, spaces);
    Line_indent(firstLine, lines, spaces);
+   Script_onChange(this);
    if (this->y >= yStart && this->y <= (yStart + lines - 1))
       this->x += move;
    this->panel->needsRedraw = true;
@@ -946,6 +965,7 @@ void Buffer_defaultKeyHandler(Buffer* this, int ch) {
       }
       Undo_insertCharAt(this->undo, this->x, this->y, ch);
       Line_insertCharAt(this->line, ch, this->x);
+      Script_onChange(this);
       this->x++;
       this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
       this->modified = true;
@@ -1095,6 +1115,7 @@ bool Buffer_save(Buffer* this) {
    }
    fclose(fd);
    Undo_store(this->undo, this->fileName);
+   Script_onSave(this, this->fileName);
    this->modified = false;
    this->readOnly = false;
    return true;

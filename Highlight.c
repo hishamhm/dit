@@ -75,18 +75,6 @@ static Color Highlight_translateColor(char* color) {
    return NormalColor;
 }
 
-void Highlight_initScript(Highlight* this, const char* fileName) {
-   if (!this->hasScript)
-      return;
-   lua_getglobal(this->L, "highlight_file");
-   if (!lua_isfunction(this->L, -1))
-      return;
-   lua_pushstring(this->L, fileName);
-   int err = lua_pcall(this->L, 1, 0, 0);
-   // TODO ignore errors for now
-   lua_pop(this->L, lua_gettop(this->L));
-}
-
 Highlight* Highlight_new(const char* fileName, const char* firstLine, lua_State* L) {
    Highlight* this = (Highlight*) malloc(sizeof(Highlight));
    this->L = L;
@@ -104,7 +92,7 @@ Highlight* Highlight_new(const char* fileName, const char* firstLine, lua_State*
       this->mainContext = Highlight_addContext(this, NULL, NULL, NULL, NormalColor);
       this->currentContext = this->mainContext;
    }
-   Highlight_initScript(this, fileName);
+   Script_highlightFile(this, fileName);
    return this;
 }
 
@@ -308,33 +296,6 @@ static inline int Highlight_tryMatch(Highlight* this, unsigned char* buffer, int
    return at;
 }
 
-void Highlight_runLineThroughScript(Highlight* this, unsigned char* buffer, int* attrs, int len, int y) {
-   if (!this->hasScript)
-      return;
-   lua_getglobal(this->L, "highlight_line");
-   if (!lua_isfunction(this->L, -1)) {
-      this->hasScript = false;
-      return;
-   }
-   lua_pushstring(this->L, buffer);
-   lua_pushinteger(this->L, y);
-   int err = lua_pcall(this->L, 2, 1, 0);
-   if (err == 0) {
-      if (lua_isstring(this->L, -1)) {
-         const char* ret = lua_tostring(this->L, -1);
-         int attr = CRT_colors[VerySpecialColor];
-         for (int i = 0; ret[i] && i < len; i++) {
-            if (ret[i] == 'X') {
-               attrs[i] = attr;
-            }
-         }
-      }
-   } else {
-      // TODO ignore errors for now
-   }
-   lua_pop(this->L, lua_gettop(this->L));
-}
-
 void Highlight_setAttrs(Highlight* this, unsigned char* buffer, int* attrs, int len, int y) {
    HighlightContext* ctx = this->currentContext;
    int at = 0;
@@ -351,7 +312,7 @@ void Highlight_setAttrs(Highlight* this, unsigned char* buffer, int* attrs, int 
    while (at < len) {
       at = Highlight_tryMatch(this, buffer, attrs, at, ctx->rules->start, ctx->follows->start, match, &ctx, true, y);
    }
-   Highlight_runLineThroughScript(this, buffer, attrs, len, y);
+   Script_highlightLine(this, buffer, attrs, len, y);
    this->currentContext = ctx->nextLine;
 }
 
