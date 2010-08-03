@@ -58,6 +58,25 @@ HighlightContextClass HighlightContextType = {
    }
 };
 
+Color Highlight_translateColorKey(char c) {
+   switch (c) {
+   case 'B': return BrightColor;
+   case 'y': return SymbolColor;
+   case 'Y': return BrightSymbolColor;
+   case 'a': return AltColor;
+   case 'A': return BrightAltColor;
+   case 'd': return DiffColor;
+   case 'D': return BrightDiffColor;
+   case 's': return SpecialColor;
+   case 'S': return BrightSpecialColor;
+   case 'p': return SpecialDiffColor;
+   case 'P': return BrightSpecialDiffColor;
+   case '*': return VerySpecialColor;
+   case '.': return DimColor;
+   default: return NormalColor;
+   }
+}
+
 static Color Highlight_translateColor(char* color) {
    if (String_eq(color, "bright")) return BrightColor;
    if (String_eq(color, "symbol")) return SymbolColor;

@@ -814,7 +814,7 @@ int main(int argc, char** argv) {
          break;
       }
       
-      if (keys[ch])
+      if (ch < KEY_MAX && keys[ch])
          (keys[ch])(buffer,tabs, &ch, &quit);
       else
          Buffer_defaultKeyHandler(buffer, ch);

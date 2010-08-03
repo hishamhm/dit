@@ -67,7 +67,8 @@ void Script_highlightLine(Highlight* this, unsigned char* buffer, int* attrs, in
          const char* ret = lua_tostring(L, -1);
          int attr = CRT_colors[VerySpecialColor];
          for (int i = 0; ret[i] && i < len; i++) {
-            if (ret[i] == 'X') {
+            if (ret[i] != ' ') {
+               int attr = CRT_colors[Highlight_translateColorKey(ret[i])];
                attrs[i] = attr;
             }
          }
