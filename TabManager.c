@@ -94,9 +94,10 @@ static inline int TabManager_nameLength(const char* name) {
    return len;
 }
 
-void TabManager_add(TabManager* this, char* name, Buffer* buffer) {
+int TabManager_add(TabManager* this, char* name, Buffer* buffer) {
    Vector_add(this->items, TabPage_new(name, buffer));
    this->width += TabManager_nameLength(name);
+   return Vector_size(this->items) - 1;
 }
 
 void TabManager_removeCurrent(TabManager* this) {
@@ -156,8 +157,11 @@ static inline void TabManager_drawBar(TabManager* this, int width) {
    this->redrawBar = false;
 }
 
-Buffer* TabManager_draw(TabManager* this, int width) {
-   TabPage* page = (TabPage*) Vector_get(this->items, this->currentPage);
+Buffer* TabManager_getBuffer(TabManager* this, int pageNr) {
+   TabPage* page = (TabPage*) Vector_get(this->items, pageNr);
+   if (!page) {
+      return NULL;
+   }
    if (page->buffer) {
       if (page->buffer->modified != this->bufferModified) {
          this->redrawBar = true;
@@ -168,14 +172,19 @@ Buffer* TabManager_draw(TabManager* this, int width) {
          free(page->name);
          page->name = NULL;
       }
-      page->buffer = Buffer_new(this->x, this->y, this->w, this->h-1, page->name, false);
+      page->buffer = Buffer_new(this->x, this->y, this->w, this->h-1, page->name, false, this);
       page->buffer->tabWidth = this->defaultTabWidth;
       this->bufferModified = false;
    }
+   return page->buffer;
+}
+
+Buffer* TabManager_draw(TabManager* this, int width) {
+   Buffer* buffer = TabManager_getBuffer(this, this->currentPage);
    if (this->redrawBar)
       TabManager_drawBar(this, width);
-   Buffer_draw(page->buffer);
-   return page->buffer;
+   Buffer_draw(buffer);
+   return buffer;
 }
 
 bool TabManager_checkLock(TabManager* this, char* fileName) {
@@ -214,14 +223,14 @@ void TabManager_resize(TabManager* this, int w, int h) {
    this->redrawBar = true;
 }
 
-int TabManager_find(TabManager* this, char* name) {
+int TabManager_find(TabManager* this, const char* name) {
    int items = Vector_size(this->items);
    for (int i = 0; i < items; i++) {
       TabPage* page = (TabPage*) Vector_get(this->items, i);
       if (String_eq(page->name, name))
-         return 1;
+         return i;
    }
-   return 0;
+   return -1;
 }
 
 inline void TabManager_refreshCurrent(TabManager* this) {
@@ -275,7 +284,7 @@ void TabManager_load(TabManager* this, const char* fileName, int limit) {
             char* enter = strrchr(line, '\n');
             if (enter) *enter = '\0';
             if (*line == '\0') continue;
-            if (!TabManager_find(this, line) && access(line, F_OK) == 0) {
+            if (TabManager_find(this, line) == -1 && access(line, F_OK) == 0) {
                TabManager_add(this, line, NULL);
                limit--;
                if (!limit) break;

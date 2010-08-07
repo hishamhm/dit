@@ -513,6 +513,22 @@ static void Dit_nextTabPage(Buffer* buffer, TabManager* tabs, int* ch) {
    *ch = 0;
 }
 
+int Dit_open(TabManager* tabs, const char* name) {
+   int page;
+   if (name) {
+      char rpath[4097];
+      realpath(name, rpath);
+      rpath[4096] = '\0';
+      page = TabManager_find(tabs, rpath);
+      if (page != -1)
+         return page;
+      page = TabManager_add(tabs, rpath, NULL);
+   } else {
+      page = TabManager_add(tabs, NULL, NULL);
+   }
+   return page;
+}
+
 static void Dit_selectForwardWord(Buffer* buffer)     { Buffer_select(buffer, Buffer_forwardWord);     }
 static void Dit_selectForwardChar(Buffer* buffer)     { Buffer_select(buffer, Buffer_forwardChar);     }
 static void Dit_selectBackwardWord(Buffer* buffer)    { Buffer_select(buffer, Buffer_backwardWord);    }
@@ -589,7 +605,7 @@ static void Dit_loadHardcodedBindings(Dit_Action* keys) {
    keys[KEY_CTRL('A')] = (Dit_Action) Buffer_beginningOfLine;
    keys[KEY_CTRL('B')] = (Dit_Action) Buffer_toggleMarking;
    keys[KEY_CTRL('C')] = (Dit_Action) Dit_copy;
-   keys[KEY_CTRL('D')] = (Dit_Action) Buffer_toggleDosLineBreaks;
+   /* Ctrl D is FREE */
    keys[KEY_CTRL('E')] = (Dit_Action) Buffer_endOfLine;
    keys[KEY_CTRL('F')] = (Dit_Action) Dit_find;
    keys[KEY_CTRL('G')] = (Dit_Action) Dit_goto;
@@ -745,15 +761,8 @@ int main(int argc, char** argv) {
    
    TabManager* tabs = TabManager_new(0, 0, COLS, LINES, 20);
    tabs->defaultTabWidth = tabWidth;
-
-   if (name) {
-      char rpath[4097];
-      realpath(name, rpath);
-      rpath[4096] = '\0';
-      TabManager_add(tabs, rpath, NULL);
-   } else {
-      TabManager_add(tabs, NULL, NULL);
-   }
+   
+   Dit_open(tabs, name);
 
    TabManager_load(tabs, "recent", 15);
 

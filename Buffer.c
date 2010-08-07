@@ -75,6 +75,8 @@ struct Buffer_ {
    // Lua state
    lua_State* L;
    bool onChange;
+   bool onKey;
+   bool onCtrl;
    bool onSave;
 };
 
@@ -115,7 +117,7 @@ inline void Buffer_restorePosition(Buffer* this) {
    }
 }
 
-Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command) {
+Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, TabManager* tabs) {
    Buffer* this = (Buffer*) malloc(sizeof(Buffer));
 
    this->x = 0;
@@ -137,11 +139,10 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command) {
    this->indentSpaces = 3;
    this->tabWidth = 8;
    
-   this->L = luaL_newstate();
+   this->L = Script_newState(tabs, this);
    this->onChange = true;
    this->onSave = true;
-   
-   luaL_openlibs(this->L);
+   this->onKey = true;   
    
    /* Hack to disable auto-indent when pasting through X11, part 1 */
    struct timeval tv;
@@ -382,6 +383,10 @@ void Buffer_draw(Buffer* this) {
    Panel_draw(p);
    
    this->wasSelecting = this->selecting;
+}
+
+int Buffer_x(Buffer* this) {
+   return this->x;
 }
 
 int Buffer_y(Buffer* this) {
@@ -970,6 +975,9 @@ void Buffer_defaultKeyHandler(Buffer* this, int ch) {
       this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
       this->modified = true;
    } else {
+      if (ch >= 1 && ch <= 26) {
+         Script_onCtrl(this, ch);
+      }
       Buffer_correctPosition(this);
    }
    this->selecting = false;
