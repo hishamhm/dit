@@ -178,12 +178,25 @@ bool Script_load(lua_State* L, const char* scriptName) {
    return true;
 }
 
-static inline bool callFunctionString(lua_State* L, const char* fn, const char* arg) {
+static int errorHandler(lua_State* L) {
+   lua_pushliteral(L, "\n");
+   lua_getglobal(L, "debug");
+   lua_getfield(L, -1, "traceback");
+   lua_call(L, 0, 1);
+   lua_remove(L, -2);
+   lua_concat(L, 3);
+   return 1;
+}
+
+static inline bool callFunction(lua_State* L, const char* fn, const char* arg) {
+   lua_pushcfunction(L, errorHandler);
+   int errFunc = lua_gettop(L);
    lua_getglobal(L, fn);
    if (!lua_isfunction(L, -1))
       return false;
-   lua_pushstring(L, arg);
-   int err = lua_pcall(L, 1, 0, 0);
+   if (arg)
+      lua_pushstring(L, arg);
+   int err = lua_pcall(L, arg ? 1 : 0, 0, errFunc);
    if (err) error(L);
    lua_pop(L, lua_gettop(L));
    return (err == 0);
@@ -192,13 +205,15 @@ static inline bool callFunctionString(lua_State* L, const char* fn, const char* 
 void Script_highlightFile(Highlight* this, const char* fileName) {
    if (!this->hasScript)
       return;
-   this->hasScript = callFunctionString(this->L, "highlight_file", fileName);
+   this->hasScript = callFunction(this->L, "highlight_file", fileName);
 }
 
 void Script_highlightLine(Highlight* this, unsigned char* buffer, int* attrs, int len, int y) {
    lua_State* L = this->L;
    if (!this->hasScript)
       return;
+   lua_pushcfunction(L, errorHandler);
+   int errFunc = lua_gettop(L);
    lua_getglobal(L, "highlight_line");
    if (!lua_isfunction(L, -1)) {
       this->hasScript = false;
@@ -206,7 +221,7 @@ void Script_highlightLine(Highlight* this, unsigned char* buffer, int* attrs, in
    }
    lua_pushstring(L, buffer);
    lua_pushinteger(L, y);
-   int err = lua_pcall(L, 2, 1, 0);
+   int err = lua_pcall(L, 2, 1, errFunc);
    if (err == 0) {
       if (lua_gettop(L) > 0 && lua_isstring(L, -1)) {
          const char* ret = lua_tostring(L, -1);
@@ -224,50 +239,37 @@ void Script_highlightLine(Highlight* this, unsigned char* buffer, int* attrs, in
    lua_pop(L, lua_gettop(L));
 }
 
-void Script_onChange(Buffer* this) {
-   if (!this->onChange)
-      return;
-   lua_getglobal(this->L, "on_change");
-   if (!lua_isfunction(this->L, -1)) {
-      this->onChange = false;
-      return;
-   }
-   int err = lua_pcall(this->L, 0, 0, 0);
-   if (err) error(this->L);
-   lua_pop(this->L, lua_gettop(this->L));
-}
-
 void Script_onKey(Buffer* this, int key) {
-   if (!this->onKey)
-      return;
+   if (this->skipOnKey) return;
+   
+   lua_pushcfunction(this->L, errorHandler);
+   int errFunc = lua_gettop(this->L);
    lua_getglobal(this->L, "on_key");
    if (!lua_isfunction(this->L, -1)) {
-      this->onKey = false;
+      this->skipOnKey = true;
       return;
    }
    lua_pushinteger(this->L, key);
-   int err = lua_pcall(this->L, 1, 0, 0);
+   int err = lua_pcall(this->L, 1, 0, errFunc);
    if (err) error(this->L);
    lua_pop(this->L, lua_gettop(this->L));
 }
 
 void Script_onCtrl(Buffer* this, int key) {
-   if (!this->onCtrl)
-      return;
-   lua_getglobal(this->L, "on_ctrl");
-   if (!lua_isfunction(this->L, -1)) {
-      this->onCtrl = false;
-      return;
-   }
+   if (this->skipOnCtrl) return;
+   
    char ch[2] = { 'A' + key - 1, '\0' };
-   lua_pushlstring(this->L, ch, 1);
-   int err = lua_pcall(this->L, 1, 0, 0);
-   if (err) error(this->L);
-   lua_pop(this->L, lua_gettop(this->L));
+   this->skipOnCtrl = !callFunction(this->L, "on_ctrl", ch);
 }
 
 void Script_onSave(Buffer* this, const char* fileName) {
-   if (!this->onSave)
-      return;
-   this->onSave = callFunctionString(this->L, "on_save", fileName);
+   if (this->skipOnSave) return;
+   
+   this->skipOnSave = !callFunction(this->L, "on_save", fileName);
+}
+
+void Script_onChange(Buffer* this) {
+   if (this->skipOnChange) return;
+   
+   this->skipOnChange = !callFunction(this->L, "on_change", NULL);
 }

@@ -2,7 +2,8 @@
 local LI = require "luainspect.init"
 
 local function loadfile(filename)
-  local fh = assert(io.open(filename, 'r'))
+  local fh = io.open(filename, 'r')
+  if not fh then return nil end
   local data = fh:read'*a'
   fh:close()
   return data
@@ -13,9 +14,12 @@ local lines
 
 function highlight_file(filename)
    file = filename
-   lines = {}
+   lines = nil
    local src = loadfile(filename)
+   if not src then return end
+   lines = {}
    local ast, err, linenum, colnum, linenum2 = LI.ast_from_string(src, filename)
+   if not ast then return end
    local notes = LI.inspect(ast)
    local total = 1
    for line in src:gmatch("[^\n]*\n?") do
@@ -50,6 +54,7 @@ end
 function highlight_line(line, y)
    if not lines then return end
    local curr = lines[y]
+   if not curr then return end
    local start = 1
    local ret = {}
    for _, note in ipairs(curr) do
@@ -80,6 +85,5 @@ function on_change()
 end
 
 function on_save(filename)
-   lines = {}
    highlight_file(filename)
 end

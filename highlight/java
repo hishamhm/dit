@@ -1,6 +1,8 @@
 FILES
 name suffix .java
 RULES
+script java.lua
+
 rule char bright
 rule void bright
 rule if bright

@@ -210,6 +210,8 @@ context " " alt
    context ${ } brightalt
       rule :- symbol
       rule `[[]%@#/*`] symbol
+      context " " brightalt
+      /context
    /context
 
    context $[ ] brightdiff brightdiff diff

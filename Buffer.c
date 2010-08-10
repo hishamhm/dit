@@ -74,10 +74,10 @@ struct Buffer_ {
    int tabWidth;
    // Lua state
    lua_State* L;
-   bool onChange;
-   bool onKey;
-   bool onCtrl;
-   bool onSave;
+   bool skipOnChange;
+   bool skipOnKey;
+   bool skipOnCtrl;
+   bool skipOnSave;
 };
 
 struct FilePosition_ {
@@ -140,9 +140,6 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
    this->tabWidth = 8;
    
    this->L = Script_newState(tabs, this);
-   this->onChange = true;
-   this->onSave = true;
-   this->onKey = true;   
    
    /* Hack to disable auto-indent when pasting through X11, part 1 */
    struct timeval tv;
