@@ -674,6 +674,45 @@ static void Dit_loadHardcodedBindings(Dit_Action* keys) {
    keys[KEY_SR]        = (Dit_Action) Dit_selectUpLine;
 }
 
+void Dit_checkFileAccess(char** argv, char* name, int* jump) {
+   if (name) {
+      char dirbuf[1000];
+      realpath(name, dirbuf);
+      char* dir = dirname(dirbuf);
+      bool exists = (access(name, F_OK) == 0);
+      int len = strlen(name);
+      if (!exists && len > 2 && name[len - 1] == ':') {
+          name[len - 1] = '\0';
+          char* line = strrchr(name, ':');
+          if (line) {
+             *line = '\0';
+             line++;
+             *jump = atoi(line);
+             exists = (access(name, F_OK) == 0);
+             if (!exists) {
+                name[len - 1] = ':';
+                line--;
+                *line = ':';
+                return;
+             }
+          } else {
+             name[len - 1] = ':';
+          }
+      }
+      bool canWriteDir = (access(dir, W_OK) == 0);
+      bool canWrite = (access(name, W_OK) == 0);
+      if ((exists && !canWrite) || (!exists && !canWriteDir)) {
+         char buffer[4096];
+         if (*jump)
+            snprintf(buffer, 4095, "sudo %s +%d %s", argv[0], *jump, name);
+         else
+            snprintf(buffer, 4095, "sudo %s %s", argv[0], name);
+         int ret = system(buffer);
+         if (ret == 0)
+            exit(0);
+      }
+   }
+}
 static void Dit_parseBindings(Dit_Action* keys) {
    for (int i = 0; i < KEY_MAX; i++)
       keys[i] = 0;
@@ -733,25 +772,7 @@ int main(int argc, char** argv) {
       fprintf(stderr, "dit: %s is a directory.\n", name);
       exit(0);
    }
-   if (name) {
-      char dirbuf[1000];
-      realpath(name, dirbuf);
-      char* dir = dirname(dirbuf);
-      bool exists = (access(name, F_OK) == 0);
-      bool canWriteDir = (access(dir, W_OK) == 0);
-      bool canWrite = (access(name, W_OK) == 0);
-      if ((exists && !canWrite) || (!exists && !canWriteDir)) {
-         char buffer[4096];
-         if (jump)
-            snprintf(buffer, 4095, "sudo %s +%d %s", argv[0], jump, name);
-         else
-            snprintf(buffer, 4095, "sudo %s %s", argv[0], name);
-   
-         int ret = system(buffer);
-         if (ret == 0)
-            exit(0);
-      }
-   }
+   Dit_checkFileAccess(argv, name, &jump);
    Files_makeHome();
    CRT_init();
    Dit_Action keys[KEY_MAX];
