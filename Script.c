@@ -72,6 +72,12 @@ static int Script_Buffer_dir(lua_State* L) {
    return 1;
 }
 
+static int Script_Buffer_filename(lua_State* L) {
+   Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
+   lua_pushstring(L, buffer->fileName);
+   return 1;
+}
+
 static int Script_Buffer_basename(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
    const char* baseName = strrchr(buffer->fileName, '/');
@@ -94,6 +100,7 @@ static luaL_Reg Buffer_functions[] = {
    { "xy", Script_Buffer_xy },
    { "dir", Script_Buffer_dir },
    { "basename", Script_Buffer_basename },
+   { "filename", Script_Buffer_filename },
    { NULL, NULL }
 };
 
