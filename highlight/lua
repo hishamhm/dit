@@ -36,8 +36,8 @@ rule ) symbol
 rule : symbol
 rule , symbol
 
-rule # brightsymbol
-rule ..  brightsymbol
+rule #  brightsymbol
+rule .. brightsymbol
 rule ^  brightsymbol
 rule <  brightsymbol
 rule >  brightsymbol
@@ -46,7 +46,7 @@ rule +  brightsymbol
 rule -  brightsymbol
 rule *  brightsymbol
 rule /  brightsymbol
-rule %%  brightsymbol
+rule %% brightsymbol
 rule ~= brightsymbol
 
 rule ; brightalt

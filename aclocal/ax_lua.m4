@@ -150,12 +150,27 @@ AC_DEFUN([AX_LUA_LIBS],
   [_AX_LUA_OPTS
   if test "x$with_lua_prefix" != x; then
     LUA_LIB="-L$with_lua_prefix/lib"
+    LUA_LIBLUA="$with_lua_prefix/lib/liblua$with_lua_suffix.a"
+  else
+    # try to find static library
+    for dir in `echo $LD_LIBRARY_PATH | tr ':' ' '` /usr /usr/local
+    do
+       LUA_LIBLUA="$dir/lib/liblua$with_lua_suffix.a"
+       if test -e "$LUA_LIBLUA"
+       then
+          break
+       fi
+    done
+  fi
+  # if static library not found, use dynamic
+  if ! test -e "$LUA_LIBLUA"; then
+    LUA_LIBLUA="-llua$with_lua_suffix"
   fi
   AC_CHECK_LIB([m], [exp], [lua_extra_libs="$lua_extra_libs -lm"], [])
   AC_CHECK_LIB([dl], [dlopen], [lua_extra_libs="$lua_extra_libs -ldl"], [])
   AC_CHECK_LIB([lua$with_lua_suffix],
     [lua_call],
-    [LUA_LIB="$LUA_LIB -llua$with_lua_suffix $lua_extra_libs"],
+    [LUA_LIB="$LUA_LIB $LUA_LIBLUA $lua_extra_libs"],
     [],
     [$LUA_LIB $lua_extra_libs])])dnl
 
