@@ -138,8 +138,16 @@ AC_DEFUN([AX_LUA_VERSION],
 
 AC_DEFUN([AX_LUA_HEADERS],
   [_AX_LUA_OPTS
-  if test "x$with_lua_prefix" != x; then
-    LUA_INCLUDE="-I$with_lua_prefix/include"
+  if test "x$with_lua_includes" != x; then
+    LUA_INCLUDE="-I$with_lua_includes"
+  elif test "x$with_lua_prefix" != x; then
+    if test -e "$with_lua_prefix/include/lua5.1"; then
+      LUA_INCLUDE="-I$with_lua_prefix/include/lua5.1"
+    else
+      LUA_INCLUDE="-I$with_lua_prefix/include"
+    fi
+  elif test -e "/usr/include/lua5.1"; then
+    LUA_INCLUDE="-I/usr/include/lua5.1"
   fi
   LUA_OLD_CPPFLAGS="$CPPFLAGS"
   CPPFLAGS="$CPPFLAGS $LUA_INCLUDE"
