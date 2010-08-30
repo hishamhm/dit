@@ -35,6 +35,7 @@ static int Script_Buffer_goto(lua_State* L) {
    int x = luaL_checkint(L, 2);
    int y = luaL_checkint(L, 3);
    Buffer_goto(buffer, x-1, y-1);
+   buffer->savedX = buffer->x;
    return 0;
 }
 
