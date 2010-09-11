@@ -17,6 +17,7 @@ CTRL_V Dit_paste
 CTRL_W Dit_closeCurrent
 CTRL_X Dit_cut
 CTRL_Y Buffer_unindent
+CTRL_Z Dit_undo
 CTRL_INSERT Dit_copy
 F3 Dit_find
 SHIFT_IC Dit_paste
