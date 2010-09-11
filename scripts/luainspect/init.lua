@@ -462,7 +462,7 @@ function M.ast_from_string(src, filename)
       -- without the normal line/char numbers given things like "if x then end end".  Should be
       -- fixed probably with gg.parse_error in _chunk in mlp_misc.lua.
       -- TODO-Metalua: remove when fixed in Metalua.
-      linenum = editor.LineCount - 1
+      --linenum = editor.LineCount - 1
       colnum = 0
     end
     local linenum2 = nil
