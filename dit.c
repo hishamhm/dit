@@ -746,6 +746,8 @@ int main(int argc, char** argv) {
    int jump = 0;
    int tabWidth = 8;
    
+   if (getenv("KONSOLE_DCOP")) setenv("TERM", "konsole", 1);
+   
    char* name = argv[1];
    if (argc > 1) {
       if (String_eq(argv[1], "--version")) {
