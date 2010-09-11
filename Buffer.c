@@ -442,12 +442,16 @@ void Buffer_select(Buffer* this, void(*motion)(Buffer*)) {
    if (!this->selecting) {
       this->selectXfrom = this->x;
       this->selectYfrom = this->y;
+      this->selectYto = this->y;
    }
+   int oldSelectYfrom = this->selectYfrom;
+   int oldSelectYto = this->selectYto;
    motion(this);
    this->selectXto = this->x;
    this->selectYto = this->y;
    this->selecting = true;
-   this->panel->needsRedraw = true;
+   if (this->selectYfrom != oldSelectYfrom || this->selectYto != oldSelectYto)
+      this->panel->needsRedraw = true;
 }
 
 bool Buffer_checkDiskState(Buffer* this) {
@@ -656,14 +660,16 @@ void Buffer_deleteBlock(Buffer* this) {
    if (xFrom == xTo && yFrom == yTo)
       return;
    if (yFrom > yTo || (yFrom == yTo && xFrom > xTo)) {
-      int tmp = yFrom; yFrom = yTo; yTo = tmp;
-      tmp = xFrom; xFrom = xTo; xTo = tmp;
+      int swap = yFrom; yFrom = yTo; yTo = swap;
+      swap = xFrom; xFrom = xTo; xTo = swap;
    }
    this->x = xFrom;
    this->y = yFrom;
    Panel_setSelected(this->panel, this->y);
+
    this->line = (Line*) Panel_getSelected(this->panel);
-   StringBuffer* str = Line_deleteBlock(this->line, yTo - yFrom + 1, xFrom, xTo);
+   int lines = yTo - yFrom + 1;
+   StringBuffer* str = Line_deleteBlock(this->line, lines, xFrom, xTo);
    int len = StringBuffer_len(str);
    assert (len > 0);
    char* block = StringBuffer_deleteGet(str);
@@ -672,7 +678,8 @@ void Buffer_deleteBlock(Buffer* this) {
    this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
    this->selecting = false;
    this->modified = true;
-   this->panel->needsRedraw = true;
+   if (lines > 1)
+      this->panel->needsRedraw = true;
 }
 
 char* Buffer_copyBlock(Buffer* this, int *len) {
@@ -706,14 +713,16 @@ void Buffer_pasteBlock(Buffer* this, char* block, int len) {
    int newX;
    int newY = this->y;
    Undo_insertBlock(this->undo, this->x, this->y, block, len);
-   Line_insertBlock(this->line, this->x, block, len, &newX, &newY);
+   bool multiline = Line_insertBlock(this->line, this->x, block, len, &newX, &newY);
 
    this->x = newX;
-   this->y = newY;
-   Panel_setSelected(this->panel, this->y);
+   if (multiline) {
+      this->panel->needsRedraw = true;
+      this->y = newY;
+      Panel_setSelected(this->panel, this->y);
+   }
    this->line = (Line*) Panel_getSelected(this->panel);
    this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
-   this->panel->needsRedraw = true;
    
    Undo_endGroup(this->undo, this->x, this->y);
    Script_onChange(this);

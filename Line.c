@@ -388,11 +388,12 @@ int* Line_unindent(Line* this, int lines, int indentSpaces) {
    return result;
 }
 
-void Line_insertBlock(Line* this, int x, char* block, int len, int* newX, int* newY) {
+bool Line_insertBlock(Line* this, int x, char* block, int len, int* newX, int* newY) {
    /* newY must contain the current value of y on input */
    char* nl = memchr(block, '\n', len);
    Line* at = this;
-   if (!nl) {
+   bool multiline = (nl);
+   if (!multiline) {
       Line_insertStringAt(this, x, block, len);
       *newX = x + len;
    } else {
@@ -422,4 +423,5 @@ void Line_insertBlock(Line* this, int x, char* block, int len, int* newX, int* n
       }
    }
    assert(this->text[this->len] == '\0');
+   return multiline;
 }
