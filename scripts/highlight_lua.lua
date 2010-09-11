@@ -67,10 +67,12 @@ function highlight_line(line, y)
        key = "*"
     elseif note.type == "global" then
        key = "D"
+    --[[
     elseif note.type == "field" then
        if note.definedglobal or note.ast.seevalue.value ~= nil then
           key = "d"
        end
+    ]]
     elseif note.type == "local" and note.isparam then
        key = "S"
     end
@@ -86,4 +88,23 @@ end
 
 function on_save(filename)
    highlight_file(filename)
+end
+
+function on_ctrl(key)
+   if key == "D" then
+      local token, x, y, len = buffer:token()
+      local curr = lines[y]
+      if not curr then return end
+      for _, note in ipairs(curr) do
+         local fchar, lchar = note[1], note[2]
+         if fchar == x then
+            if note.ast.localdefinition and note.ast.localdefinition.lineinfo then
+               buffer:goto(note.ast.localdefinition.lineinfo.first[2], note.ast.localdefinition.lineinfo.first[1] + 1)
+            end
+            break
+         elseif fchar > x then
+            break
+         end
+      end
+   end
 end
