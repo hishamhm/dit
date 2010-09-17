@@ -350,13 +350,13 @@ bool Undo_undo(Undo* this, int* x, int* y) {
 }
 
 void Undo_store(Undo* this, char* fileName) {
-   char undoFileName[4097];
-   Files_encodePathInFileName(fileName, undoFileName);
+   char* undoFileName = Files_encodePathAsFileName(fileName);
    FILE* fd = fopen(fileName, "r");
    char md5buf[32];
    md5_stream(fd, &md5buf);
    fclose(fd);
    FILE* ufd = Files_openHome("w", "undo/%s", undoFileName);
+   free(undoFileName);
    if (!ufd)
       return;
    fwrite(md5buf, 16, 1, ufd);
@@ -414,15 +414,15 @@ void Undo_store(Undo* this, char* fileName) {
 }
 
 void Undo_restore(Undo* this, char* fileName) {
-   char undoFileName[4097];
-   Files_encodePathInFileName(fileName, undoFileName);
    FILE* fd = fopen(fileName, "r");
    if (!fd)
       return;
+   char* undoFileName = Files_encodePathAsFileName(fileName);
    char md5curr[32], md5saved[32];
    md5_stream(fd, md5curr);
    fclose(fd);
    FILE* ufd = Files_openHome("r", "undo/%s", undoFileName);
+   free(undoFileName);
    if (!ufd)
       return;
    int read = fread(md5saved, 16, 1, ufd);

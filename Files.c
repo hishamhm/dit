@@ -78,14 +78,12 @@ int Files_deleteHome(const char* picture, const char* value) {
    return unlink(fileName);
 }
 
-void Files_encodePathInFileName(char* fileName, char* encodedFileName) {
-   char rpath[4097];
-   realpath(fileName, rpath);
+char* Files_encodePathAsFileName(char* fileName) {
+   char* rpath = realpath(fileName, NULL);
    for(char *c = rpath; *c; c++)
       if (*c == '/')
          *c = ':';
-   strncpy(encodedFileName, rpath, 4096);
-   encodedFileName[4095] = '\0';
+   return rpath;
 }
 
 void Files_makeHome() {

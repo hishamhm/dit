@@ -190,9 +190,10 @@ Buffer* TabManager_draw(TabManager* this, int width) {
 bool TabManager_checkLock(TabManager* this, char* fileName) {
    if (!fileName)
       return true;
-   char lockFileName[4097];
-   Files_encodePathInFileName(fileName, lockFileName);
-   if (Files_existsHome("lock/%s", lockFileName)) {
+   char* lockFileName = Files_encodePathAsFileName(fileName);
+   bool exists = Files_existsHome("lock/%s", lockFileName);
+   free(lockFileName);
+   if (exists) {
       char question[1024];
       sprintf(question, "Looks like %s is already open in another instance. Open anyway?", fileName);
       return (TabManager_question(this, question, "yn") == 0);
@@ -206,9 +207,9 @@ bool TabManager_checkLock(TabManager* this, char* fileName) {
 void TabManager_releaseLock(char* fileName) {
    if (!fileName)
       return;
-   char lockFileName[4097];
-   Files_encodePathInFileName(fileName, lockFileName);
+   char* lockFileName = Files_encodePathAsFileName(fileName);
    Files_deleteHome("lock/%s", lockFileName);
+   free(lockFileName);
 }
 
 void TabManager_resize(TabManager* this, int w, int h) {

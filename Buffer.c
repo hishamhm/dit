@@ -89,11 +89,8 @@ struct FilePosition_ {
 
 }*/
 
-char* realpath(const char* path, char* resolved_path);
-
 inline void Buffer_restorePosition(Buffer* this) {
-   char rpath[256];
-   realpath(this->fileName, rpath);
+   char* rpath = realpath(this->fileName, NULL);
    
    FILE* fd = Files_openHome("r", "filepos", NULL);
    if (fd) {
@@ -115,6 +112,7 @@ inline void Buffer_restorePosition(Buffer* this) {
       }
       fclose(fd);
    }
+   free(rpath);
 }
 
 Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, TabManager* tabs) {
@@ -194,8 +192,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
 
 inline void Buffer_storePosition(Buffer* this) {
 
-   char rpath[4097];
-   realpath(this->fileName, rpath);
+   char* rpath = realpath(this->fileName, NULL);
 
    FILE* fd = Files_openHome("r", "filepos", NULL);
    FilePosition* fps = NULL;
@@ -235,6 +232,7 @@ inline void Buffer_storePosition(Buffer* this) {
          }
       }
    }
+   free(rpath);
    if (!fps)
       return;
    fd = Files_openHome("w", "filepos", NULL);

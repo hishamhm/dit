@@ -50,11 +50,9 @@ static bool saveAs(Field* saveAsField, Buffer* buffer, char* name) {
    if (ch == 13) {
       free(buffer->fileName);
       char* name = Field_getValue(saveAsField);
-      char rpath[4097];
-      realpath(name, rpath);
-      rpath[4096] = '\0';
+      char* rpath = realpath(name, NULL);
       free(name);
-      buffer->fileName = strdup(rpath);
+      buffer->fileName = rpath;
    } else
       return false;
    return true;
@@ -516,13 +514,11 @@ static void Dit_nextTabPage(Buffer* buffer, TabManager* tabs, int* ch) {
 int Dit_open(TabManager* tabs, const char* name) {
    int page;
    if (name) {
-      char rpath[4097];
-      realpath(name, rpath);
-      rpath[4096] = '\0';
+      char* rpath = realpath(name, NULL);
       page = TabManager_find(tabs, rpath);
-      if (page != -1)
-         return page;
-      page = TabManager_add(tabs, rpath, NULL);
+      if (page == -1)
+         page = TabManager_add(tabs, rpath, NULL);
+      free(rpath);
    } else {
       page = TabManager_add(tabs, NULL, NULL);
    }
@@ -676,9 +672,9 @@ static void Dit_loadHardcodedBindings(Dit_Action* keys) {
 
 void Dit_checkFileAccess(char** argv, char* name, int* jump) {
    if (name) {
-      char dirbuf[1000];
-      realpath(name, dirbuf);
+      char* dirbuf = realpath(name, NULL);
       char* dir = dirname(dirbuf);
+   
       bool exists = (access(name, F_OK) == 0);
       int len = strlen(name);
       if (!exists && len > 2 && name[len - 1] == ':') {
@@ -693,6 +689,7 @@ void Dit_checkFileAccess(char** argv, char* name, int* jump) {
                 name[len - 1] = ':';
                 line--;
                 *line = ':';
+                free(dirbuf);
                 return;
              }
           } else {
@@ -701,6 +698,7 @@ void Dit_checkFileAccess(char** argv, char* name, int* jump) {
       }
       bool canWriteDir = (access(dir, W_OK) == 0);
       bool canWrite = (access(name, W_OK) == 0);
+      free(dirbuf);
       if ((exists && !canWrite) || (!exists && !canWriteDir)) {
          char buffer[4096];
          if (*jump)
