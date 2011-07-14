@@ -670,7 +670,7 @@ static void Dit_loadHardcodedBindings(Dit_Action* keys) {
    keys[KEY_SR]        = (Dit_Action) Dit_selectUpLine;
 }
 
-void Dit_checkFileAccess(char** argv, char* name, int* jump) {
+void Dit_checkFileAccess(char** argv, char* name, int* jump, int* column) {
    if (name) {
       char* dirbuf = realpath(name, NULL);
       char* dir = dirname(dirbuf);
@@ -683,12 +683,21 @@ void Dit_checkFileAccess(char** argv, char* name, int* jump) {
           if (line) {
              *line = '\0';
              line++;
+             char* line2 = strrchr(name, ':');
+             char* colon2 = line;
+             if (line2) {
+                *line2 = '\0';
+                line2++;
+                *column = atoi(line);
+                line = line2;
+             }
              *jump = atoi(line);
              exists = (access(name, F_OK) == 0);
              if (!exists) {
                 name[len - 1] = ':';
                 line--;
                 *line = ':';
+                *colon2 = ':';
                 free(dirbuf);
                 return;
              }
@@ -742,6 +751,7 @@ static void Dit_parseBindings(Dit_Action* keys) {
 int main(int argc, char** argv) {
 
    int jump = 0;
+   int column = 1;
    int tabWidth = 8;
    
    if (getenv("KONSOLE_DCOP")) setenv("TERM", "konsole", 1);
@@ -772,7 +782,7 @@ int main(int argc, char** argv) {
       fprintf(stderr, "dit: %s is a directory.\n", name);
       exit(0);
    }
-   Dit_checkFileAccess(argv, name, &jump);
+   Dit_checkFileAccess(argv, name, &jump, &column);
    Files_makeHome();
    CRT_init();
    Dit_Action keys[KEY_MAX];
@@ -791,7 +801,7 @@ int main(int argc, char** argv) {
    
    Buffer* buffer = TabManager_draw(tabs, COLS);
    if (jump > 0)
-      Buffer_goto(buffer, 0, jump - 1);
+      Buffer_goto(buffer, column - 1, jump - 1);
 
    int ch = 0;
    while (!quit) {
