@@ -88,6 +88,8 @@ typedef enum {
 #define KEY_CS_DELETE KEY_F(55)
 #define KEY_CS_PPAGE  KEY_F(56)
 #define KEY_CS_NPAGE  KEY_F(57)
+#define KEY_C_PPAGE   KEY_F(58)
+#define KEY_C_NPAGE   KEY_F(59)
 
 #define KEY_CTRL(x)  (x - 'A' + 1)
 
@@ -362,6 +364,8 @@ void CRT_init() {
    Hashtable_putString(CRT_keys, "CTRL_INSERT", (void*) KEY_C_INSERT);
    Hashtable_putString(CRT_keys, "CTRL_LEFT", (void*) KEY_C_LEFT);
    Hashtable_putString(CRT_keys, "CTRL_RIGHT", (void*) KEY_C_RIGHT);
+   Hashtable_putString(CRT_keys, "CTRL_PPAGE", (void*) KEY_C_PPAGE);
+   Hashtable_putString(CRT_keys, "CTRL_NPAGE", (void*) KEY_C_NPAGE);
    Hashtable_putString(CRT_keys, "CTRL_SHIFT_DELETE", (void*) KEY_CS_DELETE);
    Hashtable_putString(CRT_keys, "CTRL_SHIFT_DOWN", (void*) KEY_CS_DOWN);
    Hashtable_putString(CRT_keys, "CTRL_SHIFT_END", (void*) KEY_CS_END);

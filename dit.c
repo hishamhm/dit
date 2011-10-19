@@ -834,12 +834,16 @@ int main(int argc, char** argv) {
          case KEY_C_DOWN:  ch = KEY_CS_DOWN;  break;
          case KEY_C_HOME:  ch = KEY_CS_HOME;  break;
          case KEY_C_END:   ch = KEY_CS_END;   break;
+         case KEY_C_PPAGE: ch = KEY_CS_PPAGE; break;
+         case KEY_C_NPAGE: ch = KEY_CS_NPAGE; break;
          case KEY_RIGHT:   ch = KEY_SRIGHT;   break;
          case KEY_LEFT:    ch = KEY_SLEFT;    break;
          case KEY_UP:      ch = KEY_S_UP;     break;
          case KEY_DOWN:    ch = KEY_S_DOWN;   break;
          case KEY_HOME:    ch = KEY_SHOME;    break;
          case KEY_END:     ch = KEY_SEND;     break;
+         case KEY_PPAGE:   ch = KEY_S_PPAGE;  break;
+         case KEY_NPAGE:   ch = KEY_S_NPAGE;  break;
          default:          if (keys[ch] != (Dit_Action) Buffer_toggleMarking) buffer->marking = false;
          }
       }
