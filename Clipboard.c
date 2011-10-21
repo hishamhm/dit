@@ -52,7 +52,7 @@ char* Clipboard_get(Clipboard* this, int* textLen) {
    if (this->text) {
       if (textLen)
          *textLen = this->len;
-      return String_copy(this->text);
+      return strdup(this->text);
    }
    return NULL;
 }

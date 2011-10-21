@@ -43,11 +43,6 @@ inline void String_delete(char* s) {
    free(s);
 }
 
-inline char* String_copy(char* orig) {
-   assert(orig);
-   return strdup(orig);
-}
-
 char* String_cat(char* s1, char* s2) {
    int l1 = strlen(s1);
    int l2 = strlen(s2);
@@ -71,7 +66,7 @@ char* String_trim(char* in) {
    return out;
 }
 
-char* String_copyUpTo(char* orig, char upTo) {
+char* strdupUpTo(char* orig, char upTo) {
    int len;
    
    int origLen = strlen(orig);

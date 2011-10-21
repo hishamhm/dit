@@ -150,7 +150,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
    this->fileName = NULL;
    bool newFile = true;
    if (fileName) {
-      this->fileName = String_copy(fileName);
+      this->fileName = strdup(fileName);
       this->readOnly = (access(fileName, R_OK) == 0 && access(fileName, W_OK) != 0);
      
       FileReader* file = FileReader_new(fileName, command);
@@ -176,13 +176,15 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
          FileReader_delete(file);
          Buffer_restorePosition(this);
          Undo_restore(this->undo, fileName);
+      } else {
+         this->modified = true;
       }
    } else {
       this->readOnly = false;
    }
    if (newFile) {
       this->hl = Highlight_new(fileName, "", this->L);
-      Panel_set(p, 0, (ListItem*) Line_new(p->items, String_copy(""), 0, this->hl->mainContext));
+      Panel_set(p, 0, (ListItem*) Line_new(p->items, strdup(""), 0, this->hl->mainContext));
    }
 
    this->savedContext = this->hl->mainContext;
@@ -192,7 +194,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
 
 inline void Buffer_storePosition(Buffer* this) {
 
-   char* rpath = realpath(this->fileName, NULL);
+   const char* rpath = this->fileName;
 
    FILE* fd = Files_openHome("r", "filepos", NULL);
    FilePosition* fps = NULL;
@@ -232,7 +234,6 @@ inline void Buffer_storePosition(Buffer* this) {
          }
       }
    }
-   free(rpath);
    if (!fps)
       return;
    fd = Files_openHome("w", "filepos", NULL);

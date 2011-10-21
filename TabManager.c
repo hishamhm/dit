@@ -45,7 +45,7 @@ TabPageClass TabPageType = {
 TabPage* TabPage_new(char* name, Buffer* buffer) {
    TabPage* this = Alloc(TabPage);
    if (name) {
-      this->name = String_copy(name);
+      this->name = strdup(name);
    } else {
       this->name = NULL;
    }
@@ -168,13 +168,14 @@ Buffer* TabManager_getBuffer(TabManager* this, int pageNr) {
          this->bufferModified = page->buffer->modified;
       }
    } else {
-      if (page->name && !TabManager_checkLock(this, page->name)) {
-         free(page->name);
-         page->name = NULL;
-      }
       page->buffer = Buffer_new(this->x, this->y, this->w, this->h-1, page->name, false, this);
       page->buffer->tabWidth = this->defaultTabWidth;
-      this->bufferModified = false;
+      if (page->name && !TabManager_checkLock(this, page->name)) {
+         page->buffer->modified = true;
+         this->bufferModified = true;
+      } else {
+         this->bufferModified = false;
+      }
    }
    return page->buffer;
 }
@@ -192,15 +193,18 @@ bool TabManager_checkLock(TabManager* this, char* fileName) {
       return true;
    char* lockFileName = Files_encodePathAsFileName(fileName);
    bool exists = Files_existsHome("lock/%s", lockFileName);
-   free(lockFileName);
    if (exists) {
       char question[1024];
       sprintf(question, "Looks like %s is already open in another instance. Open anyway?", fileName);
       return (TabManager_question(this, question, "yn") == 0);
    } else {
       FILE* lfd = Files_openHome("w", "lock/%s", lockFileName);
-      fclose(lfd);
+      if (lfd)
+         fclose(lfd);
+      else
+         return false;
    }
+   free(lockFileName);
    return true;
 }
 

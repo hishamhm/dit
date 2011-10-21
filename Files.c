@@ -79,7 +79,11 @@ int Files_deleteHome(const char* picture, const char* value) {
 }
 
 char* Files_encodePathAsFileName(char* fileName) {
-   char* rpath = realpath(fileName, NULL);
+   char* rpath;
+   if (fileName[0] == '/')
+      rpath = strdup(fileName);
+   else
+      rpath = realpath(fileName, NULL);
    for(char *c = rpath; *c; c++)
       if (*c == '/')
          *c = ':';
@@ -119,6 +123,7 @@ void Files_forEachInDir(char* dirName, Method_Files_fileHandler fileHandler, voi
          return;
       }
    }
+   closedir(dir);
    char dataName[4097];
    char* dataDir = PKGDATADIR;
    snprintf(dataName, 4096, "%s/", dataDir);
@@ -138,4 +143,5 @@ void Files_forEachInDir(char* dirName, Method_Files_fileHandler fileHandler, voi
          return;
       }
    }
+   closedir(dir);
 }

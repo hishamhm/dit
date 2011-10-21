@@ -44,7 +44,7 @@ static void statusMessage(char* message) {
 }
 
 static bool saveAs(Field* saveAsField, Buffer* buffer, char* name) {
-   Field_setValue(saveAsField, name);
+   if (name) Field_setValue(saveAsField, name);
    bool quitMask[255] = {0};
    int ch = Field_quickRun(saveAsField, quitMask);
    if (ch == 13) {
@@ -515,6 +515,22 @@ int Dit_open(TabManager* tabs, const char* name) {
    int page;
    if (name) {
       char* rpath = realpath(name, NULL);
+      if (!rpath) {
+         char* basec = strdup(name);
+         char* dirc = strdup(name);
+         char* base = basename(basec);
+         char* dir = dirname(dirc);
+         bool dirExists = (access(dir, F_OK) == 0);
+         if (!dirExists) {
+            fprintf(stderr, "dit: directory %s does not exist.\n", name);
+            exit(0);
+         }
+         char* realdir = realpath(dir, NULL);
+         asprintf(&rpath, "%s/%s", realdir, base);
+         free(realdir);
+         free(basec);
+         free(dirc);
+      }
       page = TabManager_find(tabs, rpath);
       if (page == -1)
          page = TabManager_add(tabs, rpath, NULL);
@@ -674,7 +690,13 @@ void Dit_checkFileAccess(char** argv, char* name, int* jump, int* column) {
    if (name) {
       char* dirbuf = realpath(name, NULL);
       char* dir = dirname(dirbuf);
-   
+      
+      bool dirExists = (access(dir, F_OK) == 0);
+      if (!dirExists) {
+         fprintf(stderr, "dit: directory %s does not exist.\n", name);
+         exit(0);
+      }
+ 
       bool exists = (access(name, F_OK) == 0);
       int len = strlen(name);
       if (!exists && len > 2 && name[len - 1] == ':') {
@@ -720,6 +742,7 @@ void Dit_checkFileAccess(char** argv, char* name, int* jump, int* column) {
       }
    }
 }
+
 static void Dit_parseBindings(Dit_Action* keys) {
    for (int i = 0; i < KEY_MAX; i++)
       keys[i] = 0;
@@ -792,7 +815,7 @@ int main(int argc, char** argv) {
    
    TabManager* tabs = TabManager_new(0, 0, COLS, LINES, 20);
    tabs->defaultTabWidth = tabWidth;
-   
+
    Dit_open(tabs, name);
 
    TabManager_load(tabs, "recent", 15);

@@ -232,8 +232,8 @@ void Field_setValue(Field* this, char* value) {
 
 char* Field_getValue(Field* this) {
    if (!this->current)
-      return String_copy("");
-   return String_copy(this->current->text);
+      return strdup("");
+   return strdup(this->current->text);
 }
 
 int Field_quickRun(Field* this, bool* quitMask) {

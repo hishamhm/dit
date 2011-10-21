@@ -106,7 +106,7 @@ char* FileReader_readLine(FileReader* this, int* len) {
    if (this->finalEnter) {
       this->finalEnter = false;
       *len = 0;
-      return String_copy("");
+      return strdup("");
    }
    *len = 0;
    return NULL;
