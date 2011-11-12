@@ -215,8 +215,4 @@ void DebugMemory_report() {
       fclose(singleton->file);
 }
 
-//#elif defined(DEBUGLITE)
-
-//#include "efence.h"
-
 //#endif
