@@ -223,23 +223,23 @@ void CRT_init() {
    #endif
    #ifdef VIM_THEME
    CRT_colors[NormalColor] = A_NORMAL;
-   CRT_colors[TabColor] = CRT_color(White, Black);
+   CRT_colors[TabColor] = A_BOLD | A_REVERSE | CRT_color(White, Black);
    CRT_colors[CurrentTabColor] = A_BOLD | CRT_color(White, Black);
    CRT_colors[SelectionColor] = A_REVERSE | CRT_color(White, Black);
    CRT_colors[UnfocusedSelectionColor] = A_BOLD | CRT_color(White, Black);
    CRT_colors[BracketColor] = A_NORMAL;
-   CRT_colors[BrightColor] = CRT_color(Yellow, Black);
+   CRT_colors[BrightColor] = A_BOLD | CRT_color(Yellow, Black);
    CRT_colors[SymbolColor] = A_NORMAL;
    CRT_colors[BrightSymbolColor] = CRT_color(Yellow, Black);
-   CRT_colors[AltColor] = CRT_color(Red, Black);
-   CRT_colors[BrightAltColor] = CRT_color(Magenta, Black);
+   CRT_colors[AltColor] = A_BOLD | CRT_color(Magenta, Black);
+   CRT_colors[BrightAltColor] = A_BOLD | CRT_color(Red, Black);
    CRT_colors[VerySpecialColor] = A_REVERSE | CRT_color(Yellow, Black);
-   CRT_colors[DimColor] = CRT_color(Blue, Black);
-   CRT_colors[SpecialColor] = CRT_color(Red, Black);
-   CRT_colors[BrightSpecialColor] = CRT_color(Magenta, Black);
+   CRT_colors[DimColor] = A_BOLD | CRT_color(Cyan, Black);
+   CRT_colors[SpecialColor] = A_BOLD | CRT_color(Magenta, Black);
+   CRT_colors[BrightSpecialColor] = A_BOLD | CRT_color(Blue, Black); //
    CRT_colors[SpecialDiffColor] = CRT_color(Red, Black);
    CRT_colors[BrightSpecialDiffColor] = A_BOLD | CRT_color(Red, Black);
-   CRT_colors[DiffColor] = CRT_color(Green, Black);
+   CRT_colors[DiffColor] = A_BOLD | CRT_color(Green, Black);
    CRT_colors[BrightDiffColor] = CRT_color(Magenta, Black);
    CRT_colors[ScrollBarColor] = CRT_color(White, Black);
    CRT_colors[ScrollHandleColor] = CRT_color(White, Green);

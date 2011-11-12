@@ -51,7 +51,7 @@ rule do bright
 rule goto bright
 rule sizeof bright
 
-rule -> bright
+rule -> symbol
 rule ! brightsymbol
 rule < brightsymbol
 rule > brightsymbol
@@ -69,6 +69,8 @@ rule ( symbol
 rule ) symbol
 rule : symbol
 rule , symbol
+rule | symbol
+rule & symbol
 rule ; brightsymbol
 context /* */ dim
    rule TODO veryspecial
