@@ -116,7 +116,7 @@ inline void Buffer_restorePosition(Buffer* this) {
 }
 
 Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, TabManager* tabs) {
-   Buffer* this = (Buffer*) malloc(sizeof(Buffer));
+   Buffer* this = (Buffer*) calloc(sizeof(Buffer), 1);
 
    this->x = 0;
    this->y = 0;
