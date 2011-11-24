@@ -392,10 +392,10 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                            if (i < len) 
                               found = buffer->line->text[buffer->selectXfrom + i];
                            if (isalpha(newText[i])) {
-                              if ((found == 0 && mode == 1) || found == toupper(found)) {
+                              if ((found == 0 && mode == 1) || (found != 0 && found == toupper(found))) {
                                  newText[i] = toupper(newText[i]);
                                  mode = 1;
-                              } else if ((found == 0 && mode == 2) || found == tolower(found)) {
+                              } else if ((found == 0 && mode == 2) || (found != 0 && found == tolower(found))) {
                                  newText[i] = tolower(newText[i]);
                                  mode = 2;
                               }
@@ -649,7 +649,7 @@ static void Dit_registerActions() {
 
 static void Dit_loadHardcodedBindings(Dit_Action* keys) {
    keys[KEY_CTRL('A')] = (Dit_Action) Buffer_beginningOfLine;
-   keys[KEY_CTRL('B')] = (Dit_Action) Buffer_toggleMarking;
+   /* Ctrl B is FREE */
    keys[KEY_CTRL('C')] = (Dit_Action) Dit_copy;
    /* Ctrl D is FREE */
    keys[KEY_CTRL('E')] = (Dit_Action) Buffer_endOfLine;

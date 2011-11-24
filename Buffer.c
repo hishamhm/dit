@@ -979,13 +979,14 @@ void Buffer_defaultKeyHandler(Buffer* this, int ch) {
       this->x++;
       this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
       this->modified = true;
-   } else {
-      if (ch >= 1 && ch <= 26) {
-         Script_onCtrl(this, ch);
-      }
+      this->selecting = false;
+   } else if (ch >= 1 && ch <= 26) {
+      Script_onCtrl(this, ch);
       Buffer_correctPosition(this);
+   } else {
+      Buffer_correctPosition(this);
+      this->selecting = false;
    }
-   this->selecting = false;
 }
 
 char Buffer_currentChar(Buffer* this) {

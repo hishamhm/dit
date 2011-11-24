@@ -41,11 +41,57 @@ static int Script_Buffer_goto(lua_State* L) {
 
 static int Script_Buffer_line(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
-   const char* line = Buffer_currentLine(buffer);
-   lua_pushstring(L, line);
-   lua_pushinteger(L, buffer->x + 1);
-   lua_pushinteger(L, buffer->y + 1);
-   return 3;
+   const char* line;
+   if (lua_gettop(L) == 1) {
+      line = Buffer_currentLine(buffer);
+      lua_pushstring(L, line);
+      lua_pushinteger(L, buffer->x + 1);
+      lua_pushinteger(L, buffer->y + 1);
+      return 3;
+   } else {
+      int y = luaL_checkint(L, 2);
+      line = Buffer_getLine(buffer, y-1);
+      if (line) lua_pushstring(L, line);
+      else lua_pushliteral(L, "");
+      return 1;
+   }
+}
+
+static int Script_Buffer_select(lua_State* L) {
+   Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
+   int xFrom = luaL_checkint(L, 2);
+   int yFrom = luaL_checkint(L, 3);
+   int xTo = luaL_checkint(L, 4);
+   int yTo = luaL_checkint(L, 5);
+   // FIXME? validate these values
+   buffer->selecting = true;
+   buffer->selectXfrom = xFrom - 1;
+   buffer->selectYfrom = yFrom - 1;
+   buffer->selectXto = xTo - 1;
+   buffer->selectYto = yTo - 1;
+   buffer->panel->needsRedraw = true;
+   return 0;
+}
+
+static int Script_Buffer_selection(lua_State* L) {
+   Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
+   if (!buffer->selecting) {
+      lua_pushliteral(L, "");
+      lua_pushinteger(L, buffer->x + 1);
+      lua_pushinteger(L, buffer->y + 1);
+      lua_pushinteger(L, buffer->x + 1);
+      lua_pushinteger(L, buffer->y + 1);
+      return 5;
+   }
+   int len = 0;
+   char* block = Buffer_copyBlock(buffer, &len);
+   lua_pushstring(L, block);
+   lua_pushinteger(L, buffer->selectXfrom + 1);
+   lua_pushinteger(L, buffer->selectYfrom + 1);
+   lua_pushinteger(L, buffer->selectXto + 1);
+   lua_pushinteger(L, buffer->selectYto + 1);
+   free(block);
+   return 5;
 }
 
 static int Script_Buffer_token(lua_State* L) {
@@ -95,13 +141,17 @@ static int Script_Buffer_xy(lua_State* L) {
 }
 
 static luaL_Reg Buffer_functions[] = {
-   { "goto", Script_Buffer_goto },
+   // getters:
    { "line", Script_Buffer_line },
+   { "selection", Script_Buffer_selection },
    { "token", Script_Buffer_token },
    { "xy", Script_Buffer_xy },
    { "dir", Script_Buffer_dir },
    { "basename", Script_Buffer_basename },
    { "filename", Script_Buffer_filename },
+   // actions:
+   { "goto", Script_Buffer_goto },
+   { "select", Script_Buffer_select },
    { NULL, NULL }
 };
 
