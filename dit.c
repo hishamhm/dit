@@ -173,6 +173,18 @@ static void Dit_pushPull(Buffer* buffer, TabManager* tabs) {
 
 static Field* Dit_gotoField = NULL;
 
+static void pasteInField(Field* field) {
+   if (!Dit_clipboard)
+      Dit_clipboard = Clipboard_new();
+   int blockLen = 0;
+   char* block = Clipboard_get(Dit_clipboard, &blockLen);
+   if (block) {
+      if (!strchr(block, '\n'))
+         Field_setValue(field, block);
+      free(block);
+   }
+}
+
 static void Dit_goto(Buffer* buffer, TabManager* tabs) {
    clearStatusBar();
    if (!Dit_gotoField)
@@ -268,17 +280,8 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                Buffer_draw(buffer);
                break;
             case KEY_CTRL('V'):
-            {
-               if (!Dit_clipboard)
-                  break;
-               int blockLen = 0;
-               char* block = Clipboard_get(Dit_clipboard, &blockLen);
-               if (block) {
-                  Field_setValue(Dit_findField, block);
-                  free(block);
-               }
+               pasteInField(Dit_findField);
                break;
-            }
             case KEY_CTRL('I'):
             case KEY_CTRL('C'):
             case KEY_F(5):
@@ -367,6 +370,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                   quitMask[KEY_CTRL('F')] = true;
                   quitMask[KEY_CTRL('N')] = true;
                   quitMask[KEY_CTRL('P')] = true;
+                  quitMask[KEY_CTRL('V')] = true;
                   quitMask[KEY_CTRL('T')] = true;
                   rch = Field_quickRun(Dit_replaceField, quitMask);
                   if (rch == KEY_CTRL('R')) {
@@ -409,6 +413,8 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                      searched = true;
                   } else if (rch == 13 || rch == 27) {
                      break;
+                  } else if (rch == KEY_CTRL('V')) {
+                     pasteInField(Dit_replaceField);
                   } else {
                      if (rch == KEY_CTRL('T')) {
                         Field_insertChar(Dit_replaceField, 9);
