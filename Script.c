@@ -70,6 +70,7 @@ static int Script_Buffer_select(lua_State* L) {
    buffer->selectXto = xTo - 1;
    buffer->selectYto = yTo - 1;
    buffer->panel->needsRedraw = true;
+   buffer->savedX = buffer->x;
    return 0;
 }
 
@@ -155,6 +156,36 @@ static luaL_Reg Buffer_functions[] = {
    { NULL, NULL }
 };
 
+static int Script_Buffer___index(lua_State* L) {
+   if (lua_isnumber(L, 2)) {
+      return Script_Buffer_line(L);
+   } else {
+      luaL_register(L, "Buffer_functions", Buffer_functions);
+      lua_pushvalue(L, -2); // push key (function name)
+      lua_gettable(L, -2);  // get it from Buffer_functions
+      lua_remove(L, -2);    // remove Buffer_functions table from stack
+      return 1;
+   }
+}
+
+static int Script_Buffer___len(lua_State* L) {
+   Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
+   lua_pushinteger(L, Panel_size(buffer->panel));
+   return 1;
+}
+
+static void Script_Buffer_new(lua_State* L, void* ptr) {
+   Proxy* proxy = lua_newuserdata(L, sizeof(Proxy));
+   proxy->ptr = ptr;
+   if (luaL_newmetatable(L, "Buffer")) {
+      lua_pushcfunction(L, Script_Buffer___index);
+      lua_setfield(L, -2, "__index");
+      lua_pushcfunction(L, Script_Buffer___len);
+      lua_setfield(L, -2, "__len");
+   }
+   lua_setmetatable(L, -2);
+}
+
 static int Script_TabManager_open(lua_State* L) {
    TabManager* tabs = (TabManager*) ((Proxy*)luaL_checkudata(L, 1, "TabManager"))->ptr;
    const char* name = luaL_checkstring(L, 2);
@@ -181,7 +212,7 @@ static int Script_TabManager_getBuffer(lua_State* L) {
    Buffer* buffer = TabManager_getBuffer(tabs, page);
    if (!buffer)
       return 0;
-   Script_pushObject(L, buffer, "Buffer", Buffer_functions);   
+   Script_Buffer_new(L, buffer);
    return 1;
 }
 
@@ -192,13 +223,48 @@ static luaL_Reg TabManager_functions[] = {
    { NULL, NULL }
 };
 
+static int Script_string___index(lua_State* L) {
+   if (lua_isnumber(L, 2)) {
+      int at = lua_tointeger(L, 2);
+      int len;
+      char out[2];
+      const char* str = lua_tolstring(L, 1, &len);
+      if (at < 0) {
+         at += len + 1;
+      }
+      if (at > len || at < 1) {
+         lua_pop(L, 2);
+         lua_pushliteral(L, "");
+      }
+      out[0] = str[at-1];
+      out[1] = '\0';
+      lua_pop(L, 2);
+      lua_pushlstring(L, out, 1);
+      return 1;
+   } else {
+      lua_getglobal(L, "string");
+      lua_pushvalue(L, -2); // push key (function name)
+      lua_gettable(L, -2);  // get it from string functions
+      lua_remove(L, -2);    // remove string functions table from stack
+      return 1;
+   }
+}
+
 lua_State* Script_newState(TabManager* tabs, Buffer* buffer) {
    lua_State* L = luaL_newstate();
    luaL_openlibs(L);
 
+   lua_pushstring(L, "buffer");                 // push a random string
+   lua_getmetatable(L, -1);                     // get metatable of strings
+   lua_remove(L, -2);                           // remove random string
+   lua_pushcfunction(L, Script_string___index); // push custom index fn
+   lua_setfield(L, -2, "__index");              // set it in metatable
+   lua_pop(L, 1);                               // pop metatable
+
+
    Script_pushObject(L, tabs, "TabManager", TabManager_functions);
    lua_setglobal(L, "tabs");
-   Script_pushObject(L, buffer, "Buffer", Buffer_functions);
+   Script_Buffer_new(L, buffer);
    lua_setglobal(L, "buffer");
 
    return L;
