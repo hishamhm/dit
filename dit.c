@@ -363,6 +363,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                   }
                   bool quitMask[255] = {0};
                   quitMask[KEY_CTRL('R')] = true;
+                  quitMask[KEY_CTRL('C')] = true;
                   quitMask[KEY_CTRL('F')] = true;
                   quitMask[KEY_CTRL('N')] = true;
                   quitMask[KEY_CTRL('P')] = true;
@@ -371,6 +372,33 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                   if (rch == KEY_CTRL('R')) {
                      if (buffer->selecting) {
                         Buffer_pasteBlock(buffer, Dit_replaceField->current->text, strlen(Dit_replaceField->current->text));
+                        buffer->selecting = false;
+                        Buffer_draw(buffer);
+                        found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, wholeWord, true);
+                        searched = true;
+                     }
+                  } else if (rch == KEY_CTRL('C')) { // Case-matching replace
+                     if (buffer->selecting) {
+                        char* newText = strdup(Dit_replaceField->current->text);
+                        int newLen = strlen(newText);
+                        int len = buffer->selectXto - buffer->selectXfrom + 1;
+                        int mode = 0;
+                        for (int i = 0; i < newLen; i++) {
+                           char found = 0;
+                           if (i < len) 
+                              found = buffer->line->text[buffer->selectXfrom + i];
+                           if (isalpha(newText[i])) {
+                              if ((found == 0 && mode == 1) || found == toupper(found)) {
+                                 newText[i] = toupper(newText[i]);
+                                 mode = 1;
+                              } else if ((found == 0 && mode == 2) || found == tolower(found)) {
+                                 newText[i] = tolower(newText[i]);
+                                 mode = 2;
+                              }
+                           }
+                        }
+                        Buffer_pasteBlock(buffer, newText, newLen);
+                        free(newText);
                         buffer->selecting = false;
                         Buffer_draw(buffer);
                         found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, wholeWord, true);

@@ -1,6 +1,6 @@
 FILES
 name suffix .lua
-firstline regex ^#!.*lua($|[[:blank:]].*)
+firstline regex ^#!.*lua.*
 RULES   
 script highlight_lua.lua
 
