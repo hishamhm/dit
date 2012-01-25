@@ -220,12 +220,6 @@ static void Dit_goto(Buffer* buffer, TabManager* tabs) {
    TabManager_refreshCurrent(tabs);
 }
 
-typedef enum CaseMode_ {
-   CASE_ANY,
-   CASE_UPPER,
-   CASE_LOWER
-} CaseMode;
-
 static Field* Dit_findField = NULL;
 static Field* Dit_replaceField = NULL;
 
@@ -392,19 +386,13 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                         char* newText = strdup(Dit_replaceField->current->text);
                         int newLen = strlen(newText);
                         int len = buffer->selectXto - buffer->selectXfrom;
-                        CaseMode mode = CASE_ANY;
                         for (int i = 0; i < newLen; i++) {
-                           char found = 0;
-                           if (i < len)
-                              found = buffer->line->text[buffer->selectXfrom + i];
-                           fprintf(stderr, "i=%d found='%c' found==0:%d mode=%d\n", i, found, found==0, mode);
+                           char oldCh = buffer->line->text[ buffer->selectXfrom + ((i < len) ? i : len-1)];
                            if (isalpha(newText[i])) {
-                              if ((found == 0 && mode == CASE_UPPER) || (found != 0 && found == toupper(found))) {
-                                 newText[i] = toupper(newText[i]);
-                                 mode = CASE_UPPER;
-                              } else if ((found == 0 && mode == CASE_LOWER) || (found != 0 && found == tolower(found))) {
+                              if (oldCh == tolower(oldCh)) {
                                  newText[i] = tolower(newText[i]);
-                                 mode = CASE_LOWER;
+                              } else if (oldCh == toupper(oldCh)) {
+                                 newText[i] = toupper(newText[i]);
                               }
                            }
                         }
