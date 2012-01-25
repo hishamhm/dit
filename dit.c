@@ -220,6 +220,12 @@ static void Dit_goto(Buffer* buffer, TabManager* tabs) {
    TabManager_refreshCurrent(tabs);
 }
 
+typedef enum CaseMode_ {
+   CASE_ANY,
+   CASE_UPPER,
+   CASE_LOWER
+} CaseMode;
+
 static Field* Dit_findField = NULL;
 static Field* Dit_replaceField = NULL;
 
@@ -385,19 +391,20 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                      if (buffer->selecting) {
                         char* newText = strdup(Dit_replaceField->current->text);
                         int newLen = strlen(newText);
-                        int len = buffer->selectXto - buffer->selectXfrom + 1;
-                        int mode = 0;
+                        int len = buffer->selectXto - buffer->selectXfrom;
+                        CaseMode mode = CASE_ANY;
                         for (int i = 0; i < newLen; i++) {
                            char found = 0;
-                           if (i < len) 
+                           if (i < len)
                               found = buffer->line->text[buffer->selectXfrom + i];
+                           fprintf(stderr, "i=%d found='%c' found==0:%d mode=%d\n", i, found, found==0, mode);
                            if (isalpha(newText[i])) {
-                              if ((found == 0 && mode == 1) || (found != 0 && found == toupper(found))) {
+                              if ((found == 0 && mode == CASE_UPPER) || (found != 0 && found == toupper(found))) {
                                  newText[i] = toupper(newText[i]);
-                                 mode = 1;
-                              } else if ((found == 0 && mode == 2) || (found != 0 && found == tolower(found))) {
+                                 mode = CASE_UPPER;
+                              } else if ((found == 0 && mode == CASE_LOWER) || (found != 0 && found == tolower(found))) {
                                  newText[i] = tolower(newText[i]);
-                                 mode = 2;
+                                 mode = CASE_LOWER;
                               }
                            }
                         }
