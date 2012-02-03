@@ -89,7 +89,17 @@ void Dit_saveAs(Buffer* buffer, TabManager* tabs) {
 }
 
 static bool confirmClose(Buffer* buffer, TabManager* tabs, char* question) {
-   int opt = TabManager_question(tabs, question, "ync");
+   char message[512];
+   const char* base = strrchr(buffer->fileName, '/');
+   if (base)
+      base++;
+   else {
+      base = buffer->fileName;
+      if (!base) base = "Buffer";
+   }
+   snprintf(message, sizeof(message), "%s was modified. %s", base, question);
+
+   int opt = TabManager_question(tabs, message, "ync");
    if (opt == 0)
       if (!Dit_save(buffer, tabs)) {
          return false;
@@ -486,9 +496,10 @@ static void Dit_undo(Buffer* buffer, TabManager* tabs) {
 }
 
 static void Dit_closeCurrent(Buffer* buffer, TabManager* tabs) {
-   if (buffer && buffer->modified)
-      if (!confirmClose(buffer, tabs, "Buffer was modified. Save before closing?"))
+   if (buffer && buffer->modified) {
+      if (!confirmClose(buffer, tabs, "Save before closing?"))
          return;
+   }
    if (TabManager_size(tabs) == 1)
       TabManager_add(tabs, NULL, NULL);
    TabManager_removeCurrent(tabs);
@@ -504,7 +515,7 @@ static void Dit_quit(Buffer* buffer, TabManager* tabs, int* ch, int* quit) {
    
       if (buffer && buffer->modified) {
          TabManager_draw(tabs, COLS);
-         if (!confirmClose(buffer, tabs, "Buffer was modified. Save before exit?")) {
+         if (!confirmClose(buffer, tabs, "Save before exit?")) {
             reallyQuit = false;
             break;
          }
