@@ -90,14 +90,13 @@ void Dit_saveAs(Buffer* buffer, TabManager* tabs) {
 
 static bool confirmClose(Buffer* buffer, TabManager* tabs, char* question) {
    char message[512];
-   const char* base = strrchr(buffer->fileName, '/');
-   if (base)
-      base++;
-   else {
-      base = buffer->fileName;
-      if (!base) base = "Buffer";
-   }
-   snprintf(message, sizeof(message), "%s was modified. %s", base, question);
+   const char* file = buffer->fileName;
+   if (file) {
+      const char* base = strrchr(file, '/');
+      if (base) file = base + 1;
+   } else
+      file = "Buffer";
+   snprintf(message, sizeof(message), "%s was modified. %s", file, question);
 
    int opt = TabManager_question(tabs, message, "ync");
    if (opt == 0)
