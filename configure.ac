@@ -50,9 +50,17 @@ AC_CHECK_FUNCS([gettimeofday memchr memmove memset mkdir putenv realpath regcomp
 
 AX_LUA_HEADERS
 AX_LUA_LIBS
-AX_LUA_LIB_VERSION([501], [502])
+DIT_LUA_VERSION=5.1.5
+AX_LUA_TRY_LIB_VERSION([501], [502], [], [
+   AC_MSG_RESULT([Using bundled Lua])
+   LUA_INCLUDE=-Ilua-${DIT_LUA_VERSION}/src
+   LUA_LIB=lua-${DIT_LUA_VERSION}/src/liblua.a
+   LUA_DEP=lua-${DIT_LUA_VERSION}/src/liblua.a
+])
 AC_SUBST([LUA_INCLUDE])
 AC_SUBST([LUA_LIB])
+AC_SUBST([LUA_DEP])
+AC_SUBST([DIT_LUA_VERSION])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

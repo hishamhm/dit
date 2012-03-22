@@ -42,6 +42,7 @@
 #
 # LICENSE
 #
+#   Copyright (c) 2012 Hisham Muhammad <h@hisham.hm>
 #   Copyright (c) 2009 Reuben Thomas <rrt@sc3d.org>
 #   Copyright (c) 2009 Matthieu Moy <Matthieu.Moy@imag.fr>
 #   Copyright (c) 2009 Tom Payne <twpayne@gmail.com>
@@ -205,5 +206,35 @@ int main()
   [AC_MSG_RESULT([yes])],
   [AC_MSG_RESULT([no])
   AC_MSG_FAILURE([Lua libraries version not in desired range])])
+  LIBS="$LUA_OLD_LIBS"
+  CPPFLAGS="$LUA_OLD_CPPFLAGS"])dnl
+
+AC_DEFUN([AX_LUA_TRY_LIB_VERSION],
+  [_AX_LUA_OPTS
+  AC_MSG_CHECKING([liblua version is in range $1 <= v < $2])
+  _AX_LUA_VERSIONS($1, $2)
+  LUA_OLD_LIBS="$LIBS"
+  LIBS="$LIBS $LUA_LIB"
+  LUA_OLD_CPPFLAGS="$CPPFLAGS"
+  CPPFLAGS="$CPPFLAGS $LUA_INCLUDE"
+  AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <lua.h>
+#include <stdlib.h>
+#include <stdio.h>
+int main()
+{
+  printf("(found %s, %d)... ", LUA_VERSION, LUA_VERSION_NUM);
+  if (LUA_VERSION_NUM >= $lua_min_version && LUA_VERSION_NUM < $lua_max_version)
+    exit(EXIT_SUCCESS);
+  exit(EXIT_FAILURE);
+}
+]])],
+  [AC_MSG_RESULT([yes])
+   $3
+  ],
+  [
+  AC_MSG_RESULT([no])
+   $4
+  ])
   LIBS="$LUA_OLD_LIBS"
   CPPFLAGS="$LUA_OLD_CPPFLAGS"])dnl

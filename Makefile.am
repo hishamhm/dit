@@ -21,12 +21,19 @@ EXTRA_DIST = tools/GenHeaders extras/dit.keytab
 dit_SOURCES = Prototypes.h Structures.h $(my_dit_C_sources) config.h debug.h md5.c md5.h
 dit_CFLAGS = -std=c99  -DPKGDATADIR=\"$(pkgdatadir)\" -DSYSCONFDIR=\"$(sysconfdir)\" $(LUA_INCLUDE)
 dit_LDADD = $(LUA_LIB)
+dit_DEPENDENCIES = $(LUA_DEP)
+
+lua-$(DIT_LUA_VERSION)/src/liblua.a:
+	cd lua-$(DIT_LUA_VERSION)/src && make MYCFLAGS=-DLUA_USE_LINUX MYLIBS="-Wl,-E -ldl" liblua.a 
 
 Prototypes.h: $(my_dit_C_sources)
 	tools/GenHeaders Prototypes.h
 
 Structures.h: $(my_dit_C_sources)
 	tools/GenHeaders Structures.h
+
+clean-local:
+	cd lua-$(DIT_LUA_VERSION)/src && make clean
 
 install-data-local:
 	$(mkinstalldirs) "$(DESTDIR)$(datadir)/apps/konsole/"
