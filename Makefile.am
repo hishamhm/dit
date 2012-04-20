@@ -16,7 +16,7 @@ nobase_dist_pkgdata_DATA = bindings/default \
  highlight/make highlight/perl highlight/php highlight/python \
  highlight/shell highlight/xml
 
-EXTRA_DIST = tools/GenHeaders extras/dit.keytab
+EXTRA_DIST = tools/GenHeaders extras/dit.keytab lua-$(DIT_LUA_VERSION)/src/*.[ch] lua-$(DIT_LUA_VERSION)/src/Makefile lua-$(DIT_LUA_VERSION)/COPYRIGHT
 
 dit_SOURCES = Prototypes.h Structures.h $(my_dit_C_sources) config.h debug.h md5.c md5.h
 dit_CFLAGS = -std=c99  -DPKGDATADIR=\"$(pkgdatadir)\" -DSYSCONFDIR=\"$(sysconfdir)\" $(LUA_INCLUDE)
