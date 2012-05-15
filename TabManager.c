@@ -270,6 +270,10 @@ void TabManager_setPage(TabManager* this, int i) {
    TabManager_refreshCurrent(this);
 }
 
+int TabManager_getPageCount(TabManager* this) {
+   return Vector_size(this->items);
+}
+
 char* TabManager_getPageName(TabManager* this, int i) {
    TabPage* page = (TabPage*) Vector_get(this->items, i);
    if (page->buffer) {

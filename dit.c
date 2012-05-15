@@ -195,9 +195,9 @@ static void pasteInField(Field* field) {
 }
 
 static void Dit_goto(Buffer* buffer, TabManager* tabs) {
-   clearStatusBar();
+   //clearStatusBar();
    if (!Dit_gotoField)
-      Dit_gotoField = Field_new("Go to line:", 0, LINES - 1, MIN(20, COLS - 20));
+      Dit_gotoField = Field_new("Go to:", 0, LINES - 1, MIN(20, COLS - 20));
 
    Field_start(Dit_gotoField);
    bool quit = false;
@@ -210,6 +210,8 @@ static void Dit_goto(Buffer* buffer, TabManager* tabs) {
       if (!handled) {
          if ((ch >= '0' && ch <= '9') || (ch == '-' && Dit_gotoField->x == 0)) {
             Field_insertChar(Dit_gotoField, ch);
+         } else if (isprint(ch)) {
+            Field_insertChar(Dit_gotoField, ch);
          } else if (ch == 13) {
             quit = true; 
          } else if (ch == 27) {
@@ -217,13 +219,26 @@ static void Dit_goto(Buffer* buffer, TabManager* tabs) {
             Buffer_goto(buffer, saveX, saveY);
          }
       }
-      int y = atoi(Dit_gotoField->current->text);
-      if (y > 0)
-         y--;
-      if (y != lastY) {
-         Buffer_goto(buffer, 0, y);
-         Buffer_draw(buffer);
-         lastY = y;
+      char* endptr;
+      int y = strtol(Dit_gotoField->current->text, &endptr, 10);
+      if (endptr && *endptr == '\0') {
+         if (y > 0)
+            y--;
+         if (y != lastY) {
+            Buffer_goto(buffer, 0, y);
+            Buffer_draw(buffer);
+            lastY = y;
+         }
+      } else {
+         int pages = TabManager_getPageCount(tabs);
+         for (int i = 0; i < pages; i++) {
+            const char* name = TabManager_getPageName(tabs, i);
+               if (name && strcasestr(name, Dit_gotoField->current->text)) {
+                  TabManager_setPage(tabs, i);
+                  TabManager_draw(tabs, COLS);
+                  break;
+               }
+         }
       }
    }
    TabManager_refreshCurrent(tabs);
@@ -233,7 +248,6 @@ static Field* Dit_findField = NULL;
 static Field* Dit_replaceField = NULL;
 
 static void Dit_find(Buffer* buffer, TabManager* tabs) {
-   clearStatusBar();
    if (!Dit_findField)
       Dit_findField = Field_new("Find:", 0, LINES - 1, COLS - 3);
    Field_start(Dit_findField);

@@ -1,5 +1,6 @@
 FILES
 name suffix .lua
+name suffix .rockspec
 firstline regex ^#!.*lua.*
 RULES   
 script highlight_lua.lua
