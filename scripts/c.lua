@@ -11,6 +11,7 @@ local function open_header()
       return
    end
    local page = tabs:open(name)
+   tabs:markJump()
    tabs:setPage(page)
 end
 
@@ -27,7 +28,7 @@ local function match_until(line, open, close, parens, stopx)
          parens = parens - 1
       end
       stopx = stopx + 1
-   until stopx == #line or parens == 0
+   until stopx >= #line or parens == 0
    return stopx
 end
 
@@ -67,7 +68,7 @@ local function expand_selection()
          while true do
             c = line[at]
             close = bracket[c]
-            if at == 1 or close then break end
+            if at <= 1 or close then break end
             at = at - 1
          end
          if close then
@@ -87,13 +88,13 @@ local function expand_selection()
       -- try to expand through function
       if startx == 1 and stopx == 1 then
          local prev = buffer[starty-1]
-         while not prev:match("^%s*$") do
+         while prev and not prev:match("^%s*$") do
             starty = starty - 1
             prev = buffer[starty-1]
             expanded = true
          end
          local next = buffer[stopy]
-         while not next:match("^%s*$") do
+         while next and not next:match("^%s*$") do
             stopy = stopy + 1
             next = buffer[stopy]
             expanded = true
@@ -108,8 +109,11 @@ function on_ctrl(key)
       cscope.goto_definition()
    elseif key == "H" then
       open_header()
-   elseif key == "B" then
-      expand_selection()
    end
 end
 
+function on_fkey(key)
+   if key == "F7" then
+      expand_selection()
+   end
+end

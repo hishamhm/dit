@@ -1,4 +1,5 @@
 CTRL_A Buffer_beginningOfLine
+CTRL_B Dit_jumpBack
 CTRL_C Dit_copy
 CTRL_E Buffer_endOfLine
 CTRL_F Dit_find

@@ -4,6 +4,13 @@
 
 /*{
 
+struct Jump_ {
+   int x;
+   int y;
+   TabPage* page;
+   Jump* prev;
+};
+
 struct TabPageClass_ {
    ObjectClass super;
 };
@@ -16,6 +23,7 @@ struct TabPage_ {
 
 struct TabManager_ {
    Vector* items;
+   Jump* jumps;
    int x;
    int y;
    int w;
@@ -35,10 +43,19 @@ extern TabPageClass TabPageType;
 
 static const char* TabManager_Untitled = "*untitled*";
 
+void Jump_purge(Jump* jump) {
+   while (jump) {
+      Jump* prev = jump->prev;
+      free(jump);
+      jump = prev;
+   }
+}
+
 TabPageClass TabPageType = {
    .super = {
       .size = sizeof(TabPage),
-      .delete = TabPage_delete
+      .delete = TabPage_delete,
+      .equals = Object_equals
    }
 };
 
@@ -64,7 +81,7 @@ void TabPage_delete(Object* super) {
 }
 
 TabManager* TabManager_new(int x, int y, int w, int h, int tabOffset) {
-   TabManager* this = (TabManager*) malloc(sizeof(TabManager));
+   TabManager* this = (TabManager*) calloc(sizeof(TabManager), 1);
    this->x = x;
    this->y = y;
    this->w = w;
@@ -80,6 +97,7 @@ TabManager* TabManager_new(int x, int y, int w, int h, int tabOffset) {
 
 void TabManager_delete(TabManager* this) {
    Vector_delete(this->items);
+   Jump_purge(this->jumps);
    free(this);
 }
 
@@ -268,6 +286,33 @@ void TabManager_setPage(TabManager* this, int i) {
       i = 0;
    this->currentPage = i;
    TabManager_refreshCurrent(this);
+}
+
+void TabManager_markJump(TabManager* this) {
+   Jump* jump = calloc(sizeof(Jump), 1);
+   Buffer* buffer = TabManager_getBuffer(this, this->currentPage);
+   jump->x = buffer->x;
+   jump->y = buffer->y;
+   jump->page = TabManager_current(this);
+   jump->prev = this->jumps;
+   this->jumps = jump;
+}
+
+void TabManager_jumpBack(TabManager* this) {
+beep();
+   Jump* jump = this->jumps;
+   if (!jump)
+      return;
+   this->jumps = jump->prev;
+   int idx = Vector_indexOf(this->items, jump->page);
+   if (idx == -1) {
+      free(jump);
+      //TabManager_jumpBack(this);
+      return;
+   }
+   TabManager_setPage(this, idx);
+   Buffer_goto(TabManager_current(this)->buffer, jump->x, jump->y);
+   free(jump);
 }
 
 int TabManager_getPageCount(TabManager* this) {

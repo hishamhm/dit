@@ -205,6 +205,14 @@ static int Script_TabManager_setPage(lua_State* L) {
    return 0;
 }
 
+static int Script_TabManager_markJump(lua_State* L) {
+   TabManager* tabs = (TabManager*) ((Proxy*)luaL_checkudata(L, 1, "TabManager"))->ptr;
+   
+   TabManager_markJump(tabs);
+   
+   return 0;
+}
+
 static int Script_TabManager_getBuffer(lua_State* L) {
    TabManager* tabs = (TabManager*) ((Proxy*)luaL_checkudata(L, 1, "TabManager"))->ptr;
    int page = luaL_checkint(L, 2);
@@ -220,6 +228,7 @@ static luaL_Reg TabManager_functions[] = {
    { "open", Script_TabManager_open },
    { "setPage", Script_TabManager_setPage },
    { "getBuffer", Script_TabManager_getBuffer },
+   { "markJump", Script_TabManager_markJump },
    { NULL, NULL }
 };
 
@@ -235,6 +244,7 @@ static int Script_string___index(lua_State* L) {
       if (at > len || at < 1) {
          lua_pop(L, 2);
          lua_pushliteral(L, "");
+         return 1;
       } else {
          out[0] = str[at-1];
          out[1] = '\0';
@@ -385,6 +395,14 @@ void Script_onCtrl(Buffer* this, int key) {
    
    char ch[2] = { 'A' + key - 1, '\0' };
    this->skipOnCtrl = !callFunction(this->L, "on_ctrl", ch);
+}
+
+void Script_onFKey(Buffer* this, int key) {
+   if (this->skipOnFKey) return;
+   
+   char ch[10];
+   snprintf(ch, 10, "F%d", key - KEY_F(1) + 1);
+   this->skipOnFKey = !callFunction(this->L, "on_fkey", ch);
 }
 
 void Script_onSave(Buffer* this, const char* fileName) {

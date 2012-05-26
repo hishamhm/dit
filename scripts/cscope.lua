@@ -30,6 +30,7 @@ local function goto_result(decl, word)
    line = tonumber(line)
    if file then
       local page = tabs:open(file)
+      tabs:markJump()
       tabs:setPage(page)
       local buf = tabs:getBuffer(page)
       buf:goto(1, line)

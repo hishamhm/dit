@@ -140,11 +140,11 @@ static void copyOrCut(Buffer* buffer, bool cut) {
    buffer->selecting = false;
 }
 
-static void Dit_cut(Buffer* buffer, bool cut) {
+static void Dit_cut(Buffer* buffer) {
    copyOrCut(buffer, true);
 }
 
-static void Dit_copy(Buffer* buffer, bool cut) {
+static void Dit_copy(Buffer* buffer) {
    copyOrCut(buffer, false);
 }
 
@@ -158,6 +158,10 @@ static void Dit_paste(Buffer* buffer) {
       free(block);
    }
    buffer->selecting = false;
+}
+
+static void Dit_jumpBack(Buffer* buffer, TabManager* tabs) {
+   TabManager_jumpBack(tabs);
 }
 
 static void Dit_pushPull(Buffer* buffer, TabManager* tabs) {
@@ -195,7 +199,7 @@ static void pasteInField(Field* field) {
 }
 
 static void Dit_goto(Buffer* buffer, TabManager* tabs) {
-   //clearStatusBar();
+   TabManager_markJump(tabs);
    if (!Dit_gotoField)
       Dit_gotoField = Field_new("Go to:", 0, LINES - 1, MIN(20, COLS - 20));
 
@@ -248,6 +252,7 @@ static Field* Dit_findField = NULL;
 static Field* Dit_replaceField = NULL;
 
 static void Dit_find(Buffer* buffer, TabManager* tabs) {
+   TabManager_markJump(tabs);
    if (!Dit_findField)
       Dit_findField = Field_new("Find:", 0, LINES - 1, COLS - 3);
    Field_start(Dit_findField);
@@ -555,11 +560,13 @@ static void Dit_breakLine(Buffer* buffer) {
 }
 
 static void Dit_previousTabPage(Buffer* buffer, TabManager* tabs, int* ch) {
+   TabManager_markJump(tabs);
    TabManager_previousPage(tabs);
    *ch = 0;
 }
 
 static void Dit_nextTabPage(Buffer* buffer, TabManager* tabs, int* ch) {
+   TabManager_markJump(tabs);
    TabManager_nextPage(tabs);
    *ch = 0;
 }
@@ -643,6 +650,7 @@ static void Dit_registerActions() {
    Hashtable_putString(Dit_actions, "Dit_deleteLine", (void*)(long) Dit_deleteLine);
    Hashtable_putString(Dit_actions, "Dit_find", (void*)(long) Dit_find);
    Hashtable_putString(Dit_actions, "Dit_goto", (void*)(long) Dit_goto);
+   Hashtable_putString(Dit_actions, "Dit_jumpBack", (void*)(long) Dit_jumpBack);
    Hashtable_putString(Dit_actions, "Dit_nextTabPage", (void*)(long) Dit_nextTabPage);
    Hashtable_putString(Dit_actions, "Dit_paste", (void*)(long) Dit_paste);
    Hashtable_putString(Dit_actions, "Dit_previousTabPage", (void*)(long) Dit_previousTabPage);
@@ -668,7 +676,7 @@ static void Dit_registerActions() {
 
 static void Dit_loadHardcodedBindings(Dit_Action* keys) {
    keys[KEY_CTRL('A')] = (Dit_Action) Buffer_beginningOfLine;
-   /* Ctrl B is FREE */
+   keys[KEY_CTRL('B')] = (Dit_Action) Dit_jumpBack;
    keys[KEY_CTRL('C')] = (Dit_Action) Dit_copy;
    /* Ctrl D is FREE */
    keys[KEY_CTRL('E')] = (Dit_Action) Buffer_endOfLine;
