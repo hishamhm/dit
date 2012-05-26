@@ -235,11 +235,12 @@ static int Script_string___index(lua_State* L) {
       if (at > len || at < 1) {
          lua_pop(L, 2);
          lua_pushliteral(L, "");
+      } else {
+         out[0] = str[at-1];
+         out[1] = '\0';
+         lua_pop(L, 2);
+         lua_pushlstring(L, out, 1);
       }
-      out[0] = str[at-1];
-      out[1] = '\0';
-      lua_pop(L, 2);
-      lua_pushlstring(L, out, 1);
       return 1;
    } else {
       lua_getglobal(L, "string");
