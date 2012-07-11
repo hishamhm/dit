@@ -571,20 +571,36 @@ static void Dit_nextTabPage(Buffer* buffer, TabManager* tabs, int* ch) {
    *ch = 0;
 }
 
+static bool Dit_dirExists(const char* name) {
+   char* rpath = realpath(name, NULL);
+   bool dirExists = true;
+   if (rpath) {
+      char* dir = dirname(rpath);
+      dirExists = (access(dir, F_OK) == 0);
+      free(rpath);
+   } else {
+      char* dirc = strdup(name);
+      char* dir = dirname(dirc);
+      dirExists = (access(dir, F_OK) == 0);
+      free(dirc);
+   }
+   return dirExists;
+}
+
 int Dit_open(TabManager* tabs, const char* name) {
    int page;
    if (name) {
       char* rpath = realpath(name, NULL);
       if (!rpath) {
-         char* basec = strdup(name);
-         char* dirc = strdup(name);
-         char* base = basename(basec);
-         char* dir = dirname(dirc);
-         bool dirExists = (access(dir, F_OK) == 0);
-         if (!dirExists) {
+         if (!Dit_dirExists(name)) {
+            CRT_done();
             fprintf(stderr, "dit: directory %s does not exist.\n", name);
             exit(0);
          }
+         char* basec = strdup(name);
+         char* base = basename(basec);
+         char* dirc = strdup(name);
+         char* dir = dirname(dirc);
          char* realdir = realpath(dir, NULL);
          asprintf(&rpath, "%s/%s", realdir, base);
          free(realdir);
@@ -748,59 +764,55 @@ static void Dit_loadHardcodedBindings(Dit_Action* keys) {
 }
 
 void Dit_checkFileAccess(char** argv, char* name, int* jump, int* column) {
-   if (name) {
-      char* dirbuf = realpath(name, NULL);
-      char* dir = dirname(dirbuf);
-      
-      bool dirExists = (access(dir, F_OK) == 0);
-      if (!dirExists) {
-         fprintf(stderr, "dit: directory %s does not exist.\n", name);
-         exit(0);
-      }
- 
-      bool exists = (access(name, F_OK) == 0);
-      int len = strlen(name);
-      if (!exists && len > 2 && name[len - 1] == ':') {
-          name[len - 1] = '\0';
-          char* line = strrchr(name, ':');
-          if (line) {
-             *line = '\0';
-             line++;
-             char* line2 = strrchr(name, ':');
-             char* colon2 = line;
-             if (line2) {
-                *line2 = '\0';
-                line2++;
-                *column = atoi(line);
-                line = line2;
-             }
-             *jump = atoi(line);
-             exists = (access(name, F_OK) == 0);
-             if (!exists) {
-                name[len - 1] = ':';
-                line--;
-                *line = ':';
-                *colon2 = ':';
-                free(dirbuf);
-                return;
-             }
-          } else {
-             name[len - 1] = ':';
+   if (!name)
+      return;
+   
+   if (!Dit_dirExists(name)) {
+      fprintf(stderr, "dit: directory %s does not exist.\n", name);
+      exit(0);
+   }
+   bool exists = (access(name, F_OK) == 0);
+   int len = strlen(name);
+   if (!exists && len > 2 && name[len - 1] == ':') {
+       name[len - 1] = '\0';
+       char* line = strrchr(name, ':');
+       if (line) {
+          *line = '\0';
+          line++;
+          char* line2 = strrchr(name, ':');
+          char* colon2 = line;
+          if (line2) {
+             *line2 = '\0';
+             line2++;
+             *column = atoi(line);
+             line = line2;
           }
-      }
-      bool canWriteDir = (access(dir, W_OK) == 0);
-      bool canWrite = (access(name, W_OK) == 0);
-      free(dirbuf);
-      if ((exists && !canWrite) || (!exists && !canWriteDir)) {
-         char buffer[4096];
-         if (*jump)
-            snprintf(buffer, 4095, "sudo %s +%d %s", argv[0], *jump, name);
-         else
-            snprintf(buffer, 4095, "sudo %s %s", argv[0], name);
-         int ret = system(buffer);
-         if (ret == 0)
-            exit(0);
-      }
+          *jump = atoi(line);
+          exists = (access(name, F_OK) == 0);
+          if (!exists) {
+             name[len - 1] = ':';
+             line--;
+             *line = ':';
+             *colon2 = ':';
+             return;
+          }
+       } else {
+          name[len - 1] = ':';
+       }
+   }
+   char* rpath = realpath(name, NULL);
+   char* dir = dirname(rpath);
+   bool canWriteDir = (access(dir, W_OK) == 0);
+   bool canWrite = (access(name, W_OK) == 0);
+   free(rpath);
+   if ((exists && !canWrite) || (!exists && !canWriteDir)) {
+      char buffer[4096];
+      if (*jump)
+         snprintf(buffer, 4095, "sudo %s +%d %s", argv[0], *jump, name);
+      else
+         snprintf(buffer, 4095, "sudo %s %s", argv[0], name);
+      int ret = system(buffer);
+      exit(ret);
    }
 }
 
