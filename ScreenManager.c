@@ -51,6 +51,8 @@ inline int ScreenManager_size(ScreenManager* this) {
 }
 
 void ScreenManager_add(ScreenManager* this, Panel* item, int size) {
+   int lines, cols;
+   Display_getScreenSize(&cols, &lines);
    if (this->orientation == HORIZONTAL) {
       int lastX = 0;
       if (this->itemCount > 0) {
@@ -58,9 +60,9 @@ void ScreenManager_add(ScreenManager* this, Panel* item, int size) {
          lastX = last->x + last->w + 1;
       }
       if (size > 0) {
-         Panel_resize(item, size, LINES-this->y1+this->y2);
+         Panel_resize(item, size, lines-this->y1+this->y2);
       } else {
-         Panel_resize(item, COLS-this->x1+this->x2-lastX, LINES-this->y1+this->y2);
+         Panel_resize(item, cols-this->x1+this->x2-lastX, lines-this->y1+this->y2);
       }
       Panel_move(item, lastX, this->y1);
    }
@@ -84,6 +86,8 @@ void ScreenManager_setFunctionBar(ScreenManager* this, FunctionBar* fuBar) {
 }
 
 void ScreenManager_resize(ScreenManager* this, int x1, int y1, int x2, int y2) {
+   int lines, cols;
+   Display_getScreenSize(&cols, &lines);
    this->x1 = x1;
    this->y1 = y1;
    this->x2 = x2;
@@ -92,12 +96,12 @@ void ScreenManager_resize(ScreenManager* this, int x1, int y1, int x2, int y2) {
    int lastX = 0;
    for (int i = 0; i < items - 1; i++) {
       Panel* lb = (Panel*) Vector_get(this->items, i);
-      Panel_resize(lb, lb->w, LINES-y1+y2);
+      Panel_resize(lb, lb->w, lines-y1+y2);
       Panel_move(lb, lastX, y1);
       lastX = lb->x + lb->w + 1;
    }
    Panel* lb = (Panel*) Vector_get(this->items, items-1);
-   Panel_resize(lb, COLS-x1+x2-lastX, LINES-y1+y2);
+   Panel_resize(lb, cols-x1+x2-lastX, lines-y1+y2);
    Panel_move(lb, lastX, y1);
 }
 
@@ -118,21 +122,23 @@ void ScreenManager_run(ScreenManager* this, Panel** lastFocus, int* lastKey) {
          Panel_draw(lb);
          if (i < items) {
             if (this->orientation == HORIZONTAL) {
-               mvvline(lb->y, lb->x+lb->w, ' ', lb->h+1);
+               Display_mvvline(lb->y, lb->x+lb->w, ' ', lb->h+1);
             }
          }
       }
       if (this->fuBar)
          FunctionBar_draw(this->fuBar, NULL);
 
-      ch = getch();
+      ch = Display_getch();
       
       bool loop = false;
       if (ch == KEY_MOUSE) {
          MEVENT mevent;
-         int ok = getmouse(&mevent);
+         int ok = Display_getmouse(&mevent);
          if (ok == OK) {
-            if (mevent.y == LINES - 1) {
+            int lines, cols;
+            Display_getScreenSize(&cols, &lines);
+            if (mevent.y == lines - 1) {
                ch = FunctionBar_synthesizeEvent(this->fuBar, mevent.x);
             } else {
                for (int i = 0; i < this->itemCount; i++) {

@@ -10,13 +10,15 @@ typedef struct Proxy_ {
 }*/
 
 static void error(lua_State* L) {
-   clear();
-   mvprintw(0,0,"%s", lua_tostring(L, -1));
-   getch();
+   int lines, cols;
+   Display_getScreenSize(&cols, &lines);
+   Display_clear();
+   Display_printAt(0,0,"%s", lua_tostring(L, -1));
+   Display_getch();
    lua_getglobal(L, "tabs");
    TabManager* tabs = (TabManager*) ((Proxy*)lua_touserdata(L, -1))->ptr;
    TabManager_refreshCurrent(tabs);
-   TabManager_draw(tabs, COLS);
+   TabManager_draw(tabs, cols);
 }
 
 static void Script_pushObject(lua_State* L, void* ptr, const char* klass, const luaL_Reg* functions) {
@@ -305,9 +307,9 @@ bool Script_load(lua_State* L, const char* scriptName) {
    int err = luaL_dofile(L, foundFile);
    free(foundFile);
    if (err != 0) {
-      clear();
-      mvprintw(0,0,"Error loading script %s", lua_tostring(L, -1));
-      getch();
+      Display_clear();
+      Display_printAt(0,0,"Error loading script %s", lua_tostring(L, -1));
+      Display_getch();
       return false;
    }
    return true;

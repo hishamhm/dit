@@ -1,7 +1,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <curses.h>
 #include <sys/param.h>
 
 #include "Prototypes.h"

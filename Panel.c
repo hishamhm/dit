@@ -6,9 +6,6 @@
 #include <sys/param.h>
 #include <stdbool.h>
 
-#include <curses.h>
-//#link ncurses
-
 /*{
 
 typedef enum HandlerResult_ {
@@ -26,7 +23,6 @@ struct PanelClass_ {
 struct Panel_ {
    Object super;
    int x, y, w, h;
-   WINDOW* window;
    List* items;
    int selected;
    int scrollV, scrollH;
@@ -233,13 +229,11 @@ void Panel_draw(Panel* this) {
    assert(last <= itemCount);
 
    if (this->header.len > 0) {
-      int attr = CRT_colors[HeaderColor];
-      attron(attr);
-      mvhline(y, x, ' ', w);
-      attroff(attr);
+      Display_attrset(CRT_colors[HeaderColor]);
+      Display_mvhline(y, x, ' ', w);
       if (scrollH < this->header.len) {
          assert(this->header.len > 0);
-         mvaddchnstr(y, x, this->header.chstr + scrollH,
+         Display_writeChstrAtn(y, x, this->header.chstr + scrollH,
                      MIN(this->header.len - scrollH, w));
       }
       y++;
@@ -254,7 +248,7 @@ void Panel_draw(Panel* this) {
       highlight = CRT_colors[UnfocusedSelectionColor];
    }
 
-   attrset(this->color);
+   Display_attrset(this->color);
    if (this->needsRedraw) {
 
       for(int i = first, j = 0; j < h && i < last; i++, j++) {
@@ -266,24 +260,24 @@ void Panel_draw(Panel* this) {
          int amt = MIN(itemRef.len - scrollH, w);
          if (i == this->selected) {
             if (this->highlightBar) {
-               attron(highlight);
+               Display_attrset(highlight);
                RichString_setAttr(&itemRef, highlight);
             }
             cursorY = y + j;
-            mvhline(cursorY, x+amt, ' ', w-amt);
+            Display_mvhline(cursorY, x+amt, ' ', w-amt);
             if (amt > 0)
-               mvaddchnstr(y+j, x+0, itemRef.chstr + scrollH, amt);
+               Display_writeChstrAtn(y+j, x+0, itemRef.chstr + scrollH, amt);
             if (this->highlightBar)
-               attroff(highlight);
+               Display_attrset(this->color);
          } else {
-            mvhline(y+j, x+amt, ' ', w-amt);
+            Display_mvhline(y+j, x+amt, ' ', w-amt);
 
             if (amt > 0)
-               mvaddchnstr(y+j, x+0, itemRef.chstr + scrollH, amt);
+               Display_writeChstrAtn(y+j, x+0, itemRef.chstr + scrollH, amt);
          }
       }
       for (int i = y + (last - first); i < y + h; i++)
-         mvhline(i, x+0, ' ', w);
+         Display_mvhline(i, x+0, ' ', w);
 
       /* paint scrollbar */
       {
@@ -295,16 +289,16 @@ void Panel_draw(Panel* this) {
          for (int i = 0; i < h; i++) {
             char ch;
             if (i >= startAt && handleHeight) {
-               attrset(handle);
+               Display_attrset(handle);
                ch = CRT_scrollHandle;
                handleHeight--;
             } else {
-               attrset(bar);
+               Display_attrset(bar);
                ch = CRT_scrollBar;
             }
-            mvaddch(y + i, w, ch);
+            Display_writeChAt(y + i, w, ch);
          }
-         attrset(this->color);
+         Display_attrset(this->color);
       }
 
       this->needsRedraw = false;
@@ -318,23 +312,23 @@ void Panel_draw(Panel* this) {
       RichString newRef; RichString_init(&newRef);
       this->displaying = this->selected;
       Msg(Object, display, newObj, &newRef);
-      mvhline(y+ this->oldSelected - this->scrollV, x+0, ' ', w);
+      Display_mvhline(y+ this->oldSelected - this->scrollV, x+0, ' ', w);
       if (scrollH < oldRef.len)
-         mvaddchnstr(y+ this->oldSelected - this->scrollV, x+0, oldRef.chstr + scrollH, MIN(oldRef.len - scrollH, w));
+         Display_writeChstrAtn(y+ this->oldSelected - this->scrollV, x+0, oldRef.chstr + scrollH, MIN(oldRef.len - scrollH, w));
       if (this->highlightBar)
-         attron(highlight);
+         Display_attrset(highlight);
       cursorY = y+this->selected - this->scrollV;
-      mvhline(cursorY, x+0, ' ', w);
+      Display_mvhline(cursorY, x+0, ' ', w);
       if (this->highlightBar)
          RichString_setAttr(&newRef, highlight);
       if (scrollH < newRef.len)
-         mvaddchnstr(y+this->selected - this->scrollV, x+0, newRef.chstr + scrollH, MIN(newRef.len - scrollH, w));
+         Display_writeChstrAtn(y+this->selected - this->scrollV, x+0, newRef.chstr + scrollH, MIN(newRef.len - scrollH, w));
       if (this->highlightBar)
-         attroff(highlight);
+         Display_attrset(this->color);
    }
    this->oldSelected = this->selected;
 
-   move(cursorY, this->cursorX);
+   Display_move(cursorY, this->cursorX);
 }
 
 bool Panel_onKey(Panel* this, int key) {

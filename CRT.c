@@ -1,6 +1,5 @@
 
 #define _GNU_SOURCE
-#include <curses.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -112,7 +111,7 @@ int putenv(char*);
 
 }*/
 
-//#link ncurses
+bool CRT_linuxConsole = false;
 
 bool CRT_linuxConsole = false;
 
@@ -126,17 +125,15 @@ char CRT_scrollBar;
 
 int CRT_colors[Colors];
 
-static SCREEN* CRT_term;
-
 Hashtable* CRT_keys;
 
 void CRT_parseTerminalFile(char* term) {
 
    FILE* fd = Files_open("r", "terminals/%s", term);
    if (!fd) {
-      mvprintw(0,0,"Warning: could not parse terminal rules file terminals/%s", term);
-      mvprintw(1,0,"Press any key.");
-      getch();
+      Display_printAt(0,0,"Warning: could not parse terminal rules file terminals/%s", term);
+      Display_printAt(1,0,"Press any key.");
+      Display_getch();
       return;
    }
    while (!feof(fd)) {
@@ -150,7 +147,7 @@ void CRT_parseTerminalFile(char* term) {
       String_convertEscape(sequence, "^[", 033);
       int keynum = (int) Hashtable_getString(CRT_keys, key);
       if (keynum)
-         define_key(sequence, keynum);
+         Display_defineKey(sequence, keynum);
       nextLine:
       String_freeArray(tokens);
    }
@@ -170,27 +167,11 @@ void CRT_init() {
 
    CRT_delay = 0;
    
-   CRT_term = newterm(term, stdout, stdin);
-   raw();
-   noecho();
-   if (CRT_delay)
-      halfdelay(CRT_delay);
-   nonl();
-   intrflush(stdscr, false);
-   keypad(stdscr, true);
-   ESCDELAY = 100;
-   if (has_colors()) {
-      start_color();
-      CRT_hasColors = true;
-      use_default_colors();
-      for (int i = 0; i < 8; i++)
-         for (int j = 0; j < 8; j++)
-            init_pair(i*8+j, i==7?-1:i, j==0?-1:j);
-      init_pair(White*8+Black, Black, -1);
+   CRT_hasColors = Display_init(term);
+   if (CRT_hasColors) {
       CRT_scrollHandle = ' ';
       CRT_scrollBar = ' ';
    } else {
-      CRT_hasColors = false;
       CRT_scrollHandle = '*';
       CRT_scrollBar = '|';
    }
@@ -476,23 +457,19 @@ void CRT_init() {
 //   signal(11, CRT_handleSIGSEGV);
 #endif
    signal(SIGTERM, CRT_handleSIGTERM);
-
-   mousemask(BUTTON1_PRESSED, NULL);
 }
 
 void CRT_done() {
    Hashtable_delete(CRT_keys);
-   curs_set(1);
-   endwin();
-   delscreen(CRT_term);
+   Display_done();
 }
 
 int CRT_readKey() {
-   nocbreak();
-   cbreak();
-   int ret = getch();
-   if (CRT_delay)
-      halfdelay(CRT_delay);
+   //nocbreak();
+   //cbreak();
+   int ret = Display_getch();
+   //if (CRT_delay)
+   //   halfdelay(CRT_delay);
    return ret;
 }
 
@@ -508,8 +485,8 @@ void CRT_handleSIGTERM(int signal) {
 }
 
 int CRT_getCharacter() {
-   refresh();
-   int ch = getch();
+   Display_refresh();
+   int ch = Display_getch();
    #if defined __linux || defined __CYGWIN__
    if (ch == KEY_LEFT || ch == KEY_RIGHT || ch == KEY_UP || ch == KEY_DOWN
        || ch == KEY_HOME || ch == KEY_END || ch == KEY_IC || ch == KEY_DC || ch == '\t') {

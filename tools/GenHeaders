@@ -43,13 +43,16 @@ then
    echo '#include <stdbool.h>' >> "$new"
    echo '#include <stdio.h>' >> "$new"
    echo '#include <string.h>' >> "$new"
-   echo '#include <curses.h>' >> "$new"
    echo >> "$new"
    echo '#include "Structures.h"' >> "$new"
    echo >> "$new"
    
    includes() {
       cat "$1" | grep --text "^#include"
+   }
+
+   defines() {
+      cat "$1" | grep --text "^#define Display_.*"
    }
    
    proto() {
@@ -66,6 +69,9 @@ then
    
    do_all includes | sort -u | tac >> "$new"
    do_all proto
+   echo "#if HAVE_CURSES_H" >> "$new"
+   do_all defines >> "$new"
+   echo "#endif" >> "$new"
    
    echo >> "$new"
    echo '#include <stdlib.h>' >> "$new"
@@ -85,6 +91,7 @@ else
    
    echo "#ifndef Structures_HEADER" > "$new"
    echo "#define Structures_HEADER" >> "$new"
+   echo "#include \"config.h\"" >> "$new"
    echo >> "$new"
    
    cat *.c | awk '

@@ -15,11 +15,12 @@
 #include "config.h"
 #include "debug.h"
 
-
 //#link m
 
+static int lines, cols;
+
 static void printVersionFlag() {
-   clear();
+   Display_clear();
    printf("dit " VERSION " - (C) 2005-2006 Hisham Muhammad.\n");
    printf("Released under the GNU GPL.\n\n");
    exit(0);
@@ -27,20 +28,20 @@ static void printVersionFlag() {
 
 static void clearStatusBar() {
    int y, x;
-   getyx(stdscr, y, x);
-   attrset(CRT_colors[StatusColor]);
-   mvhline(LINES - 1, 0, ' ', COLS);
-   move(y, x);
+   Display_getyx(&y, &x);
+   Display_attrset(CRT_colors[StatusColor]);
+   Display_mvhline(lines - 1, 0, ' ', cols);
+   Display_move(y, x);
 }
 
 static void statusMessage(char* message) {
-   int cursorX, cursorY;
-   getyx(stdscr, cursorY, cursorX);
-   attrset(CRT_colors[StatusColor]);
-   mvhline(LINES - 1, 0, ' ', COLS);
-   mvprintw(LINES - 1, 0, message);
-   attrset(CRT_colors[NormalColor]);
-   move(cursorY, cursorX);
+   int y, x;
+   Display_getyx(&y, &x);
+   Display_attrset(CRT_colors[StatusColor]);
+   Display_mvhline(lines - 1, 0, ' ', cols);
+   Display_printAt(lines - 1, 0, message);
+   Display_attrset(CRT_colors[NormalColor]);
+   Display_move(y, x);
 }
 
 static bool saveAs(Field* saveAsField, Buffer* buffer, char* name) {
@@ -59,10 +60,10 @@ static bool saveAs(Field* saveAsField, Buffer* buffer, char* name) {
 }
 
 static bool Dit_save(Buffer* buffer, TabManager* tabs) {
-   Field* saveAsField = Field_new("Save failed. Save as:", 0, LINES-1, COLS-2);
+   Field* saveAsField = Field_new("Save failed. Save as:", 0, lines-1, cols-2);
    bool saved = false;
    if (!buffer->fileName) {
-      Field* saveAsField = Field_new("Save as:", 0, LINES-1, COLS-2);
+      Field* saveAsField = Field_new("Save as:", 0, lines-1, cols-2);
       if (!saveAs(saveAsField, buffer, ""))
          return false;
       Field_delete(saveAsField);
@@ -81,7 +82,7 @@ static bool Dit_save(Buffer* buffer, TabManager* tabs) {
 }
 
 void Dit_saveAs(Buffer* buffer, TabManager* tabs) {
-   Field* saveAsField = Field_new("Save as:", 0, LINES-1, COLS-2);
+   Field* saveAsField = Field_new("Save as:", 0, lines-1, cols-2);
    if (!saveAs(saveAsField, buffer, buffer->fileName ? buffer->fileName : ""))
       return;
    Field_delete(saveAsField);
@@ -169,7 +170,7 @@ static void Dit_pushPull(Buffer* buffer, TabManager* tabs) {
 
    buffer->selecting = false;
    buffer->marking = false;
-   int mode = getch();
+   int mode = Display_getch();
    switch (mode)
    {
    case KEY_LEFT:
@@ -201,7 +202,7 @@ static void pasteInField(Field* field) {
 static void Dit_goto(Buffer* buffer, TabManager* tabs) {
    TabManager_markJump(tabs);
    if (!Dit_gotoField)
-      Dit_gotoField = Field_new("Go to:", 0, LINES - 1, MIN(20, COLS - 20));
+      Dit_gotoField = Field_new("Go to:", 0, lines - 1, MIN(20, cols - 20));
 
    Field_start(Dit_gotoField);
    bool quit = false;
@@ -239,7 +240,7 @@ static void Dit_goto(Buffer* buffer, TabManager* tabs) {
             const char* name = TabManager_getPageName(tabs, i);
                if (name && strcasestr(name, Dit_gotoField->current->text)) {
                   TabManager_setPage(tabs, i);
-                  TabManager_draw(tabs, COLS);
+                  TabManager_draw(tabs, cols);
                   break;
                }
          }
@@ -254,7 +255,7 @@ static Field* Dit_replaceField = NULL;
 static void Dit_find(Buffer* buffer, TabManager* tabs) {
    TabManager_markJump(tabs);
    if (!Dit_findField)
-      Dit_findField = Field_new("Find:", 0, LINES - 1, COLS - 3);
+      Dit_findField = Field_new("Find:", 0, lines - 1, cols - 3);
    Field_start(Dit_findField);
    bool quit = false;
    int saveX = buffer->x;
@@ -361,7 +362,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             {
                int rch = 0;
                if (!Dit_replaceField)
-                  Dit_replaceField = Field_new("", 0, LINES - 1, COLS - 3);
+                  Dit_replaceField = Field_new("", 0, lines - 1, cols - 3);
                Dit_replaceField->fieldColor = CRT_colors[FieldColor];
                Field_printfLabel(Dit_replaceField, "L:%d C:%d [%c%c] %sReplace with:", buffer->y + 1, buffer->x + 1, caseSensitive ? 'C' : ' ', wholeWord ? 'W' : ' ', wrapped ? "Wrapped " : "");
                Field_start(Dit_replaceField);
@@ -493,8 +494,8 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
 }
 
 static void Dit_refresh(Buffer* buffer, TabManager* tabs) {
-   attrset(NormalColor);
-   clear();
+   Display_attrset(NormalColor);
+   Display_clear();
    Buffer_refreshHighlight(buffer);
    TabManager_refreshCurrent(tabs);
 }
@@ -532,7 +533,7 @@ static void Dit_quit(Buffer* buffer, TabManager* tabs, int* ch, int* quit) {
       buffer = page->buffer;
    
       if (buffer && buffer->modified) {
-         TabManager_draw(tabs, COLS);
+         TabManager_draw(tabs, cols);
          if (!confirmClose(buffer, tabs, "Save before exit?")) {
             reallyQuit = false;
             break;
@@ -821,10 +822,10 @@ static void Dit_parseBindings(Dit_Action* keys) {
       keys[i] = 0;
    FILE* fd = Files_open("r", "bindings/default", NULL);
    if (!fd) {
-      clear();
-      mvprintw(0,0,"Warning: could not parse key bindings file bindings/default");
-      mvprintw(1,0,"Press any key to load hardcoded defaults.");
-      getch();
+      Display_clear();
+      Display_printAt(0,0,"Warning: could not parse key bindings file bindings/default");
+      Display_printAt(1,0,"Press any key to load hardcoded defaults.");
+      Display_getch();
       Dit_loadHardcodedBindings(keys);
       return;
    }
@@ -885,17 +886,19 @@ int main(int argc, char** argv) {
    Dit_registerActions();
    Dit_parseBindings(keys);
    Hashtable_delete(Dit_actions);
+
+   Display_getScreenSize(&cols, &lines);
    
-   TabManager* tabs = TabManager_new(0, 0, COLS, LINES, 20);
+   TabManager* tabs = TabManager_new(0, 0, cols, lines, 20);
    tabs->defaultTabWidth = tabWidth;
 
    Dit_open(tabs, name);
 
    TabManager_load(tabs, "recent", 15);
 
-   bkgdset(NormalColor);
+   Display_bkgdset(NormalColor);
    
-   Buffer* buffer = TabManager_draw(tabs, COLS);
+   Buffer* buffer = TabManager_draw(tabs, cols);
    if (jump > 0)
       Buffer_goto(buffer, column - 1, jump - 1);
 
@@ -903,21 +906,21 @@ int main(int argc, char** argv) {
    while (!quit) {
       int y, x;
 
-      attrset(CRT_colors[TabColor]);
-      mvhline(LINES - 1, 0, ' ', tabs->tabOffset);
+      Display_attrset(CRT_colors[TabColor]);
+      Display_mvhline(lines - 1, 0, ' ', tabs->tabOffset);
 
-      Buffer* buffer = TabManager_draw(tabs, COLS);
-      getyx(stdscr, y, x);
+      Buffer* buffer = TabManager_draw(tabs, cols);
+      Display_getyx(&y, &x);
 
-      attrset(CRT_colors[TabColor]);
-      mvprintw(LINES - 1, 0, "L:%d C:%d %s%s",
+      Display_attrset(CRT_colors[TabColor]);
+      Display_printAt(lines - 1, 0, "L:%d C:%d %s%s",
                              buffer->y + 1, buffer->x + 1,
                              (buffer->tabCharacters ? " TABS" : ""),
                              (buffer->dosLineBreaks ? " DOS" : ""));
 
-      attrset(A_NORMAL);
+      Display_attrset(A_NORMAL);
       buffer->lastKey = ch;
-      move(y, x);
+      Display_move(y, x);
       ch = CRT_getCharacter();
       
       //TODO: mouse
@@ -948,9 +951,10 @@ int main(int argc, char** argv) {
       case ERR:
          continue;
       case KEY_RESIZE:
-         TabManager_resize(tabs, COLS, LINES);
+         Display_getScreenSize(&cols, &lines);
+         TabManager_resize(tabs, cols, lines);
          if (Dit_findField)
-            Dit_findField->y = LINES - 1;
+            Dit_findField->y = lines - 1;
          break;
       }
       
@@ -960,10 +964,9 @@ int main(int argc, char** argv) {
          Buffer_defaultKeyHandler(buffer, ch);
    }
 
-   attron(CRT_colors[NormalColor]);
-   mvhline(LINES-1, 0, ' ', COLS);
-   attroff(CRT_colors[NormalColor]);
-   refresh();
+   Display_attrset(CRT_colors[NormalColor]);
+   Display_mvhline(lines-1, 0, ' ', cols);
+   Display_refresh();
    
    CRT_done();
    if (Dit_clipboard)

@@ -3,7 +3,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <curses.h>
 
 #include "Prototypes.h"
 
@@ -49,24 +48,22 @@ void FunctionBar_draw(FunctionBar* this, char* buffer) {
 }
 
 void FunctionBar_drawAttr(FunctionBar* this, char* buffer, int attr) {
-   attron(CRT_colors[StatusColor]);
-   mvhline(LINES-1, 0, ' ', COLS);
-   attroff(CRT_colors[StatusColor]);
+   int lines, cols;
+   Display_getScreenSize(&cols, &lines);
+   Display_attrset(CRT_colors[StatusColor]);
+   Display_mvhline(lines-1, 0, ' ', cols);
    int x = 0;
    for (int i = 0; i < this->size; i++) {
-      attron(CRT_colors[KeyColor]);
-      mvaddstr(LINES-1, x, this->keys[i]);
-      attroff(CRT_colors[KeyColor]);
+      Display_attrset(CRT_colors[KeyColor]);
+      Display_writeAt(lines-1, x, this->keys[i]);
       x += strlen(this->keys[i]);
-      attron(CRT_colors[StatusColor]);
-      mvaddstr(LINES-1, x, this->functions[i]);
-      attroff(CRT_colors[StatusColor]);
+      Display_attrset(CRT_colors[StatusColor]);
+      Display_writeAt(lines-1, x, this->functions[i]);
       x += strlen(this->functions[i]);
    }
    if (buffer != NULL) {
-      attron(attr);
-      mvaddstr(LINES-1, x, buffer);
-      attroff(attr);
+      Display_attrset(attr);
+      Display_writeAt(lines-1, x, buffer);
    }
 }
 

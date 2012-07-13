@@ -18,7 +18,7 @@ typedef enum {
 typedef union {
    void* ptr;
    int i;
-   char* str;
+   const char* str;
 } HashtableKey;
 
 typedef int(*Hashtable_hash_fn)(Hashtable*, HashtableKey);
@@ -58,13 +58,13 @@ static HashtableItem* HashtableItem_new(HashtableKey key, void* value) {
    return this;
 }
 
-static HashtableItem* HashtableItem_newString(char* key, void* value) {
+static HashtableItem* HashtableItem_newString(const char* key, void* value) {
    HashtableItem* this;
    int len = strlen(key);
    
    this = (HashtableItem*) calloc(sizeof(HashtableItem)+len+1, 1);
-   this->key.str = (char*) this+sizeof(HashtableItem);
-   strcpy(this->key.str, key);
+   this->key.str = (const char*) this+sizeof(HashtableItem);
+   strcpy((char*) this+sizeof(HashtableItem), key);
    this->value = value;
    this->next = NULL;
    return this;
@@ -175,7 +175,7 @@ void Hashtable_put(Hashtable* this, HashtableKey key, void* value) {
    return;
 }
 
-void Hashtable_putString(Hashtable* this, char* key, void* value) {
+void Hashtable_putString(Hashtable* this, const char* key, void* value) {
    HashtableKey hk;
    hk.str = key;
    int index = Hashtable_stringHash(this, hk);
@@ -239,7 +239,7 @@ void* Hashtable_getInt(Hashtable* this, int key) {
    return NULL;
 }
 
-void* Hashtable_getString(Hashtable* this, char* key) {
+void* Hashtable_getString(Hashtable* this, const char* key) {
    HashtableKey hk;
    hk.str = key;
    int index = Hashtable_stringHash(this, hk);

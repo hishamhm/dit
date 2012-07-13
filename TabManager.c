@@ -39,6 +39,8 @@ struct TabManager_ {
 
 extern TabPageClass TabPageType;
    
+extern bool CRT_hasColors;
+
 }*/
 
 static const char* TabManager_Untitled = "*untitled*";
@@ -131,12 +133,14 @@ TabPage* TabManager_current(TabManager* this) {
 }
 
 static inline void TabManager_drawBar(TabManager* this, int width) {
+   int lines, cols;
+   Display_getScreenSize(&cols, &lines);
    int items = Vector_size(this->items);
    int current = this->currentPage;
    assert(current < items);
    int x = this->x + this->tabOffset;
-   attrset(CRT_colors[TabColor]);
-   mvhline(LINES - 1, x, ' ', COLS - x);
+   Display_attrset(CRT_colors[TabColor]);
+   Display_mvhline(lines - 1, x, ' ', cols - x);
    char buffer[256];
    int tabWidth = -1;
    int i = 0;
@@ -149,9 +153,9 @@ static inline void TabManager_drawBar(TabManager* this, int width) {
    for (; i < items; i++) {
       TabPage* page = (TabPage*) Vector_get(this->items, i);
       if (i == current)
-         attrset(CRT_colors[CurrentTabColor]);
+         Display_attrset(CRT_colors[CurrentTabColor]);
       else
-         attrset(CRT_colors[TabColor]);
+         Display_attrset(CRT_colors[TabColor]);
       char modified;
       const char* label = TabManager_Untitled;
       if (page->buffer) {
@@ -165,13 +169,19 @@ static inline void TabManager_drawBar(TabManager* this, int width) {
       }
       char* base = strrchr(label, '/');
       if (base) label = base + 1;
-      if (i == current && tabWidth == -1)
-         mvprintw(this->y + this->h - 1, x, " ");
-      snprintf(buffer, 255, "[%c]%s ", modified, label);
-      mvaddnstr(this->y + this->h - 1, x+1, buffer, tabWidth);
+      if (x+1 < cols-1) {
+         if (i == current && tabWidth == -1)
+            Display_printAt(this->y + this->h - 1, x, " ");
+         if ((!CRT_hasColors) && i == current) {
+            snprintf(buffer, 255, "{%c}%s ", modified, label);
+         } else {
+            snprintf(buffer, 255, "[%c]%s ", modified, label);
+         }
+         Display_writeAtn(this->y + this->h - 1, x+1, buffer, MIN(tabWidth, cols - x-1));
+      }
       x += (tabWidth == -1 ? strlen(label) + 4 : tabWidth);
    }
-   attrset(CRT_colors[NormalColor]);
+   Display_attrset(CRT_colors[NormalColor]);
    this->redrawBar = false;
 }
 
@@ -299,7 +309,6 @@ void TabManager_markJump(TabManager* this) {
 }
 
 void TabManager_jumpBack(TabManager* this) {
-beep();
    Jump* jump = this->jumps;
    if (!jump)
       return;
@@ -367,16 +376,18 @@ int TabManager_size(TabManager* this) {
 }
 
 int TabManager_question(TabManager* this, char* question, char* options) {
-   attrset(CRT_colors[StatusColor]);
-   mvprintw(LINES - 1, 0, "%s [%s]", question, options);
-   clrtoeol();
-   attrset(CRT_colors[NormalColor]);
-   refresh();
+   int lines, cols;
+   Display_getScreenSize(&cols, &lines);
+   Display_attrset(CRT_colors[StatusColor]);
+   Display_printAt(lines - 1, 0, "%s [%s]", question, options);
+   Display_clearToEol();
+   Display_attrset(CRT_colors[NormalColor]);
+   Display_refresh();
    int opt;
    char* which;
-   beep();
+   Display_beep();
    do {
-      opt = getch();
+      opt = Display_getch();
    } while (!(which = strchr(options, opt)));
    TabManager_refreshCurrent(this);
    return which - options;

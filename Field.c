@@ -117,36 +117,41 @@ FieldItem* Field_previousInHistory(Field* this) {
 
 int Field_run(Field* this, bool setCursor, bool* handled) {
    int cursorX, cursorY;
-   getyx(stdscr, cursorY, cursorX);
+   Display_getyx(&cursorY, &cursorX);
    assert(this->current);
    FieldItem* curr = this->current;
-   attrset(this->labelColor);
+   Display_attrset(this->labelColor);
    int x = this->x;
-   mvaddnstr(this->y, x, this->label, this->labelLen);
+   Display_writeAtn(this->y, x, this->label, this->labelLen);
    x += this->labelLen;
-   mvaddstr(this->y, x, " [");
+   Display_writeAt(this->y, x, " [");
    x += 2;
-   mvaddstr(this->y, this->x + this->w - 1, "]");
+   Display_writeAt(this->y, this->x + this->w - 1, "]");
    int w = this->w - 3  - this->labelLen;
    int scrollH = 0;
 
-   attrset(this->fieldColor);
+   Display_attrset(this->fieldColor);
    int display = curr->len - scrollH;
    if (display) {
-      mvaddnstr(this->y, x, curr->text + scrollH, display);
+      Display_writeAtn(this->y, x, curr->text + scrollH, display);
    }
    int rest = w - display;
    if (rest)
-      mvhline(this->y, x + display, ' ', rest);
-   attrset(A_NORMAL);
+      Display_mvhline(this->y, x + display, ' ', rest);
+   Display_attrset(A_NORMAL);
    if (setCursor) {
-      move(this->y, this->x + this->labelLen + 2 + this->cursor - scrollH);
+      Display_move(this->y, this->x + this->labelLen + 2 + this->cursor - scrollH);
    } else {
-      move(this->y, this->x + this->labelLen + 2 + this->cursor - scrollH);
-      chgat(1, A_REVERSE, 0, NULL);
-      move(cursorY, cursorX);
+      Display_move(this->y, this->x + this->labelLen + 2 + this->cursor - scrollH);
+      Display_attrset(A_REVERSE);
+      if (this->cursor < curr->len) {
+         Display_writeAtn(this->y, x + this->cursor, curr->text + scrollH + this->cursor, 1);
+      } else {
+         Display_writeAtn(this->y, x + this->cursor, " ", 1);
+      }
+      Display_move(cursorY, cursorX);
    }
-   int ch = getch();
+   int ch = Display_getch();
    *handled = true;
    switch (ch) {
    case KEY_LEFT:

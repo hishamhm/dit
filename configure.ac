@@ -12,8 +12,14 @@ AC_PROG_CC
 AM_PROG_CC_C_O
 
 # Checks for libraries.
-AC_CHECK_LIB([ncurses], [refresh], [], [missing_libraries="$missing_libraries libncurses"])
 AC_CHECK_LIB([m], [ceil], [], [missing_libraries="$missing_libraries libm"])
+
+AC_ARG_ENABLE(ncurses, [AC_HELP_STRING([--enable-ncurses], [use ncurses (switch to low-level hacks if disabled)])],, enable_ncurses="yes")
+if test "x$enable_ncurses" = xyes
+then
+   AC_CHECK_LIB([ncurses], [refresh], [], [missing_libraries="$missing_libraries libncurses"])
+   AC_CHECK_HEADERS([curses.h],[:], [missing_headers="$missing_headers $ac_header"])
+fi
 
 if test ! -z "$missing_libraries"; then
   AC_MSG_ERROR([missing libraries: $missing_libraries])
@@ -22,7 +28,7 @@ fi
 # Checks for header files.
 AC_HEADER_DIRENT
 AC_HEADER_STDC
-AC_CHECK_HEADERS([limits.h stdint.h stdlib.h string.h strings.h sys/ioctl.h sys/param.h sys/time.h unistd.h curses.h],[:],[
+AC_CHECK_HEADERS([limits.h stdint.h stdlib.h string.h strings.h sys/ioctl.h sys/param.h sys/time.h unistd.h],[:],[
   missing_headers="$missing_headers $ac_header"
 ])
 

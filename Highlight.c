@@ -238,9 +238,9 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
          } else if (String_eq(tokens[0], "script") && ntokens == 2) {
             this->hasScript = Script_load(this->L, tokens[1]);
          } else {
-            clear();
-            mvprintw(0,0,"Error reading %s: line %d: %s", name, lineno, buffer);
-            getch();
+            Display_clear();
+            Display_printAt(0,0,"Error reading %s: line %d: %s", name, lineno, buffer);
+            Display_getch();
             success = false;
          }
          break;
@@ -252,9 +252,9 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
    }
    fclose(file);
    if (contexts->size != 1) {
-      clear();
-      mvprintw(0,0,"Error reading %s: %d context%s still open", name, contexts->size - 1, contexts->size > 2 ? "s" : "");
-      getch();
+      Display_clear();
+      Display_printAt(0,0,"Error reading %s: %d context%s still open", name, contexts->size - 1, contexts->size > 2 ? "s" : "");
+      Display_getch();
       success = false;
    }
    Stack_delete(contexts);
