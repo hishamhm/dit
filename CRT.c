@@ -114,6 +114,8 @@ int putenv(char*);
 
 //#link ncurses
 
+bool CRT_linuxConsole = false;
+
 bool CRT_hasColors;
 
 int CRT_delay;
@@ -162,6 +164,8 @@ void CRT_init() {
    if (strcmp(term, "xterm") == 0) {
       putenv("TERM=xterm-color");
       term = "xterm-color";
+   } else if (strcmp(term, "linux") == 0) {
+      CRT_linuxConsole = true;
    }
 
    CRT_delay = 0;
@@ -514,8 +518,10 @@ int CRT_getCharacter() {
       #else
       unsigned int modifiers = 6;
       #endif
-      int err = ioctl(0, TIOCLINUX, &modifiers);
-      if (err) return ch;
+      if (CRT_linuxConsole) {
+         int err = ioctl(0, TIOCLINUX, &modifiers);
+         if (err) return ch;
+      }
       switch (modifiers) {
       case SHIFT_MASK:
          switch (ch) {
