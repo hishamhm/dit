@@ -113,8 +113,6 @@ int putenv(char*);
 
 bool CRT_linuxConsole = false;
 
-bool CRT_linuxConsole = false;
-
 bool CRT_hasColors;
 
 int CRT_delay;
