@@ -107,41 +107,42 @@ void Files_makeHome() {
 }
 
 void Files_forEachInDir(char* dirName, Method_Files_fileHandler fileHandler, void* data) {
-   char homeName[4097];
+   char homeName[2049];
    char* homeDir = getenv("HOME");
-   snprintf(homeName, 4096, "%s/.dit/", homeDir);
+   snprintf(homeName, sizeof(homeName), "%s/.dit/", homeDir);
    int homeLen = strlen(homeName);
-   snprintf(homeName + homeLen, 4096 - homeLen, "%s", dirName);
+   snprintf(homeName + homeLen, sizeof(homeName) - homeLen, "%s", dirName);
    DIR* dir = opendir(homeName);
    while (dir) {
       struct dirent* entry = readdir(dir);
       if (!entry) break;
       if (entry->d_name[0] == '.') continue;
-      snprintf(homeName + homeLen, 4096 - homeLen, "%s/%s", dirName, entry->d_name);
+      snprintf(homeName + homeLen, sizeof(homeName) - homeLen, "%s/%s", dirName, entry->d_name);
       if (fileHandler(data, homeName)) {
          if (dir) closedir(dir);
          return;
       }
    }
-   closedir(dir);
-   char dataName[4097];
+   if (dir) closedir(dir);
+   char dataName[2049];
    char* dataDir = PKGDATADIR;
-   snprintf(dataName, 4096, "%s/", dataDir);
+   snprintf(dataName, sizeof(dataName), "%s/", dataDir);
    int dataLen = strlen(dataName);
-   snprintf(dataName + dataLen, 4096 - homeLen, "%s", dirName);
+   snprintf(dataName + dataLen, sizeof(dataName) - homeLen, "%s", dirName);
    dir = opendir(dataName);
    while (dir) {
       struct dirent* entry = readdir(dir);
       if (!entry) break;
       if (entry->d_name[0] == '.') continue;
-      snprintf(homeName + homeLen, 4096 - homeLen, "%s/%s", dirName, entry->d_name);
-      if (access(homeName, R_OK) == 0)
+      snprintf(homeName + homeLen, sizeof(dataName) - homeLen, "%s/%s", dirName, entry->d_name);
+      if (access(homeName, R_OK) == 0) {
          continue;
-      snprintf(dataName + dataLen, 4096 - dataLen, "%s/%s", dirName, entry->d_name);
+      }
+      snprintf(dataName + dataLen, sizeof(dataName) - dataLen, "%s/%s", dirName, entry->d_name);
       if (fileHandler(data, dataName)) {
          if (dir) closedir(dir);
          return;
       }
    }
-   closedir(dir);
+   if (dir) closedir(dir);
 }
