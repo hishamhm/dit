@@ -274,19 +274,19 @@ void Display_attrToEscape(unsigned long attr, char* escape) {
    int i = 2;
    escape[i] = '0'; i++;
    if (attr > 0) {
-      escape[i] = ';'; i++;
       if (attr & A_BOLD) {
+         escape[i] = ';'; i++;
          escape[i] = '1'; i++;
-      } else {
-         escape[i] = '2'; i++;
-         escape[i] = '2'; i++;
+//      } else {
+//         escape[i] = '2'; i++;
+//         escape[i] = '2'; i++;
       }
-      escape[i] = ';'; i++;
       if (attr & A_REVERSE) {
+         escape[i] = ';'; i++;
          escape[i] = '7'; i++;
-      } else {
-         escape[i] = '2'; i++;
-         escape[i] = '7'; i++;
+//      } else {
+//         escape[i] = '2'; i++;
+//         escape[i] = '7'; i++;
       }
       if (attr & (7<<8)) {
          escape[i] = ';'; i++;
