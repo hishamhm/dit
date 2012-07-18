@@ -332,7 +332,6 @@ void Display_writeChstrAtn(int y, int x, const chtype *chstr, int n) {
    }
    fwrite(str, n, 1, stdout);
 */
-   char str[n];
    int lastAttr = -1;
    for (int i = 0; i < n; i++) {
       int attr = (chstr[i] & 0xffffff00);
@@ -460,15 +459,20 @@ bool Display_init(char* term) {
 }
 #else
 bool Display_init(char* term) {
+
    tcgetattr(0, &stdoutSettings);
    struct termios rawTerm = stdoutSettings;
+
    rawTerm.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP
                       | INLCR | IGNCR | ICRNL | IXON);
    rawTerm.c_oflag &= ~OPOST;
    rawTerm.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);                                                                      
    rawTerm.c_cflag &= ~(CSIZE | PARENB);
    rawTerm.c_cflag |= CS8;
-   tcsetattr(0, 0, &rawTerm);
+
+   //rawTerm.c_lflag &= ~(ECHO|ECHONL|ICANON|IEXTEN);
+   tcsetattr(0, TCSADRAIN, &rawTerm);
+
    setbuf(stdin, NULL);
 
    Display_terminalSequences = Hashtable_new(200, Hashtable_STR, Hashtable_BORROW_REFS);
@@ -484,7 +488,7 @@ void Display_done() {
 }
 #else
 void Display_done() {
-   tcsetattr(0, 0, &stdoutSettings);
+   tcsetattr(0, TCSADRAIN, &stdoutSettings);
    Hashtable_delete(Display_terminalSequences);
 }
 #endif
