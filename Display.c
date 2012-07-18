@@ -385,7 +385,7 @@ int Display_getch() {
    if (ch == 27) {
       for (int i = 1; i <= 10; i++) {
          struct pollfd pfd = { .fd = 0, .events = POLLIN, .revents = 0 };
-         int any = poll(&pfd, 1, 10);
+         int any = poll(&pfd, 1, 30);
          if (any > 0) {
             sequence[i] = getchar();
          } else {
