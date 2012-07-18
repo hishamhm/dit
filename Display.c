@@ -333,19 +333,26 @@ void Display_writeChstrAtn(int y, int x, const chtype *chstr, int n) {
    fwrite(str, n, 1, stdout);
 */
    int lastAttr = -1;
+   char buffer[1024];
+   int len = 0;
    for (int i = 0; i < n; i++) {
       int attr = (chstr[i] & 0xffffff00);
       char c = chstr[i] & 0xff;
       if (attr != lastAttr) {
          char escape[20];
          Display_attrToEscape(attr, escape);
-         printf("%s%c", escape, c);
+         len += snprintf(buffer+len, sizeof(buffer)-len, "%s%c", escape, c);
          lastAttr = attr;
       } else {
-         putchar(c);
+         len += snprintf(buffer+len, sizeof(buffer)-len, "%c", c);
+      }
+      if (len > 1000) {
+         fwrite(buffer, len, 1, stdout);
+         len = 0;
       }
    }
-   fwrite("\033[0m", 4, 1, stdout);
+   len += snprintf(buffer+len, sizeof(buffer)-len, "\033[0m");
+   fwrite(buffer, len, 1, stdout);
 }
 #endif
 
