@@ -213,11 +213,11 @@ AC_DEFUN([AX_LUA_TRY_LIB_VERSION],
   [_AX_LUA_OPTS
   _AX_LUA_VERSIONS($1, $2)
   AC_CACHE_CHECK([if liblua version is in range $1 <= v < $2], [ax_cv_lua_try_lib_version], [
+LUA_OLD_LIBS="$LIBS"
+LUA_OLD_CPPFLAGS="$CPPFLAGS"
+LIBS="$LIBS $LUA_LIB"
+CPPFLAGS="$CPPFLAGS $LUA_INCLUDE"
   AC_RUN_IFELSE([AC_LANG_SOURCE([[
-  LUA_OLD_LIBS="$LIBS"
-  LIBS="$LIBS $LUA_LIB"
-  LUA_OLD_CPPFLAGS="$CPPFLAGS"
-  CPPFLAGS="$CPPFLAGS $LUA_INCLUDE"
 #include <lua.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -236,7 +236,7 @@ int main()
   AC_MSG_RESULT([no])
    $4
   ])
-  LIBS="$LUA_OLD_LIBS"
-  CPPFLAGS="$LUA_OLD_CPPFLAGS"
+LIBS="$LUA_OLD_LIBS"
+CPPFLAGS="$LUA_OLD_CPPFLAGS"
   ])
 ])dnl

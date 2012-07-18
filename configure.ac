@@ -55,15 +55,28 @@ AC_TYPE_SIGNAL
 AC_FUNC_STAT
 AC_CHECK_FUNCS([gettimeofday memchr memmove memset mkdir putenv realpath regcomp strchr strdup strncasecmp strrchr strstr])
 
-AX_LUA_HEADERS
-AX_LUA_LIBS
 DIT_LUA_VERSION=5.1.5
-AX_LUA_TRY_LIB_VERSION([501], [502], [], [
+
+AC_ARG_ENABLE(bundled-lua, [AC_HELP_STRING([--enable-bundled-lua], [compile bundled copy of Lua])],, enable_bundled_lua="no")
+
+if test x"$enable_bundled_lua" = x"no"
+then
+   AX_LUA_HEADERS
+   AX_LUA_LIBS
+   AX_LUA_TRY_LIB_VERSION([501], [502], [], [enable_bundled_lua="yes"])
+fi
+
+if test x"$enable_bundled_lua" = x"yes"
+then
    AC_MSG_RESULT([Using bundled Lua])
+   lua_extra_libs=
+   AC_CHECK_LIB([m], [exp], [lua_extra_libs="$lua_extra_libs -lm"], [])
+   AC_CHECK_LIB([dl], [dlopen], [lua_extra_libs="$lua_extra_libs -ldl"], [])
    LUA_INCLUDE=-Ilua-${DIT_LUA_VERSION}/src
-   LUA_LIB=lua-${DIT_LUA_VERSION}/src/liblua.a
-   LUA_DEP=lua-${DIT_LUA_VERSION}/src/liblua.a
-])
+   LUA_LIB="lua-${DIT_LUA_VERSION}/src/liblua.a $lua_extra_libs"
+   LUA_DEP="lua-${DIT_LUA_VERSION}/src/liblua.a $lua_extra_libs"
+fi
+
 AC_SUBST([LUA_INCLUDE])
 AC_SUBST([LUA_LIB])
 AC_SUBST([LUA_DEP])
