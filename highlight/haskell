@@ -1,0 +1,34 @@
+FILES
+name suffix .hs
+RULES
+
+rule import bright
+rule where bright
+rule let bright
+rule in bright
+
+rule [ symbol
+rule ] symbol
+rule ( symbol
+rule ) symbol
+rule , symbol
+rule :: brightdiff
+rule = brightdiff
+rule -> brightdiff
+rule ++ brightalt
+rule : brightalt
+
+rule " alt
+context " " alt
+   rule \\ brightalt
+   rule \" brightalt
+   eager_rule \`[abcfnrtv`] brightalt
+   rule \`[0`-3`]`[0`-7`]`[0`-7`] brightalt
+   rule " alt
+/context
+
+context -- `$ dim
+   rule TODO veryspecial
+   rule XXX veryspecial
+   rule FIXME veryspecial
+/context
