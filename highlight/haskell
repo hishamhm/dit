@@ -14,9 +14,16 @@ rule ) symbol
 rule , symbol
 rule :: brightdiff
 rule = brightdiff
+rule /= brightdiff
+rule > brightdiff
+rule < brightdiff
 rule -> brightdiff
+rule `` brightdiff
 rule ++ brightalt
 rule : brightalt
+
+rule != veryspecial
+rule ~= veryspecial
 
 rule " alt
 context " " alt
@@ -31,4 +38,15 @@ context -- `$ dim
    rule TODO veryspecial
    rule XXX veryspecial
    rule FIXME veryspecial
+/context
+
+context {- -} dim
+   rule TODO veryspecial
+   rule XXX veryspecial
+   rule FIXME veryspecial
+   rule -} dim
+/context
+
+context `` `` brightdiff
+   rule `` brightdiff
 /context
