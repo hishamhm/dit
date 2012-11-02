@@ -262,7 +262,7 @@ void Buffer_goto(Buffer* this, int x, int y) {
    Panel_setSelected(this->panel, y);
    this->line = (Line*) Panel_getSelected(this->panel);
    this->y = Panel_getSelectedIndex(this->panel);
-   this->x = MIN(0, last_x(this));
+   this->x = MIN(MAX(0, x), last_x(this));
    this->panel->scrollV = MAX(0, this->y - (this->panel->h / 2));
    this->panel->needsRedraw = true;
 }

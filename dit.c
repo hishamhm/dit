@@ -357,7 +357,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                               if (!wrapped) {
                                  wrapped = true;
                                  Buffer_draw(buffer);
-                                 int answer = TabManager_question(tabs, "Search wrapped. Continue replacing?", "yn");
+                                 int answer = TabManager_question(tabs, "Search is back at the beginning. Continue replacing?", "yn");
                                  if (answer == 1) {
                                     quit = 1;
                                     break;
@@ -457,7 +457,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                   if (!quit && !wrapped) {
                      wrapped = true;
                      Buffer_draw(buffer);
-                     int answer = TabManager_question(tabs, "Search wrapped. Continue?", "yn");
+                     int answer = TabManager_question(tabs, "Search is back at the beginning. Continue?", "yn");
                      if (answer == 1)
                         break;
                   }
