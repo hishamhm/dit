@@ -1,11 +1,13 @@
 FILES
 name suffix .hs
 RULES
+script haskell.lua
 
 rule import bright
 rule where bright
 rule let bright
 rule in bright
+rule do bright
 
 rule [ symbol
 rule ] symbol
@@ -13,14 +15,14 @@ rule ( symbol
 rule ) symbol
 rule , symbol
 rule :: brightdiff
-rule = brightdiff
-rule /= brightdiff
-rule > brightdiff
-rule < brightdiff
-rule -> brightdiff
-rule `` brightdiff
-rule ++ brightalt
-rule : brightalt
+rule = symbol
+rule /= symbol
+rule > symbol
+rule < symbol
+rule -> symbol
+rule `` symbol
+rule ++ symbol
+rule : symbol
 
 rule != veryspecial
 rule ~= veryspecial
@@ -47,6 +49,6 @@ context {- -} dim
    rule -} dim
 /context
 
-context `` `` brightdiff
-   rule `` brightdiff
+context `` `` diff
+   rule `` diff
 /context

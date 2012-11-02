@@ -327,7 +327,7 @@ StringBuffer* Line_copyBlock(Line* this, int lines, int xFrom, int xTo) {
    return str;
 }
 
-void Line_insertStringAt(Line* this, int at, char* text, int len) {
+void Line_insertStringAt(Line* this, int at, const char* text, int len) {
    assert(at >= 0 && at <= this->len);
    if (this->len + len + 1 > this->textSize) {
       int newSize = this->textSize + len + 1;

@@ -3,7 +3,7 @@ name suffix .lua
 name suffix .rockspec
 firstline regex ^#!.*lua.*
 RULES   
-script highlight_lua.lua
+script lua.lua
 
 rule and      bright
 rule break    bright

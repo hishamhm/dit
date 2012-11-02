@@ -27,6 +27,10 @@ static Hashtable* Display_terminalSequences;
 
 /*{
 
+#ifdef HAVE_LIBNCURSES
+#define HAVE_CURSES_H 1
+#endif
+
 #if HAVE_CURSES_H
    #include <curses.h>
 #else

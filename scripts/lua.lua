@@ -1,5 +1,6 @@
 
-local LI = require "luainspect.init"
+local code = require("dit.code")
+local LI = require("luainspect.init")
 
 local function loadfile(filename)
   local fh = io.open(filename, 'r')
@@ -11,6 +12,8 @@ end
 
 local file
 local lines
+local commented_lines = {}
+local controlled_change = false
 
 function highlight_file(filename)
    file = filename
@@ -29,7 +32,6 @@ function highlight_file(filename)
    table.insert(lines, { offset = total, len = #src - total })
    local line = 1
    local curr = lines[1]
---local f = io.open("teste.txt", "w")
    for _,note in ipairs(notes) do
       if note.type ~= "comment" and note.type ~= "string" then
          local fchar, lchar = note[1], note[2]
@@ -41,14 +43,7 @@ function highlight_file(filename)
          note[2] = lchar - curr.offset + 1
          table.insert(curr, note)
       end
---[[
-for k,v in pairs(note) do
-   f:write(tostring(k).." = "..tostring(v).."\n")
-end
-f:write("\n")
---]]
   end
---f:close()
 end
 
 function highlight_line(line, y)
@@ -83,7 +78,9 @@ function highlight_line(line, y)
 end
 
 function on_change()
-   lines = nil
+   if not controlled_change then
+      lines = nil
+   end
 end
 
 function on_save(filename)
@@ -106,5 +103,16 @@ function on_ctrl(key)
             break
          end
       end
+   elseif key == '_' then
+      controlled_change = true
+      code.comment_block("--", "%-%-", lines, commented_lines)
+      controlled_change = false
+   end
+   return true
+end
+
+function on_fkey(key)
+   if key == "F7" then
+      code.expand_selection()
    end
 end

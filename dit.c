@@ -165,26 +165,6 @@ static void Dit_jumpBack(Buffer* buffer, TabManager* tabs) {
    TabManager_jumpBack(tabs);
 }
 
-static void Dit_pushPull(Buffer* buffer, TabManager* tabs) {
-   statusMessage("Pull or push with <- or ->");
-
-   buffer->selecting = false;
-   buffer->marking = false;
-   int mode = Display_getch();
-   switch (mode)
-   {
-   case KEY_LEFT:
-      Buffer_pullText(buffer);
-      break;
-   case KEY_RIGHT:
-      Buffer_pushText(buffer);
-      break;
-   default:
-      break;
-   }
-   TabManager_refreshCurrent(tabs);
-}
-
 static Field* Dit_gotoField = NULL;
 
 static void pasteInField(Field* field) {
@@ -671,7 +651,6 @@ static void Dit_registerActions() {
    Hashtable_putString(Dit_actions, "Dit_nextTabPage", (void*)(long) Dit_nextTabPage);
    Hashtable_putString(Dit_actions, "Dit_paste", (void*)(long) Dit_paste);
    Hashtable_putString(Dit_actions, "Dit_previousTabPage", (void*)(long) Dit_previousTabPage);
-   Hashtable_putString(Dit_actions, "Dit_pushPull", (void*)(long) Dit_pushPull);
    Hashtable_putString(Dit_actions, "Dit_quit", (void*)(long) Dit_quit);
    Hashtable_putString(Dit_actions, "Dit_refresh", (void*)(long) Dit_refresh);
    Hashtable_putString(Dit_actions, "Dit_save", (void*)(long) Dit_save);
@@ -707,7 +686,7 @@ static void Dit_loadHardcodedBindings(Dit_Action* keys) {
    /* Ctrl M is enter */
    keys[KEY_CTRL('N')] = (Dit_Action) Dit_wordWrap;
    /* Ctrl O is FREE */
-   keys[KEY_CTRL('P')] = (Dit_Action) Dit_pushPull;
+   /* Ctrl P is FREE */
    keys[KEY_CTRL('Q')] = (Dit_Action) Dit_quit;
    /* Ctrl R is FREE */
    keys[KEY_CTRL('S')] = (Dit_Action) Dit_save;

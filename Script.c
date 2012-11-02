@@ -36,6 +36,7 @@ static int Script_Buffer_goto(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
    int x = luaL_checkint(L, 2);
    int y = luaL_checkint(L, 3);
+   Buffer_validateCoordinates(buffer, *x, *y);
    Buffer_goto(buffer, x-1, y-1);
    buffer->savedX = buffer->x;
    return 0;
@@ -61,16 +62,19 @@ static int Script_Buffer_line(lua_State* L) {
 
 static int Script_Buffer_select(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
-   int xFrom = luaL_checkint(L, 2);
-   int yFrom = luaL_checkint(L, 3);
-   int xTo = luaL_checkint(L, 4);
-   int yTo = luaL_checkint(L, 5);
-   // FIXME? validate these values
+   int xFrom = luaL_checkint(L, 2) - 1;
+   int yFrom = luaL_checkint(L, 3) - 1;
+   int xTo = luaL_checkint(L, 4) - 1;
+   int yTo = luaL_checkint(L, 5) - 1;
+   Buffer_validateCoordinate(buffer, &xFrom, &yFrom);
+   Buffer_validateCoordinate(buffer, &xTo, &yTo);
    buffer->selecting = true;
-   buffer->selectXfrom = xFrom - 1;
-   buffer->selectYfrom = yFrom - 1;
-   buffer->selectXto = xTo - 1;
-   buffer->selectYto = yTo - 1;
+   buffer->selectXfrom = xFrom;
+   buffer->selectYfrom = yFrom;
+   buffer->selectXto = xTo;
+   buffer->selectYto = yTo;
+   buffer->x = xTo;
+   buffer->y = yTo;
    buffer->panel->needsRedraw = true;
    buffer->savedX = buffer->x;
    return 0;
@@ -143,6 +147,18 @@ static int Script_Buffer_xy(lua_State* L) {
    return 2;
 }
 
+static int Script_Buffer_beginUndoGroup(lua_State* L) {
+   Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
+   Buffer_beginUndoGroup(buffer);
+   return 0;
+}
+
+static int Script_Buffer_endUndoGroup(lua_State* L) {
+   Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
+   Buffer_endUndoGroup(buffer);
+   return 0;
+}
+
 static luaL_Reg Buffer_functions[] = {
    // getters:
    { "line", Script_Buffer_line },
@@ -155,6 +171,8 @@ static luaL_Reg Buffer_functions[] = {
    // actions:
    { "goto", Script_Buffer_goto },
    { "select", Script_Buffer_select },
+   { "begin_undo", Script_Buffer_beginUndoGroup },
+   { "end_undo", Script_Buffer_endUndoGroup },
    { NULL, NULL }
 };
 
@@ -170,6 +188,19 @@ static int Script_Buffer___index(lua_State* L) {
    }
 }
 
+static int Script_Buffer___newindex(lua_State* L) {
+   Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
+   const char* line;
+   if (lua_gettop(L) == 3) {
+      int y = luaL_checkint(L, 2) - 1;
+      luaL_checkstring(L, 3);
+      int len;
+      const char* text = lua_tolstring(L, 3, &len);
+      Buffer_setLine(buffer, y, text, len);
+   }
+   return 0;
+}
+
 static int Script_Buffer___len(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
    lua_pushinteger(L, Panel_size(buffer->panel));
@@ -182,6 +213,8 @@ static void Script_Buffer_new(lua_State* L, void* ptr) {
    if (luaL_newmetatable(L, "Buffer")) {
       lua_pushcfunction(L, Script_Buffer___index);
       lua_setfield(L, -2, "__index");
+      lua_pushcfunction(L, Script_Buffer___newindex);
+      lua_setfield(L, -2, "__newindex");
       lua_pushcfunction(L, Script_Buffer___len);
       lua_setfield(L, -2, "__len");
    }

@@ -24,8 +24,12 @@
 #define isword(x) (isalpha(x) || x == '_')
 #endif
 
+#ifndef last_x_line
+#define last_x_line(this, line) (this->dosLineBreaks ? line->len - 1 : line->len)
+#endif
+
 #ifndef last_x
-#define last_x(this) (this->dosLineBreaks ? this->line->len - 1 : this->line->len)
+#define last_x(this) last_x_line(this, this->line)
 #endif
 
 struct Buffer_ {
@@ -258,7 +262,7 @@ void Buffer_goto(Buffer* this, int x, int y) {
    Panel_setSelected(this->panel, y);
    this->line = (Line*) Panel_getSelected(this->panel);
    this->y = Panel_getSelectedIndex(this->panel);
-   this->x = MIN(x, last_x(this));
+   this->x = MIN(0, last_x(this));
    this->panel->scrollV = MAX(0, this->y - (this->panel->h / 2));
    this->panel->needsRedraw = true;
 }
@@ -572,6 +576,14 @@ void Buffer_backwardChar(Buffer* this) {
    this->selecting = false;
 }
 
+void Buffer_beginUndoGroup(Buffer* this) {
+   Undo_beginGroup(this->undo, this->x, this->y);
+}
+
+void Buffer_endUndoGroup(Buffer* this) {
+   Undo_endGroup(this->undo, this->x, this->y);
+}
+
 void Buffer_beginningOfLine(Buffer* this) {
    int prevX = this->x;
    this->x = 0;
@@ -730,6 +742,25 @@ void Buffer_pasteBlock(Buffer* this, char* block, int len) {
    this->modified = true;
 }
 
+bool Buffer_setLine(Buffer* this, int y, const char* text, int len) {
+   if (y < 0)
+      y += Panel_size(this->panel);
+   if (y < 0 || y > Panel_size(this->panel)-1)
+      return false;
+   Undo_beginGroup(this->undo, this->x, this->y);
+   Line* line = (Line*) Panel_get(this->panel, y);
+   char* oldContent = calloc(line->len+1, 1);
+   memcpy(oldContent, line->text, line->len);
+   Undo_deleteBlock(this->undo, 0, y, oldContent, line->len);
+   Line_deleteChars(line, 0, line->len);
+   Undo_insertBlock(this->undo, 0, y, text, len);
+   Line_insertStringAt(line, 0, text, len);
+   Undo_endGroup(this->undo, this->x, this->y);
+   Script_onChange(this);
+   this->modified = true;
+   return true;
+}
+
 void Buffer_deleteChar(Buffer* this) {
    if (this->selecting) {
       Buffer_deleteBlock(this);
@@ -751,87 +782,6 @@ void Buffer_deleteChar(Buffer* this) {
    }
    this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
    this->modified = true;
-}
-
-void Buffer_pullText(Buffer* this) {
-   Line* ref;
-   if (this->y > this->savedY)
-      ref = (Line*) this->line->super.prev;
-   else
-      ref = (Line*) this->line->super.next;
-   if (!ref)
-      return;
-
-   int end = this->x;
-   
-   while (end > 0 && this->line->text[end] != ' ') end--;
-   while (end < last_x(this) && this->line->text[end] == ' ') end++;
-   if (end == last_x(this)) return;
-   int at = end;
-   if (at > 0) {
-      do {
-         at--;
-      } while (at > 0 && ref->text[at] == ' ' && this->line->text[at] == ' ');
-      if (at > 0) {
-         while (at > 0 && ref->text[at] != ' ' && this->line->text[at] == ' ')
-            at--;
-         at++;
-      }
-   }
-   int amt = end - at;
-   if (amt <= 0) return;
-
-   StringBuffer* str = Line_deleteBlock(this->line, 1, at, end);
-   assert(amt == StringBuffer_len(str));
-   char* block = StringBuffer_deleteGet(str);
-   Undo_deleteBlock(this->undo, at, this->y, block, amt);
-   Script_onChange(this);
-
-   if (at < this->x) {
-      this->x = at;
-      this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
-   }
-   this->modified = true;
-   this->selecting = false;
-}
-
-void Buffer_pushText(Buffer* this) {
-   Line* ref;
-   if (this->y > this->savedY)
-      ref = (Line*) this->line->super.prev;
-   else
-      ref = (Line*) this->line->super.next;
-   if (!ref)
-      return;
-
-   int start = this->x;
-   if (this->line->text[this->x] != ' ')
-      while (start > 0 && this->line->text[start] != ' ')
-         start--;
-
-   while (start < last_x(this) && this->line->text[start] == ' ') start++;
-   if (start == last_x(this)) return;
-   int at = start;
-   if (ref->len > at) {
-      if (ref->len > at && ref->text[at] != ' ')
-         while (ref->len > at && ref->text[at] != ' ')
-            at++;
-      while (ref->len > at && ref->text[at] == ' ')
-         at++;
-   }
-   int amt = at - start;
-   char blanks[amt + 1];
-   for (int i = 0; i < amt; i++) {
-      blanks[i] = ' ';
-   }
-   blanks[amt] = '\0';
-   
-   Undo_insertBlanks(this->undo, start, this->y, amt);
-   Line_insertStringAt(this->line, start, blanks, amt);
-   Script_onChange(this);
-
-   this->modified = true;
-   this->selecting = false;
 }
 
 void Buffer_backwardDeleteChar(Buffer* this) {
@@ -908,6 +858,16 @@ void Buffer_correctPosition(Buffer* this) {
    this->y = Panel_getSelectedIndex(this->panel);
 }
 
+void Buffer_validateCoordinate(Buffer* this, int *x, int* y) {
+   int tx = *x;
+   int ty = *y;
+   ty = MIN(MAX(ty, 0), Panel_size(this->panel)-1);
+   Line* line = (Line*) Panel_get(this->panel, ty);
+   tx = MIN(MAX(tx, 0), last_x_line(this, line));
+   *x = tx;
+   *y = ty;
+}
+
 inline void Buffer_blockOperation(Buffer* this, Line** firstLine, int* yStart, int* lines) {
    if (this->selecting) {
       int yFrom = this->selectYfrom;
@@ -981,7 +941,7 @@ void Buffer_defaultKeyHandler(Buffer* this, int ch) {
       this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
       this->modified = true;
       this->selecting = false;
-   } else if (ch >= 1 && ch <= 26) {
+   } else if (ch >= 1 && ch <= 31) {
       Script_onCtrl(this, ch);
       Buffer_correctPosition(this);
    } else if (ch >= KEY_F(1) && ch <= KEY_F(12)) {

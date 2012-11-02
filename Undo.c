@@ -191,10 +191,10 @@ void Undo_endGroup(Undo* this, int x, int y) {
    Stack_push(this->actions, action, 0);
 }
 
-void Undo_insertBlock(Undo* this, int x, int y, char* block, int len) {
+void Undo_insertBlock(Undo* this, int x, int y, const char* block, int len) {
    UndoAction* action = UndoAction_new(UndoInsertBlock, x, y);
    // Don't keep block in undo structure. Just calculate its size.
-   char* walk = block;
+   const char* walk = block;
    int yTo = y;
    int xTo = 0;
    while (walk - block < len) {
