@@ -1044,6 +1044,15 @@ bool Buffer_find(Buffer* this, char* needle, bool findNext, bool caseSensitive, 
          this->selectYto = y;
          this->selecting = true;
          Buffer_goto(this, x + needleLen, y);
+
+         int screenX = Line_widthUntil(this->line, this->x, this->tabWidth);
+         int screenXfrom = Line_widthUntil(this->line, this->selectXfrom, this->tabWidth);
+         Panel* p = this->panel;
+         int margin = p->w / 6;
+         if (p->scrollH > (screenXfrom - margin))
+            p->scrollH = MAX(screenXfrom - margin, 0);
+         if (screenX - p->scrollH >= p->w - margin)
+            p->scrollH = screenX - p->w + margin;
          return true;
       }
       if (forward) {
