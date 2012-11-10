@@ -241,6 +241,12 @@ char* Field_getValue(Field* this) {
    return strdup(this->current->text);
 }
 
+int Field_getLength(Field* this) {
+   if (!this->current)
+      return 0;
+   return this->current->len;
+}
+
 int Field_quickRun(Field* this, bool* quitMask) {
    int result = 0;
    bool quit = false;
