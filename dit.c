@@ -257,6 +257,15 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             if (ch == 9) {
                bool inserted = false;
                int at = buffer->x;
+               if (Field_getLength(Dit_findField) == 0) {
+                  while (at > 0) {
+                     ch = buffer->line->text[at - 1];
+                     if (isword(ch))
+                        at--;
+                     else
+                        break;
+                  }
+               }
                while (at < buffer->line->len) {
                   ch = buffer->line->text[at];
                   if (isword(ch)) {
