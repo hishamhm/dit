@@ -1,4 +1,5 @@
 
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <string.h>
 #include <sys/param.h>
@@ -148,8 +149,8 @@ void Line_display(Object* cast, RichString* str) {
    }
    
    if (str && outIndex >= scrollH) {
-      RichString_append(str, out + scrollH, outIndex - scrollH);
-      RichString_setAttrs(str, attrs + scrollH);
+      RichString_appendn(str, 0, out + scrollH, outIndex - scrollH);
+      RichString_paintAttrs(str, attrs + scrollH);
    }
    this->context = Highlight_getContext(hl);
 }

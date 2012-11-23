@@ -51,7 +51,7 @@ void Object_delete(Object* this) {
 void Object_display(Object* this, RichString* out) {
    unsigned char objAddress[50];
    sprintf((char*)objAddress, "O:%p C:%p", (void*) this, (void*) this->class);
-   RichString_write(out, objAddress);
+   RichString_write(out, 0, objAddress);
 }
 
 bool Object_equals(const Object* this, const Object* o) {

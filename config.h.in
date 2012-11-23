@@ -3,6 +3,9 @@
 /* Define to 1 if the `closedir' function returns void instead of `int'. */
 #undef CLOSEDIR_VOID
 
+/* Define to 1 if you have the <curses.h> header file. */
+#undef HAVE_CURSES_H
+
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
 #undef HAVE_DIRENT_H
@@ -18,6 +21,9 @@
 
 /* Define to 1 if you have the `ncurses' library (-lncurses). */
 #undef HAVE_LIBNCURSES
+
+/* Define to 1 if you have the `ncursesw' library (-lncursesw). */
+#undef HAVE_LIBNCURSESW
 
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
@@ -46,6 +52,15 @@
 
 /* Define to 1 if you have the `mkdir' function. */
 #undef HAVE_MKDIR
+
+/* Define to 1 if you have the <ncursesw/curses.h> header file. */
+#undef HAVE_NCURSESW_CURSES_H
+
+/* Define to 1 if you have the <ncurses.h> header file. */
+#undef HAVE_NCURSES_H
+
+/* Define to 1 if you have the <ncurses/ncurses.h> header file. */
+#undef HAVE_NCURSES_NCURSES_H
 
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
@@ -119,6 +134,9 @@
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
+
+/* Set if Unicode was enabled. */
+#undef HAVE_UNICODE
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H

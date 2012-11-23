@@ -4,7 +4,7 @@
 
 #include <stdbool.h>
 
-#if HAVE_CURSES_H
+#if HAVE_CURSES
 
 static SCREEN* CRT_term;
 
@@ -26,13 +26,22 @@ static Hashtable* Display_terminalSequences;
 #endif
 
 /*{
+#include "config.h"
 
-#ifdef HAVE_LIBNCURSES
-#define HAVE_CURSES_H 1
-#endif
-
-#if HAVE_CURSES_H
+#ifdef HAVE_NCURSESW_CURSES_H
+   #include <ncursesw/curses.h>
+   #define HAVE_CURSES 1
+   #undef mvaddchnstr
+   #define mvaddchnstr mvadd_wchnstr
+#elif HAVE_NCURSES_NCURSES_H
+   #include <ncurses/ncurses.h>
+   #define HAVE_CURSES 1
+#elif HAVE_NCURSES_H
+   #include <ncurses.h>
+   #define HAVE_CURSES 1
+#elif HAVE_CURSES
    #include <curses.h>
+   #define HAVE_CURSES 1
 #else
 
 typedef unsigned long chtype;
@@ -191,7 +200,7 @@ typedef struct mevent {
 }*/
 
 void Display_getScreenSize(int* w, int* h) {
-#if HAVE_CURSES_H
+#if HAVE_CURSES
    *w = COLS;
    *h = LINES;
 #else
@@ -207,7 +216,7 @@ void Display_getScreenSize(int* w, int* h) {
 #endif
 }
 
-#if HAVE_CURSES_H
+#if HAVE_CURSES
 #define Display_printAt mvprintw
 #else
 void Display_printAt(int y, int x, const char* fmt, ...) {
@@ -219,7 +228,7 @@ void Display_printAt(int y, int x, const char* fmt, ...) {
 }
 #endif
 
-#if HAVE_CURSES_H
+#if HAVE_CURSES
 #define Display_writeAt mvaddstr
 #define Display_writeAtn mvaddnstr
 #define Display_writeChAt mvaddch
@@ -238,7 +247,7 @@ void Display_writeChAt(int y, int x, const char ch) {
 }
 #endif
 
-#if HAVE_CURSES_H
+#if HAVE_CURSES
 #define Display_move move
 #else
 void Display_move(int y, int x) {
@@ -248,7 +257,7 @@ void Display_move(int y, int x) {
 }
 #endif
 
-#if HAVE_CURSES_H
+#if HAVE_CURSES
 #define Display_mvhline mvhline
 #else
 void Display_mvhline(int y, int x, char c, int qty) {
@@ -258,7 +267,7 @@ void Display_mvhline(int y, int x, char c, int qty) {
 }
 #endif
 
-#if HAVE_CURSES_H
+#if HAVE_CURSES
 #define Display_mvvline mvvline
 #else
 void Display_mvvline(int y, int x, char c, int qty) {
@@ -268,7 +277,7 @@ void Display_mvvline(int y, int x, char c, int qty) {
 }
 #endif
 
-#if HAVE_CURSES_H
+#if HAVE_CURSES
 #define Display_attrset attrset
 #else
 
@@ -314,7 +323,7 @@ void Display_attrset(unsigned long attr) {
 }
 #endif
 
-#if HAVE_CURSES_H
+#if HAVE_CURSES
 #define Display_clear clear
 #else
 void Display_clear() {
@@ -322,10 +331,10 @@ void Display_clear() {
 }
 #endif
 
-#if HAVE_CURSES_H
+#if HAVE_CURSES
 #define Display_writeChstrAtn mvaddchnstr
 #else
-void Display_writeChstrAtn(int y, int x, const chtype *chstr, int n) {
+void Display_writeChstrAtn(int y, int x, CharType* chstr, int n) {
    printf("\033[%d;%df", y+1, x+1, y, x, n);
 /*
    char str[n];
@@ -360,7 +369,7 @@ void Display_writeChstrAtn(int y, int x, const chtype *chstr, int n) {
 }
 #endif
 
-#if HAVE_CURSES_H
+#if HAVE_CURSES
 #define Display_clearToEol clrtoeol
 #else
 void Display_clearToEol() {
@@ -368,7 +377,7 @@ void Display_clearToEol() {
 }
 #endif
 
-#if HAVE_CURSES_H
+#if HAVE_CURSES
 void Display_getyx(int* y, int* x) {
    getyx(stdscr, *y, *x);
 }
@@ -379,7 +388,7 @@ void Display_getyx(int* y, int* x) {
 }
 #endif
 
-#if HAVE_CURSES_H
+#if HAVE_CURSES
 #define Display_getch getch
 #else
 int Display_getch() {
@@ -404,7 +413,7 @@ int Display_getch() {
 }
 #endif
 
-#if HAVE_CURSES_H
+#if HAVE_CURSES
 #define Display_defineKey define_key
 #else
 void Display_defineKey(const char* sequence, int keynum) {
@@ -412,7 +421,7 @@ void Display_defineKey(const char* sequence, int keynum) {
 }
 #endif
 
-#if HAVE_CURSES_H
+#if HAVE_CURSES
 #define Display_bkgdset bkgdset
 #else
 void Display_bkgdset(int color) {
@@ -420,7 +429,7 @@ void Display_bkgdset(int color) {
 }
 #endif
 
-#if HAVE_CURSES_H
+#if HAVE_CURSES
 #define Display_beep beep
 #else
 void Display_beep() {
@@ -428,7 +437,7 @@ void Display_beep() {
 }
 #endif
 
-#if HAVE_CURSES_H
+#if HAVE_CURSES
 #define Display_getmouse getmouse
 #else
 int Display_getmouse(MEVENT* mevent) {
@@ -437,7 +446,7 @@ int Display_getmouse(MEVENT* mevent) {
 }
 #endif
 
-#if HAVE_CURSES_H
+#if HAVE_CURSES
 #define Display_refresh refresh
 #else
 void Display_refresh() {
@@ -445,7 +454,7 @@ void Display_refresh() {
 }
 #endif
 
-#if HAVE_CURSES_H
+#if HAVE_CURSES
 bool Display_init(char* term) {
    CRT_term = newterm(term, stdout, stdin);
    raw();
@@ -491,7 +500,7 @@ bool Display_init(char* term) {
 }
 #endif
 
-#if HAVE_CURSES_H
+#if HAVE_CURSES
 void Display_done() {
    curs_set(1);
    endwin();

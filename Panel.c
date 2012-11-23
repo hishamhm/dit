@@ -58,6 +58,7 @@ Panel* Panel_new(int x, int y, int w, int h, int color, ListItemClass* class, bo
 
 void Panel_delete(Object* cast) {
    Panel* this = (Panel*)cast;
+   RichString_end(this->header);
    Panel_done(this);
    free(this);
 }
@@ -79,7 +80,7 @@ void Panel_init(Panel* this, int x, int y, int w, int h, int color, ListItemClas
    this->cursorX = 0;
    this->displaying = 0;
    this->focus = true;
-   RichString_prune(&(this->header));
+   RichString_beginAllocated(this->header);
 }
 
 void Panel_done(Panel* this) {
@@ -108,7 +109,7 @@ void Panel_move(Panel* this, int x, int y) {
 void Panel_resize(Panel* this, int w, int h) {
    assert (this != NULL);
 
-   if (this->header.len > 0)
+   if (RichString_sizeVal(this->header) > 0)
       h--;
    this->w = w;
    this->h = h;
@@ -228,13 +229,14 @@ void Panel_draw(Panel* this) {
    assert(first >= 0);
    assert(last <= itemCount);
 
-   if (this->header.len > 0) {
+   int headerLen = RichString_sizeVal(this->header);
+   if (headerLen > 0) {
       Display_attrset(CRT_colors[HeaderColor]);
       Display_mvhline(y, x, ' ', w);
-      if (scrollH < this->header.len) {
-         assert(this->header.len > 0);
+      if (scrollH < headerLen) {
+         assert(headerLen > 0);
          Display_writeChstrAtn(y, x, this->header.chstr + scrollH,
-                     MIN(this->header.len - scrollH, w));
+                     MIN(headerLen - scrollH, w));
       }
       y++;
    }
@@ -254,10 +256,10 @@ void Panel_draw(Panel* this) {
       for(int i = first, j = 0; j < h && i < last; i++, j++) {
          Object* itemObj = (Object*) List_get(this->items, i);
          assert(itemObj);
-         RichString itemRef; RichString_init(&itemRef);
+         RichString_begin(itemRef);
          this->displaying = i;
          Msg(Object, display, itemObj, &itemRef);
-         int amt = MIN(itemRef.len - scrollH, w);
+         int amt = MIN(RichString_sizeVal(itemRef) - scrollH, w);
          if (i == this->selected) {
             if (this->highlightBar) {
                Display_attrset(highlight);
@@ -275,6 +277,7 @@ void Panel_draw(Panel* this) {
             if (amt > 0)
                Display_writeChstrAtn(y+j, x+0, itemRef.chstr + scrollH, amt);
          }
+         RichString_end(itemRef);
       }
       for (int i = y + (last - first); i < y + h; i++)
          Display_mvhline(i, x+0, ' ', w);
@@ -305,26 +308,30 @@ void Panel_draw(Panel* this) {
 
    } else {
       Object* oldObj = (Object*) List_get(this->items, this->oldSelected);
-      RichString oldRef; RichString_init(&oldRef);
+      RichString_begin(oldRef);
       this->displaying = this->oldSelected;
       Msg(Object, display, oldObj, &oldRef);
       Object* newObj = (Object*) List_get(this->items, this->selected);
-      RichString newRef; RichString_init(&newRef);
+      RichString_begin(newRef);
       this->displaying = this->selected;
       Msg(Object, display, newObj, &newRef);
       Display_mvhline(y+ this->oldSelected - this->scrollV, x+0, ' ', w);
-      if (scrollH < oldRef.len)
-         Display_writeChstrAtn(y+ this->oldSelected - this->scrollV, x+0, oldRef.chstr + scrollH, MIN(oldRef.len - scrollH, w));
+      int oldLen = RichString_sizeVal(oldRef);
+      if (scrollH < oldLen)
+         Display_writeChstrAtn(y+ this->oldSelected - this->scrollV, x+0, oldRef.chstr + scrollH, MIN(oldLen - scrollH, w));
       if (this->highlightBar)
          Display_attrset(highlight);
       cursorY = y+this->selected - this->scrollV;
       Display_mvhline(cursorY, x+0, ' ', w);
       if (this->highlightBar)
          RichString_setAttr(&newRef, highlight);
-      if (scrollH < newRef.len)
-         Display_writeChstrAtn(y+this->selected - this->scrollV, x+0, newRef.chstr + scrollH, MIN(newRef.len - scrollH, w));
+      int newLen = RichString_sizeVal(newRef);
+      if (scrollH < newLen)
+         Display_writeChstrAtn(y+this->selected - this->scrollV, x+0, newRef.chstr + scrollH, MIN(newLen - scrollH, w));
       if (this->highlightBar)
          Display_attrset(this->color);
+      RichString_end(oldRef);
+      RichString_end(newRef);
    }
    this->oldSelected = this->selected;
 

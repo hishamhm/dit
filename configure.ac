@@ -15,21 +15,37 @@ AM_PROG_CC_C_O
 AC_CHECK_LIB([m], [ceil], [], [missing_libraries="$missing_libraries libm"])
 
 AC_ARG_ENABLE(ncurses, [AC_HELP_STRING([--enable-ncurses], [use ncurses (switch to low-level hacks if disabled)])],, enable_ncurses="yes")
-extra_headers=
-if test "x$enable_ncurses" = xyes
-then
-   AC_CHECK_LIB([ncurses], [refresh], [], [missing_libraries="$missing_libraries libncurses"])
-   extra_headers=curses.h
+
+# Checks for header files.
+AC_HEADER_DIRENT
+AC_HEADER_STDC
+
+AC_ARG_ENABLE(unicode, [AC_HELP_STRING([--enable-unicode], [enable Unicode support])], ,enable_unicode="yes")
+if test "x$enable_unicode" = xyes; then
+   AC_DEFINE([HAVE_UNICODE], [1], [Set if Unicode was enabled.])
+   if test "x$enable_ncurses" = xyes
+   then
+      AC_CHECK_LIB([ncursesw], [refresh], [], [
+         missing_libraries="$missing_libraries libncursesw"
+         AC_MSG_ERROR([You may want to use --disable-unicode or install libncursesw.])
+      ])
+      AC_CHECK_HEADERS([ncursesw/curses.h],[:],
+           [AC_CHECK_HEADERS([ncurses/ncurses.h],[:],
+             [AC_CHECK_HEADERS([ncurses.h],[:],[missing_headers="$missing_headers $ac_header"])])])
+    fi
+else
+   if test "x$enable_ncurses" = xyes
+   then
+      AC_CHECK_LIB([ncurses], [refresh], [], [missing_libraries="$missing_libraries libncurses"])
+      AC_CHECK_HEADERS([curses.h],[:],[missing_headers="$missing_headers $ac_header"])
+   fi
 fi
 
 if test ! -z "$missing_libraries"; then
   AC_MSG_ERROR([missing libraries: $missing_libraries])
 fi
 
-# Checks for header files.
-AC_HEADER_DIRENT
-AC_HEADER_STDC
-AC_CHECK_HEADERS([limits.h stdint.h stdlib.h string.h strings.h sys/ioctl.h sys/param.h sys/time.h unistd.h $extra_headers],[:],[
+AC_CHECK_HEADERS([limits.h stdint.h stdlib.h string.h strings.h sys/ioctl.h sys/param.h sys/time.h unistd.h],[:],[
   missing_headers="$missing_headers $ac_header"
 ])
 

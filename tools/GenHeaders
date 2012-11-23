@@ -69,7 +69,7 @@ then
    
    do_all includes | sort -u | tac >> "$new"
    do_all proto
-   echo "#if HAVE_CURSES_H" >> "$new"
+   echo "#if HAVE_CURSES" >> "$new"
    do_all defines >> "$new"
    echo "#endif" >> "$new"
    
