@@ -7,7 +7,7 @@ RULES
 context diff `$ veryspecial
 /context
 
-context @@ @@ special
+context `^@@ @@ special
 /context
 
 context --- `$ brightalt
