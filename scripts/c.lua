@@ -31,3 +31,48 @@ function on_fkey(key)
       code.expand_selection()
    end
 end
+
+current_file = nil
+errors = nil
+
+function highlight_file(filename)
+   current_file = filename
+end
+
+function highlight_line(line, y)
+   if errors and errors[y] then
+      local out = {}
+      for i = 1, #line do out[i] = " " end
+      local marking = false
+      for x, _ in pairs(errors[y]) do
+         out[x] = "*"
+         local xs = x
+         while line[xs]:match("[%w_]") do
+            out[xs] = "*"
+            xs = xs + 1
+         end
+      end
+      return table.concat(out)
+   else
+      return ""
+   end
+end
+
+function on_change()
+   errors = nil
+   return true
+end
+
+function on_save()
+   local cmd = io.popen("LANG=C gcc -c "..current_file.." --std=c99 2>&1")
+   local cmdout = cmd:read("*a")
+   cmd:close()
+   errors = {}
+   for ey, ex in cmdout:gmatch("[^\n]*:([0-9]+):([0-9]+): error:[^\n]*") do
+      ey = tonumber(ey)
+      ex = tonumber(ex)
+      if not errors[ey] then errors[ey] = {} end
+      errors[ey][ex] = true
+   end
+   return true
+end
