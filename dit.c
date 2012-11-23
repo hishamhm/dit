@@ -630,7 +630,6 @@ static void Dit_registerActions() {
    Hashtable_putString(Dit_actions, "Buffer_backwardDeleteChar", (void*)(long) Buffer_backwardDeleteChar);
    Hashtable_putString(Dit_actions, "Buffer_backwardWord", (void*)(long) Buffer_backwardWord);
    Hashtable_putString(Dit_actions, "Buffer_beginningOfFile", (void*)(long) Buffer_beginningOfFile);
-   Hashtable_putString(Dit_actions, "Buffer_beginningOfLine", (void*)(long) Buffer_beginningOfLine );
    Hashtable_putString(Dit_actions, "Buffer_beginningOfLine", (void*)(long) Buffer_beginningOfLine);
    Hashtable_putString(Dit_actions, "Buffer_deleteChar", (void*)(long) Buffer_deleteChar);
    Hashtable_putString(Dit_actions, "Buffer_downLine", (void*)(long) Buffer_downLine);
