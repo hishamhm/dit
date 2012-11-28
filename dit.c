@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <libgen.h>
+#include <locale.h>
 
 #include "Prototypes.h"
 
@@ -45,7 +46,7 @@ static void statusMessage(char* message) {
 }
 
 static bool saveAs(Field* saveAsField, Buffer* buffer, char* name) {
-   if (name) Field_setValue(saveAsField, name);
+   if (name) Field_setValue(saveAsField, Text_new(name));
    bool quitMask[255] = {0};
    int ch = Field_quickRun(saveAsField, quitMask);
    if (ch == 13) {
@@ -152,11 +153,10 @@ static void Dit_copy(Buffer* buffer) {
 static void Dit_paste(Buffer* buffer) {
    if (!Dit_clipboard)
       Dit_clipboard = Clipboard_new();
-   int blockLen;
-   char* block = Clipboard_get(Dit_clipboard, &blockLen);
-   if (block) {
-      Buffer_pasteBlock(buffer, block, blockLen);
-      free(block);
+   Text block = Clipboard_get(Dit_clipboard);
+   if (Text_isSet(block)) {
+      Buffer_pasteBlock(buffer, block);
+      Text_prune(&block);
    }
    buffer->selecting = false;
 }
@@ -170,12 +170,11 @@ static Field* Dit_gotoField = NULL;
 static void pasteInField(Field* field) {
    if (!Dit_clipboard)
       Dit_clipboard = Clipboard_new();
-   int blockLen = 0;
-   char* block = Clipboard_get(Dit_clipboard, &blockLen);
-   if (block) {
-      if (!strchr(block, '\n'))
+   Text block = Clipboard_get(Dit_clipboard);
+   if (Text_isSet(block)) {
+      if (!Text_hasChar(block, '\n'))
          Field_setValue(field, block);
-      free(block);
+      Text_prune(&block);
    }
 }
 
@@ -191,7 +190,8 @@ static void Dit_goto(Buffer* buffer, TabManager* tabs) {
    int lastY = buffer->y + 1;
    while (!quit) {
       bool handled;
-      int ch = Field_run(Dit_gotoField, false, &handled);
+      bool code;
+      int ch = Field_run(Dit_gotoField, false, &handled, &code);
       if (!handled) {
          if ((ch >= '0' && ch <= '9') || (ch == '-' && Dit_gotoField->x == 0)) {
             Field_insertChar(Dit_gotoField, ch);
@@ -205,7 +205,7 @@ static void Dit_goto(Buffer* buffer, TabManager* tabs) {
          }
       }
       char* endptr;
-      int y = strtol(Dit_gotoField->current->text, &endptr, 10);
+      int y = strtol(Dit_gotoField->current->text.data, &endptr, 10);
       if (endptr && *endptr == '\0') {
          if (y > 0)
             y--;
@@ -218,7 +218,7 @@ static void Dit_goto(Buffer* buffer, TabManager* tabs) {
          int pages = TabManager_getPageCount(tabs);
          for (int i = 0; i < pages; i++) {
             const char* name = TabManager_getPageName(tabs, i);
-               if (name && strcasestr(name, Dit_gotoField->current->text)) {
+               if (name && strcasestr(name, Dit_gotoField->current->text.data)) {
                   TabManager_setPage(tabs, i);
                   TabManager_draw(tabs, cols);
                   break;
@@ -246,32 +246,31 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
    bool caseSensitive = false;
    bool wholeWord = false;
    while (!quit) {
+      Field_printfLabel(Dit_findField, "L:%d C:%d [%c%c] %sFind:", buffer->y + 1, buffer->x + 1, caseSensitive ? 'C' : ' ', wholeWord ? 'W' : ' ', wrapped ? "Wrapped " : "");
       bool searched = false;
       bool found = false;
       bool handled;
-      Field_printfLabel(Dit_findField, "L:%d C:%d [%c%c] %sFind:", buffer->y + 1, buffer->x + 1, caseSensitive ? 'C' : ' ', wholeWord ? 'W' : ' ', wrapped ? "Wrapped " : "");
-      int ch = Field_run(Dit_findField, false, &handled);
+      bool code;
+      int ch = Field_run(Dit_findField, false, &handled, &code);
       int lastY = buffer->y + 1;
       if (!handled) {
-         if ((ch >= 32 && ch <= 255) || ch == 9 || ch == KEY_CTRL('T')) {
+         if (!code && (ch >= 32 || ch == 9 || ch == KEY_CTRL('T'))) {
             if (ch == 9) {
-               bool inserted = false;
                int at = buffer->x;
                if (Field_getLength(Dit_findField) == 0) {
                   while (at > 0) {
-                     ch = buffer->line->text[at - 1];
+                     ch = Line_charAt(buffer->line, at - 1);
                      if (isword(ch))
                         at--;
                      else
                         break;
                   }
                }
-               while (at < buffer->line->len) {
-                  ch = buffer->line->text[at];
+               while (at < Line_chars(buffer->line)) {
+                  ch = Line_charAt(buffer->line, at);
                   if (isword(ch)) {
                      Field_insertChar(Dit_findField, ch);
                      at++;
-                     inserted = true;
                   } else {
                      break;
                   }
@@ -285,7 +284,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             wrapped = false;                  
             firstX = -1;
             firstY = -1;
-            found = Buffer_find(buffer, Dit_findField->current->text, false, caseSensitive, wholeWord, true);
+            found = Buffer_find(buffer, Field_text(Dit_findField), false, caseSensitive, wholeWord, true);
             searched = true;
          } else {
             switch (ch) {
@@ -305,7 +304,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             case KEY_F(5):
             {
                caseSensitive = !caseSensitive;
-               found = Buffer_find(buffer, Dit_findField->current->text, false, caseSensitive, wholeWord, true);
+               found = Buffer_find(buffer, Field_text(Dit_findField), false, caseSensitive, wholeWord, true);
                searched = true;
                break;
             }
@@ -313,7 +312,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             case KEY_F(6):
             {
                wholeWord = !wholeWord;
-               found = Buffer_find(buffer, Dit_findField->current->text, false, caseSensitive, wholeWord, true);
+               found = Buffer_find(buffer, Field_text(Dit_findField), false, caseSensitive, wholeWord, true);
                searched = true;
                break;
             }
@@ -321,17 +320,17 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             case KEY_CTRL('F'):
             case KEY_CTRL('N'):
             {
-               if (Dit_findField->current->text[0] == '\0') {
+               if (Text_chars(Field_text(Dit_findField)) == 0) {
                   Field_previousInHistory(Dit_findField);
                   break;
                }
-               found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, wholeWord, true);
+               found = Buffer_find(buffer, Field_text(Dit_findField), true, caseSensitive, wholeWord, true);
                searched = true;
                break;
             }
             case KEY_CTRL('G'):
             {
-               int y = atoi(Dit_findField->current->text);
+               int y = atoi(Text_toString(Field_text(Dit_findField)));
                if (y > 0)
                   y--;
                if (y != lastY) {
@@ -343,7 +342,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             }
             case KEY_CTRL('P'):
             {
-               found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, wholeWord, false);
+               found = Buffer_find(buffer, Field_text(Dit_findField), true, caseSensitive, wholeWord, false);
                searched = true;
                break;
             }
@@ -393,19 +392,20 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                   rch = Field_quickRun(Dit_replaceField, quitMask);
                   if (rch == KEY_CTRL('R')) {
                      if (buffer->selecting) {
-                        Buffer_pasteBlock(buffer, Dit_replaceField->current->text, strlen(Dit_replaceField->current->text));
+                        Buffer_pasteBlock(buffer, Dit_replaceField->current->text);
                         buffer->selecting = false;
                         Buffer_draw(buffer);
-                        found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, wholeWord, true);
+                        found = Buffer_find(buffer, Field_text(Dit_findField), true, caseSensitive, wholeWord, true);
                         searched = true;
                      }
                   } else if (rch == KEY_CTRL('C')) { // Case-matching replace
                      if (buffer->selecting) {
-                        char* newText = strdup(Dit_replaceField->current->text);
+                        char* newText = strdup(Text_toString(Field_text(Dit_replaceField)));
                         int newLen = strlen(newText);
                         int len = buffer->selectXto - buffer->selectXfrom;
+                        // FIXME UTF-8
                         for (int i = 0; i < newLen; i++) {
-                           char oldCh = buffer->line->text[ buffer->selectXfrom + ((i < len) ? i : len-1)];
+                           char oldCh = Line_charAt(buffer->line, buffer->selectXfrom + ((i < len) ? i : len-1) );
                            if (isalpha(newText[i])) {
                               if (oldCh == tolower(oldCh)) {
                                  newText[i] = tolower(newText[i]);
@@ -414,15 +414,15 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                               }
                            }
                         }
-                        Buffer_pasteBlock(buffer, newText, newLen);
+                        Buffer_pasteBlock(buffer, Text_new(newText));
                         free(newText);
                         buffer->selecting = false;
                         Buffer_draw(buffer);
-                        found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, wholeWord, true);
+                        found = Buffer_find(buffer, Field_text(Dit_findField), true, caseSensitive, wholeWord, true);
                         searched = true;
                      }
                   } else if (rch == KEY_CTRL('P')) {
-                     found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, wholeWord, false);
+                     found = Buffer_find(buffer, Field_text(Dit_findField), true, caseSensitive, wholeWord, false);
                      searched = true;
                   } else if (rch == 13 || rch == 27) {
                      break;
@@ -433,8 +433,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                         Field_insertChar(Dit_replaceField, 9);
                         continue; 
                      }
-
-                     found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, wholeWord, true);
+                     found = Buffer_find(buffer, Field_text(Dit_findField), true, caseSensitive, wholeWord, true);
                      searched = true;
                   }
                }
@@ -447,12 +446,12 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             }
          }
       } else {
-         if (ch == KEY_UP || ch == KEY_DOWN) {
+         if (code && (ch == KEY_UP || ch == KEY_DOWN)) {
             Buffer_goto(buffer, saveX, saveY);
             wrapped = false;
             firstX = -1;
             firstY = -1;
-            found = Buffer_find(buffer, Dit_findField->current->text, true, caseSensitive, wholeWord, true);
+            found = Buffer_find(buffer, Field_text(Dit_findField), true, caseSensitive, wholeWord, true);
             searched = true;
          }
       }
@@ -812,7 +811,8 @@ static void Dit_parseBindings(Dit_Action* keys) {
       Display_clear();
       Display_printAt(0,0,"Warning: could not parse key bindings file bindings/default");
       Display_printAt(1,0,"Press any key to load hardcoded defaults.");
-      Display_getch();
+      bool code;
+      Display_getch(&code);
       Dit_loadHardcodedBindings(keys);
       return;
    }
@@ -833,6 +833,8 @@ static void Dit_parseBindings(Dit_Action* keys) {
 }
 
 int main(int argc, char** argv) {
+
+   setlocale(LC_ALL, "");
 
    int jump = 0;
    int column = 1;
@@ -889,6 +891,7 @@ int main(int argc, char** argv) {
    if (jump > 0)
       Buffer_goto(buffer, column - 1, jump - 1);
 
+   bool code;
    int ch = 0;
    while (!quit) {
       int y, x;
@@ -908,47 +911,56 @@ int main(int argc, char** argv) {
       Display_attrset(A_NORMAL);
       buffer->lastKey = ch;
       Display_move(y, x);
-      ch = CRT_getCharacter();
+      
+      ch = CRT_getCharacter(&code);
       
       //TODO: mouse
-
-      if (buffer->marking) {
-         switch (ch) {
-         case KEY_C_RIGHT: ch = KEY_CS_RIGHT; break;
-         case KEY_C_LEFT:  ch = KEY_CS_LEFT;  break;
-         case KEY_C_UP:    ch = KEY_CS_UP;    break;
-         case KEY_C_DOWN:  ch = KEY_CS_DOWN;  break;
-         case KEY_C_HOME:  ch = KEY_CS_HOME;  break;
-         case KEY_C_END:   ch = KEY_CS_END;   break;
-         case KEY_C_PPAGE: ch = KEY_CS_PPAGE; break;
-         case KEY_C_NPAGE: ch = KEY_CS_NPAGE; break;
-         case KEY_RIGHT:   ch = KEY_SRIGHT;   break;
-         case KEY_LEFT:    ch = KEY_SLEFT;    break;
-         case KEY_UP:      ch = KEY_S_UP;     break;
-         case KEY_DOWN:    ch = KEY_S_DOWN;   break;
-         case KEY_HOME:    ch = KEY_SHOME;    break;
-         case KEY_END:     ch = KEY_SEND;     break;
-         case KEY_PPAGE:   ch = KEY_S_PPAGE;  break;
-         case KEY_NPAGE:   ch = KEY_S_NPAGE;  break;
-         default:          if (keys[ch] != (Dit_Action) Buffer_toggleMarking) buffer->marking = false;
-         }
-      }
-
-      switch (ch) {
-      case ERR:
-         continue;
-      case KEY_RESIZE:
-         Display_getScreenSize(&cols, &lines);
-         TabManager_resize(tabs, cols, lines);
-         if (Dit_findField)
-            Dit_findField->y = lines - 1;
-         break;
-      }
       
-      if (ch < KEY_MAX && keys[ch])
-         (keys[ch])(buffer,tabs, &ch, &quit);
-      else
-         Buffer_defaultKeyHandler(buffer, ch);
+      if (!code) {
+         if (ch < 32 && keys[ch])
+            (keys[ch])(buffer, tabs, &ch, &quit);
+         else
+            Buffer_defaultKeyHandler(buffer, ch, code);
+      } else {
+
+         if (buffer->marking) {
+            switch (ch) {
+            case KEY_C_RIGHT: ch = KEY_CS_RIGHT; break;
+            case KEY_C_LEFT:  ch = KEY_CS_LEFT;  break;
+            case KEY_C_UP:    ch = KEY_CS_UP;    break;
+            case KEY_C_DOWN:  ch = KEY_CS_DOWN;  break;
+            case KEY_C_HOME:  ch = KEY_CS_HOME;  break;
+            case KEY_C_END:   ch = KEY_CS_END;   break;
+            case KEY_C_PPAGE: ch = KEY_CS_PPAGE; break;
+            case KEY_C_NPAGE: ch = KEY_CS_NPAGE; break;
+            case KEY_RIGHT:   ch = KEY_SRIGHT;   break;
+            case KEY_LEFT:    ch = KEY_SLEFT;    break;
+            case KEY_UP:      ch = KEY_S_UP;     break;
+            case KEY_DOWN:    ch = KEY_S_DOWN;   break;
+            case KEY_HOME:    ch = KEY_SHOME;    break;
+            case KEY_END:     ch = KEY_SEND;     break;
+            case KEY_PPAGE:   ch = KEY_S_PPAGE;  break;
+            case KEY_NPAGE:   ch = KEY_S_NPAGE;  break;
+            default:          if (keys[ch] != (Dit_Action) Buffer_toggleMarking) buffer->marking = false;
+            }
+         }
+   
+         switch (ch) {
+         case ERR:
+            continue;
+         case KEY_RESIZE:
+            Display_getScreenSize(&cols, &lines);
+            TabManager_resize(tabs, cols, lines);
+            if (Dit_findField)
+               Dit_findField->y = lines - 1;
+            break;
+         }
+         
+         if (ch < KEY_MAX && keys[ch])
+            (keys[ch])(buffer, tabs, &ch, &quit);
+         else
+            Buffer_defaultKeyHandler(buffer, ch, code);
+      }
    }
 
    Display_attrset(CRT_colors[NormalColor]);

@@ -383,12 +383,13 @@ int TabManager_question(TabManager* this, char* question, char* options) {
    Display_clearToEol();
    Display_attrset(CRT_colors[NormalColor]);
    Display_refresh();
+   bool code;
    int opt;
    char* which;
    Display_beep();
    do {
-      opt = Display_getch();
-   } while (!(which = strchr(options, opt)));
+      opt = Display_getch(&code);
+   } while (code || !(which = strchr(options, opt)));
    TabManager_refreshCurrent(this);
    return which - options;
 }

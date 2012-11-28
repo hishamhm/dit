@@ -129,10 +129,11 @@ void ScreenManager_run(ScreenManager* this, Panel** lastFocus, int* lastKey) {
       if (this->fuBar)
          FunctionBar_draw(this->fuBar, NULL);
 
-      ch = Display_getch();
+      bool code;
+      ch = Display_getch(&code);
       
       bool loop = false;
-      if (ch == KEY_MOUSE) {
+      if (code && ch == KEY_MOUSE) {
          MEVENT mevent;
          int ok = Display_getmouse(&mevent);
          if (ok == OK) {
@@ -140,6 +141,7 @@ void ScreenManager_run(ScreenManager* this, Panel** lastFocus, int* lastKey) {
             Display_getScreenSize(&cols, &lines);
             if (mevent.y == lines - 1) {
                ch = FunctionBar_synthesizeEvent(this->fuBar, mevent.x);
+               code = true;
             } else {
                for (int i = 0; i < this->itemCount; i++) {
                   Panel* lb = (Panel*) Vector_get(this->items, i);
@@ -158,7 +160,7 @@ void ScreenManager_run(ScreenManager* this, Panel** lastFocus, int* lastKey) {
       if (loop) continue;
       
       if (lbFocus->eventHandler) {
-         HandlerResult result = lbFocus->eventHandler(lbFocus, ch);
+         HandlerResult result = lbFocus->eventHandler(lbFocus, ch, code);
          if (result == HANDLED) {
             continue;
          } else if (result == BREAK_LOOP) {
@@ -167,6 +169,7 @@ void ScreenManager_run(ScreenManager* this, Panel** lastFocus, int* lastKey) {
          }
       }
       
+      if (code)
       switch (ch) {
       case ERR:
          continue;

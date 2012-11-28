@@ -8,15 +8,13 @@
 
 /*{
 
-#define PM_RULE 1
-#define PM_EAGER_RULE 2
-
-typedef int(*Method_PatternMatcher_match)(GraphNode*, unsigned char*, int*, char*);
+typedef int(*Method_PatternMatcher_match)(GraphNode*, const unsigned char*, int*, bool*);
 
 struct GraphNode_ {
    unsigned char min;
    unsigned char max;
-   char endNode;
+   bool endNode;
+   bool eager;
    int value;
    union {
       GraphNode* simple;
@@ -60,7 +58,8 @@ void PatternMatcher_delete(PatternMatcher* this) {
    free(this);
 }
 
-inline GraphNode* GraphNode_follow(GraphNode* this, unsigned char c) {
+static inline GraphNode* GraphNode_follow(GraphNode* this, unsigned char c) {
+   assert(this);
    if (c < this->min || c > this->max) {
       return NULL;
    }
@@ -83,7 +82,7 @@ inline GraphNode* GraphNode_follow(GraphNode* this, unsigned char c) {
    }
 }
 
-void GraphNode_build(GraphNode* current, unsigned char* input, unsigned char* special, int value, char nodeType) {
+void GraphNode_build(GraphNode* current, unsigned char* input, unsigned char* special, int value, bool eager) {
 #define SPECIAL(c) (*special && *input == c)
 #define NEXT do { special++; input++; } while (0)
    assert(current); assert(input); assert(special);
@@ -127,7 +126,7 @@ void GraphNode_build(GraphNode* current, unsigned char* input, unsigned char* sp
          NEXT;
          GraphNode* next = GraphNode_new();
          GraphNode_link(current, mask, next);
-         GraphNode_build(current, input, special, value, nodeType);
+         GraphNode_build(current, input, special, value, eager);
          current = next;
       } else {
          GraphNode* next = NULL;
@@ -140,12 +139,13 @@ void GraphNode_build(GraphNode* current, unsigned char* input, unsigned char* sp
       }
    }
    current->value = value;
-   current->endNode = nodeType;
+   current->eager = eager;
+   current->endNode = true;
 #undef SPECIAL
 #undef NEXT
 }
 
-void PatternMatcher_add(PatternMatcher* this, unsigned char* pattern, int value, int nodeType) {
+void PatternMatcher_add(PatternMatcher* this, unsigned char* pattern, int value, bool eager) {
    assert(this); assert(pattern);
    int len = strlen((char*)pattern) + 1;
    unsigned char input[len];
@@ -175,37 +175,18 @@ void PatternMatcher_add(PatternMatcher* this, unsigned char* pattern, int value,
       if (!this->lineStart)
          this->lineStart = GraphNode_new();
       start = this->lineStart;
-      GraphNode_build(start, input+1, special+1, value, nodeType);
+      GraphNode_build(start, input+1, special+1, value, eager);
    } else {
-      GraphNode_build(start, input, special, value, nodeType);
+      GraphNode_build(start, input, special, value, eager);
    }
 }
 
 bool PatternMatcher_partialMatch(GraphNode* node, unsigned char* input, int inputLen, char* rest, int restLen) {
    int i = 0;
    while (i < inputLen) {
-      assert(node);
-      char c = input[i];
-      if (c < node->min || c > node->max) {
-         node = NULL;
+      node = GraphNode_follow(node, input[i]);
+      if (!node)
          break;
-      }
-      if (node->min == node->max) {
-         assert(c == node->min);
-         node = node->u.simple;
-      } else {
-         int id = c - node->min;
-         int ptrid = node->u.l.links[id];
-         if (ptrid == 0)
-            break;
-         if (node->u.l.nptrs == 1) {
-            assert(node->u.l.p.single);
-            node = node->u.l.p.single;
-         } else {
-            assert(node->u.l.p.list[ptrid - 1]);
-            node = node->u.l.p.list[ptrid - 1];
-         }
-      }
       i++;
    }
    if (node) {
@@ -222,74 +203,37 @@ bool PatternMatcher_partialMatch(GraphNode* node, unsigned char* input, int inpu
    return false;
 }
 
-int PatternMatcher_match(GraphNode* node, unsigned char* input, int* value, char* endNode) {
+int PatternMatcher_match(GraphNode* node, const unsigned char* input, int* value, bool* eager) {
    int i = 0;
    int match = 0;
    *value = 0;
    while (input[i]) {
-      assert(node);
-      // node = GraphNode_follow(node, input[i]);
-
-      // inlined version follows
-      char c = input[i];
-      if (c < node->min || c > node->max)
+      node = GraphNode_follow(node, input[i]);
+      if (!node)
          break;
-      if (node->min == node->max) {
-         assert(c == node->min);
-         node = node->u.simple;
-      } else {
-         int id = c - node->min;
-         int ptrid = node->u.l.links[id];
-         if (ptrid == 0)
-            break;
-         if (node->u.l.nptrs == 1) {
-            assert(node->u.l.p.single);
-            node = node->u.l.p.single;
-         } else {
-            assert(node->u.l.p.list[ptrid - 1]);
-            node = node->u.l.p.list[ptrid - 1];
-         }
-      }
       i++;
       if (node->endNode) {
          match = i;
          *value = node->value;
-         *endNode = node->endNode;
+         *eager = node->eager;
       }
    }
    return match;
 }
 
-int PatternMatcher_match_toLower(GraphNode* node, unsigned char* input, int* value, char* endNode) {
+int PatternMatcher_match_toLower(GraphNode* node, const unsigned char* input, int* value, bool* eager) {
    int i = 0;
    int match = 0;
    *value = 0;
    while (input[i]) {
-      // node = GraphNode_follow(node, input[i]);
-
-      // inlined version follows
-      char c = tolower(input[i]);
-      if (c < node->min || c > node->max)
+      node = GraphNode_follow(node, tolower(input[i]));
+      if (!node)
          break;
-      if (node->min == node->max) {
-         assert(c == node->min);
-         node = node->u.simple;
-      } else {
-         int id = c - node->min;
-         int ptrid = node->u.l.links[id];
-         if (ptrid == 0)
-            break;
-         if (node->u.l.nptrs == 1)
-            node = node->u.l.p.single;
-         else
-            node = node->u.l.p.list[ptrid - 1];
-      }
-
       i++;
       if (node->endNode) {
          match = i;
          *value = node->value;
-         *endNode = node->endNode;
+         *eager = node->eager;
       }
    }
    return match;

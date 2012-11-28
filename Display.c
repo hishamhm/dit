@@ -44,8 +44,6 @@ static Hashtable* Display_terminalSequences;
    #define HAVE_CURSES 1
 #else
 
-typedef unsigned long chtype;
-
 #define OK 0
 #define ERR -1
 
@@ -388,30 +386,44 @@ void Display_getyx(int* y, int* x) {
 }
 #endif
 
-#if HAVE_CURSES
-#define Display_getch getch
-#else
-int Display_getch() {
-   char sequence[11] = { 0 };
-   int ch = getchar();
-   sequence[0] = ch;
-   if (ch == 27) {
-      for (int i = 1; i <= 10; i++) {
-         struct pollfd pfd = { .fd = 0, .events = POLLIN, .revents = 0 };
-         int any = poll(&pfd, 1, 30);
-         if (any > 0) {
-            sequence[i] = getchar();
-         } else {
-            break;
+int Display_getch(bool* code) {
+   #if HAVE_CURSES
+      #if HAVE_NCURSESW_CURSES_H
+         wint_t ch;
+         int isCode = get_wch(&ch);
+         *code = (isCode == KEY_CODE_YES || isCode == ERR);
+         if (isCode == ERR) return ERR;
+         return ch;
+      #else
+         int ch = getch();
+         *code = (ch > 0xff || ch == ERR);
+         return ch;
+      #endif
+   #else
+      char sequence[11] = { 0 };
+      // TODO: UTF-8 loop
+      int ch = getchar();
+      sequence[0] = ch;
+      if (ch == 27) {
+         for (int i = 1; i <= 10; i++) {
+            struct pollfd pfd = { .fd = 0, .events = POLLIN, .revents = 0 };
+            int any = poll(&pfd, 1, 30);
+            if (any > 0) {
+               sequence[i] = getchar();
+            } else {
+               break;
+            }
          }
       }
-   }
-   int keynum = (int) Hashtable_getString(Display_terminalSequences, sequence);
-   if (keynum)
-      return keynum;
-   return ch;
+      int keynum = (int) Hashtable_getString(Display_terminalSequences, sequence);
+      if (keynum) {
+         *code = true;
+         return keynum;
+      }
+      *code = false;
+      return ch;
+   #endif
 }
-#endif
 
 #if HAVE_CURSES
 #define Display_defineKey define_key
@@ -504,7 +516,7 @@ bool Display_init(char* term) {
 void Display_done() {
    curs_set(1);
    endwin();
-   delscreen(CRT_term);
+   //delscreen(CRT_term);
 }
 #else
 void Display_done() {

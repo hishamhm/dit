@@ -131,7 +131,7 @@ void CRT_parseTerminalFile(char* term) {
    if (!fd) {
       Display_printAt(0,0,"Warning: could not parse terminal rules file terminals/%s", term);
       Display_printAt(1,0,"Press any key.");
-      Display_getch();
+      CRT_readKey();
       return;
    }
    while (!feof(fd)) {
@@ -465,7 +465,8 @@ void CRT_done() {
 int CRT_readKey() {
    //nocbreak();
    //cbreak();
-   int ret = Display_getch();
+   bool code;
+   int ret = Display_getch(&code);
    //if (CRT_delay)
    //   halfdelay(CRT_delay);
    return ret;
@@ -482,12 +483,12 @@ void CRT_handleSIGTERM(int signal) {
    exit(0);
 }
 
-int CRT_getCharacter() {
+int CRT_getCharacter(bool* code) {
    Display_refresh();
-   int ch = Display_getch();
+   int ch = Display_getch(code);
    #if defined __linux || defined __CYGWIN__
-   if (ch == KEY_LEFT || ch == KEY_RIGHT || ch == KEY_UP || ch == KEY_DOWN
-       || ch == KEY_HOME || ch == KEY_END || ch == KEY_IC || ch == KEY_DC || ch == '\t') {
+   if ((*code && (ch == KEY_LEFT || ch == KEY_RIGHT || ch == KEY_UP || ch == KEY_DOWN
+       || ch == KEY_HOME || ch == KEY_END || ch == KEY_IC || ch == KEY_DC)) || (!*code && ch == '\t')) {
       #ifndef __CYGWIN__
       unsigned char modifiers = 6;
       #else

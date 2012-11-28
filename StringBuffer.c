@@ -81,7 +81,7 @@ void StringBuffer_add(StringBuffer* this, char* str) {
    StringBuffer_addN(this, str, len);
 }
 
-void StringBuffer_addN(StringBuffer* this, char* str, int len) {
+void StringBuffer_addN(StringBuffer* this, const char* str, int len) {
    int end = this->usedSize;
    StringBuffer_makeRoom(this, this->usedSize + len+1);
    strncpy(this->buffer + end, str, len+1);

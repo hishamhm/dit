@@ -14,7 +14,7 @@ static void error(lua_State* L) {
    Display_getScreenSize(&cols, &lines);
    Display_clear();
    Display_printAt(0,0,"%s", lua_tostring(L, -1));
-   Display_getch();
+   CRT_readKey();
    lua_getglobal(L, "tabs");
    TabManager* tabs = (TabManager*) ((Proxy*)lua_touserdata(L, -1))->ptr;
    TabManager_refreshCurrent(tabs);
@@ -196,7 +196,7 @@ static int Script_Buffer___newindex(lua_State* L) {
       luaL_checkstring(L, 3);
       int len;
       const char* text = lua_tolstring(L, 3, &len);
-      Buffer_setLine(buffer, y, text, len);
+      Buffer_setLine(buffer, y, Text_new((unsigned char*)text));
    }
    return 0;
 }
@@ -342,7 +342,7 @@ bool Script_load(lua_State* L, const char* scriptName) {
    if (err != 0) {
       Display_clear();
       Display_printAt(0,0,"Error loading script %s", lua_tostring(L, -1));
-      Display_getch();
+      CRT_readKey();
       return false;
    }
    return true;
@@ -378,7 +378,7 @@ void Script_highlightFile(Highlight* this, const char* fileName) {
    this->hasScript = callFunction(this->L, "highlight_file", fileName);
 }
 
-void Script_highlightLine(Highlight* this, unsigned char* buffer, int* attrs, int len, int y) {
+void Script_highlightLine(Highlight* this, const unsigned char* buffer, int* attrs, int len, int y) {
    lua_State* L = this->L;
    if (!this->hasScript)
       return;

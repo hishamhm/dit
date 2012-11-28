@@ -191,19 +191,20 @@ void Undo_endGroup(Undo* this, int x, int y) {
    Stack_push(this->actions, action, 0);
 }
 
-void Undo_insertBlock(Undo* this, int x, int y, const char* block, int len) {
+void Undo_insertBlock(Undo* this, int x, int y, Text block) {
    UndoAction* action = UndoAction_new(UndoInsertBlock, x, y);
    // Don't keep block in undo structure. Just calculate its size.
-   const char* walk = block;
+   const unsigned char* walk = block.data;
+   int len = block.dataSize;
    int yTo = y;
    int xTo = 0;
-   while (walk - block < len) {
-      char* at = memchr(walk, '\n', len - (walk - block));
+   while (walk - block.data < len) {
+      char* at = memchr(walk, '\n', len - (walk - block.data));
       if (at) {
          yTo++;
          walk = at + 1;
       } else {
-         xTo += (len - (walk - block)) + (yTo == y ? x : 0);
+         xTo += (len - (walk - block.data)) + (yTo == y ? x : 0);
          break;
       }
    }
@@ -288,13 +289,13 @@ bool Undo_undo(Undo* this, int* x, int* y) {
    }
    case UndoBackwardDeleteChar:
    {
-      Line_insertCharAt(line, action->data.c, action->x);
+      Line_insertChar(line, action->data.c, action->x);
       *x = action->x + 1;
       break;
    }
    case UndoDeleteChar:
    {
-      Line_insertCharAt(line, action->data.c, action->x);
+      Line_insertChar(line, action->data.c, action->x);
       break;
    }
    case UndoInsertChar:
@@ -313,7 +314,7 @@ bool Undo_undo(Undo* this, int* x, int* y) {
    {
       int newX, newY;
       assert(action->data.str.len > 0);
-      Line_insertBlock(line, action->x, action->data.str.buf, action->data.str.len, &newX, &newY);
+      Line_insertBlock(line, action->x, Text_new(action->data.str.buf), &newX, &newY);
       break;
    }
    case UndoIndent:
@@ -325,7 +326,7 @@ bool Undo_undo(Undo* this, int* x, int* y) {
    {
       for (int i = 0; i < action->data.unindent.len; i++) {
          for (int j = 0; j < action->data.unindent.buf[i]; j++)
-            Line_insertCharAt(line, action->data.unindent.tab ? '\t' : ' ', 0);
+            Line_insertChar(line, action->data.unindent.tab ? '\t' : ' ', 0);
          line = (Line*) line->super.next;
          assert(line);
       }

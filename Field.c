@@ -5,6 +5,7 @@
 #include "Prototypes.h"
 //#needs Object
 //#needs List
+//#needs Text
 
 /*{
 
@@ -27,12 +28,12 @@ struct FieldItemClass_ {
 
 struct FieldItem_ {
    ListItem super;
-   char* text;
-   int len;
-   int w;
+   Text text;
 };
 
 extern FieldItemClass FieldItemType;
+
+#define Field_text(this) ((this)->current->text)
 
 }*/
 
@@ -77,9 +78,7 @@ void Field_delete(Field* this) {
 FieldItem* FieldItem_new(List* list, int w) {
    FieldItem* this = Pool_allocate(list->pool);
    Bless(FieldItem);
-   this->text = calloc(w, 1);
-   this->len = 0;
-   this->w = w;
+   this->text = Text_null();
    return this;
 }
 
@@ -93,12 +92,12 @@ void Field_printfLabel(Field* this, char* picture, ...) {
 
 void FieldItem_delete(Object* cast) {
    FieldItem* this = (FieldItem*) cast;
-   free(this->text);
+   Text_prune(&(this->text));
 }
 
 void Field_start(Field* this) {
    this->current = (FieldItem*) List_getLast(this->history);
-   if (!this->current || this->current->len > 0) {
+   if (!this->current || Text_chars(this->current->text) > 0) {
       this->current = FieldItem_new(this->history, this->w);
       List_add(this->history, (ListItem*) this->current);
    }
@@ -110,12 +109,12 @@ FieldItem* Field_previousInHistory(Field* this) {
    if (curr->super.prev) {
       curr = (FieldItem*) curr->super.prev;
       this->current = curr;
-      this->cursor = curr->len;
+      this->cursor = Text_chars(curr->text);
    }
    return curr;
 }
 
-int Field_run(Field* this, bool setCursor, bool* handled) {
+int Field_run(Field* this, bool setCursor, bool* handled, bool* code) {
    int cursorX, cursorY;
    Display_getyx(&cursorY, &cursorX);
    assert(this->current);
@@ -128,123 +127,112 @@ int Field_run(Field* this, bool setCursor, bool* handled) {
    x += 2;
    Display_writeAt(this->y, this->x + this->w - 1, "]");
    int w = this->w - 3  - this->labelLen;
-   int scrollH = 0;
 
    Display_attrset(this->fieldColor);
-   int display = curr->len - scrollH;
+   int display = Text_chars(curr->text);
    if (display) {
-      Display_writeAtn(this->y, x, curr->text + scrollH, display);
+      Display_writeAtn(this->y, x, Text_toString(curr->text), Text_bytes(curr->text));
    }
    int rest = w - display;
    if (rest)
       Display_mvhline(this->y, x + display, ' ', rest);
    Display_attrset(A_NORMAL);
    if (setCursor) {
-      Display_move(this->y, this->x + this->labelLen + 2 + this->cursor - scrollH);
+      Display_move(this->y, this->x + this->labelLen + 2 + this->cursor);
    } else {
-      Display_move(this->y, this->x + this->labelLen + 2 + this->cursor - scrollH);
+      Display_move(this->y, this->x + this->labelLen + 2 + this->cursor);
       Display_attrset(A_REVERSE);
-      if (this->cursor < curr->len) {
-         Display_writeAtn(this->y, x + this->cursor, curr->text + scrollH + this->cursor, 1);
+      if (this->cursor < Text_chars(curr->text)) {
+         const unsigned char* ch = Text_stringAt(curr->text, this->cursor);
+         Display_writeAtn(this->y, x + this->cursor, ch, UTF8_bytes(*ch));
       } else {
          Display_writeAtn(this->y, x + this->cursor, " ", 1);
       }
       Display_move(cursorY, cursorX);
    }
-   int ch = Display_getch();
-   *handled = true;
-   switch (ch) {
-   case KEY_LEFT:
-      if (this->cursor > 0)
-         this->cursor--;
-      break;
-   case KEY_RIGHT:
-      if (this->cursor < curr->len)
-         this->cursor++;
-      break;
-   case KEY_UP:
-      curr = Field_previousInHistory(this);
-      break;
-   case KEY_DOWN:
-      if (curr->super.next) {
-         curr = (FieldItem*) curr->super.next;
-         this->current = curr;
-         this->cursor = curr->len;
-      }
-      break;
-   case KEY_C_LEFT:
-      this->cursor = String_forwardWord(curr->text, curr->len, this->cursor);
-      break;
-   case KEY_C_RIGHT:
-      this->cursor = String_backwardWord(curr->text, curr->len, this->cursor);
-      break;
-   case KEY_CTRL('A'):
-   case KEY_HOME:
-      this->cursor = 0;
-      break;
-   case KEY_CTRL('E'):
-   case KEY_END:
-      this->cursor = curr->len;
-      break;
-   case KEY_DC:
-      if (curr->len > 0 && this->cursor < curr->len) {
-         for (int i = this->cursor; i < this->w - 1; i++)
-            curr->text[i] = curr->text[i+1];
-         curr->len--;
-         curr->text[curr->len] = '\0';
-      }
-      break;
-   case '\177':
-   case KEY_BACKSPACE:
-      if (curr->len > 0 && this->x < curr->len && this->cursor > 0) {
-         this->cursor--;
-         for (int i = this->cursor; i < this->w - 1; i++)
-            curr->text[i] = curr->text[i+1];
-         curr->len--;
-         curr->text[curr->len] = '\0';
-      }
-      break;
-   default:
+   int ch = Display_getch(code);
+   if (!*code) {
       *handled = false;
-      break;
+      if (ch == KEY_CTRL('A'))      { ch = KEY_HOME; *code = true; }
+      else if (ch == KEY_CTRL('E')) { ch = KEY_END; *code = true; }
+      else if (ch == '\177')        { ch = KEY_BACKSPACE; *code = true; }
+   }
+   if (*code) {
+      *handled = true;
+      switch (ch) {
+      case KEY_LEFT:
+         if (this->cursor > 0)
+            this->cursor--;
+         break;
+      case KEY_RIGHT:
+         if (this->cursor < Text_chars(curr->text))
+            this->cursor++;
+         break;
+      case KEY_UP:
+         curr = Field_previousInHistory(this);
+         break;
+      case KEY_DOWN:
+         if (curr->super.next) {
+            curr = (FieldItem*) curr->super.next;
+            this->current = curr;
+            this->cursor = Text_chars(curr->text);
+         }
+         break;
+      case KEY_C_LEFT:
+         this->cursor = Text_forwardWord(curr->text, this->cursor);
+         break;
+      case KEY_C_RIGHT:
+         this->cursor = Text_backwardWord(curr->text, this->cursor);
+         break;
+      case KEY_HOME:
+         this->cursor = 0;
+         break;
+      case KEY_END:
+         this->cursor = Text_chars(curr->text);
+         break;
+      case KEY_DC:
+         Text_deleteChar(&(curr->text), this->cursor);
+         break;
+      case KEY_BACKSPACE:
+         if (this->cursor > 0) {
+            this->cursor--;
+            Text_deleteChar(&(curr->text), this->cursor);
+         }
+         break;
+      default:
+         *handled = false;
+         break;
+      }
    }
    return ch;
 }
 
-void Field_insertChar(Field* this, int ch) {
+void Field_insertChar(Field* this, wchar_t ch) {
    if (!this->current)
       Field_start(this);
    FieldItem* curr = this->current;
-   if (curr->len < curr->w) {
-      for (int i = curr->len; i > this->cursor; i--) {
-         curr->text[i] = curr->text[i-1];
-      }
-      curr->text[this->cursor] = ch;
-      curr->len++;
-      curr->text[curr->len] = '\0';
-      this->cursor++;
-   }
+   Text_insertChar(&(curr->text), this->cursor, ch);
+   this->cursor++;
 }
 
-void Field_setValue(Field* this, char* value) {
+void Field_setValue(Field* this, Text value) {
    if (!this->current)
       Field_start(this);
    FieldItem* curr = this->current;
-   curr->len = MIN(strlen(value), curr->w);
-   strncpy(curr->text, value, curr->len);
-   this->cursor = MIN(curr->len, curr->w - 1);
+   curr->text = Text_copy(value);
+   this->cursor = MIN(Text_chars(curr->text), this->cursor);
 }
 
 char* Field_getValue(Field* this) {
    if (!this->current)
       return strdup("");
-   return strdup(this->current->text);
+   return strdup(Text_toString(this->current->text));
 }
 
 int Field_getLength(Field* this) {
    if (!this->current)
       return 0;
-   return this->current->len;
+   return Text_chars(this->current->text);
 }
 
 int Field_quickRun(Field* this, bool* quitMask) {
@@ -254,9 +242,10 @@ int Field_quickRun(Field* this, bool* quitMask) {
       Field_start(this);
    while (!quit) {
       bool handled;
-      int ch = Field_run(this, false, &handled);
+      bool code;
+      int ch = Field_run(this, false, &handled, &code);
       if (!handled) {
-         if (ch >= 32)
+         if (!code && ch >= 32)
             Field_insertChar(this, ch);
          else if (ch == 27 || ch == 13 || (ch >= 0 && ch <= 255 && quitMask[ch])) {
             quit = true;

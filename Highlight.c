@@ -10,6 +10,7 @@
 
 #include "Prototypes.h"
 //#needs Object
+//#needs Text
 
 /*{
 
@@ -40,7 +41,7 @@ struct Highlight_ {
 struct ReadHighlightFileArgs_ {
    Highlight* this;
    const char* fileName;
-   const char* firstLine;
+   Text firstLine;
 };
 
 #ifndef isword
@@ -94,7 +95,7 @@ static Color Highlight_translateColor(char* color) {
    return NormalColor;
 }
 
-Highlight* Highlight_new(const char* fileName, const char* firstLine, lua_State* L) {
+Highlight* Highlight_new(const char* fileName, Text firstLine, lua_State* L) {
    Highlight* this = (Highlight*) malloc(sizeof(Highlight));
    this->L = L;
    this->hasScript = false;
@@ -123,7 +124,7 @@ void Highlight_delete(Highlight* this) {
 bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
    Highlight* this = args->this;
    const char* fileName = args->fileName;
-   const char* firstLine = args->firstLine;
+   Text firstLine = args->firstLine;
    FILE* file = fopen(name, "r");
    if (!file) return false;
 
@@ -173,7 +174,7 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
             if (lastSlash)
                subject = lastSlash + 1;
          } else if (String_eq(tokens[0], "firstline"))
-            subject = firstLine;
+            subject = firstLine.data;
          else
             success = false;
          if (success) {
@@ -186,7 +187,7 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
             } else if (String_eq(tokens[1], "regex") && ntokens == 3) {
                regex_t magic;
                regcomp(&magic, tokens[2], REG_EXTENDED | REG_NOSUB);
-               if (regexec(&magic, firstLine, 0, NULL, 0) == 0)
+               if (regexec(&magic, subject, 0, NULL, 0) == 0)
                   state = 3;
                regfree(&magic);
             } else {
@@ -212,16 +213,16 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
             char* close = (String_eq(tokens[2], "`$") ? NULL : tokens[2]);
             Color color;
             if (ntokens == 6) {
-               HighlightContext_addRule(context, open, Highlight_translateColor(tokens[3]), PM_RULE);
+               HighlightContext_addRule(context, open, Highlight_translateColor(tokens[3]), false);
                color = Highlight_translateColor(tokens[5]);
             } else {
                color = Highlight_translateColor(tokens[3]);
-               HighlightContext_addRule(context, open, color, PM_RULE);
+               HighlightContext_addRule(context, open, color, false);
             }
             context = Highlight_addContext(this, open, close, Stack_peek(contexts, NULL), color);
             if (close) {
                color = (ntokens == 6 ? Highlight_translateColor(tokens[4]) : color);
-               HighlightContext_addRule(context, close, color, PM_RULE);
+               HighlightContext_addRule(context, close, color, false);
             }
             Stack_push(contexts, context, 0);
          } else if (String_eq(tokens[0], "/context") && ntokens == 1) {
@@ -230,9 +231,9 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
                context = Stack_peek(contexts, NULL);
             }
          } else if (String_eq(tokens[0], "rule") && ntokens == 3) {
-            HighlightContext_addRule(context, tokens[1], Highlight_translateColor(tokens[2]), PM_RULE);
+            HighlightContext_addRule(context, tokens[1], Highlight_translateColor(tokens[2]), false);
          } else if (String_eq(tokens[0], "eager_rule") && ntokens == 3) {
-            HighlightContext_addRule(context, tokens[1], Highlight_translateColor(tokens[2]), PM_EAGER_RULE);
+            HighlightContext_addRule(context, tokens[1], Highlight_translateColor(tokens[2]), true);
          } else if (String_eq(tokens[0], "insensitive") && ntokens == 1) {
             this->toLower = true;
          } else if (String_eq(tokens[0], "script") && ntokens == 2) {
@@ -240,7 +241,7 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
          } else {
             Display_clear();
             Display_printAt(0,0,"Error reading %s: line %d: %s", name, lineno, buffer);
-            Display_getch();
+            CRT_readKey();
             success = false;
          }
          break;
@@ -254,7 +255,7 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
    if (contexts->size != 1) {
       Display_clear();
       Display_printAt(0,0,"Error reading %s: %d context%s still open", name, contexts->size - 1, contexts->size > 2 ? "s" : "");
-      Display_getch();
+      CRT_readKey();
       success = false;
    }
    Stack_delete(contexts);
@@ -272,11 +273,11 @@ HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close,
    Vector_add(this->contexts, ctx);
    if (open) {
       assert(parent);
-      PatternMatcher_add(parent->follows, (unsigned char*) open, (int) ctx, PM_RULE);
+      PatternMatcher_add(parent->follows, (unsigned char*) open, (int) ctx, false);
    }
    if (close) {
       assert(parent);
-      PatternMatcher_add(ctx->follows, (unsigned char*) close, (int) parent, PM_RULE);
+      PatternMatcher_add(ctx->follows, (unsigned char*) close, (int) parent, false);
    } else {
       if (parent)
          ctx->nextLine = parent;
@@ -284,19 +285,19 @@ HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close,
    return ctx;
 }
 
-static inline int Highlight_tryMatch(Highlight* this, unsigned char* buffer, int* attrs, int at, GraphNode* rules, GraphNode* follows, Method_PatternMatcher_match match, HighlightContext** ctx, bool paintUnmatched, int y) {
-   unsigned char* here = buffer + at;
+static inline int Highlight_tryMatch(Highlight* this, const unsigned char* buffer, int* attrs, int at, GraphNode* rules, GraphNode* follows, Method_PatternMatcher_match match, HighlightContext** ctx, bool paintUnmatched, int y) {
+   const unsigned char* here = buffer + at;
    int intColor;
-   char endNode;
-   int matchlen = match(rules, here, &intColor, &endNode);
+   bool eager;
+   int matchlen = match(rules, here, &intColor, &eager);
    Color color = (Color) intColor;
    assert(color >= 0 && color < Colors);
-   if (matchlen && (endNode == PM_EAGER_RULE || ( !(isword(here[matchlen-1]) && isword(here[matchlen]))))) {
+   if (matchlen && (eager || ( !(isword(here[matchlen-1]) && isword(here[matchlen]))))) {
       int attr = CRT_colors[color];
       for (int i = at; i < at+matchlen; i++)
          attrs[i] = attr;
       int nextCtx = 0;
-      int followMatchlen = match(follows, here, &nextCtx, &endNode);
+      int followMatchlen = match(follows, here, &nextCtx, &eager);
       if (followMatchlen == matchlen) {
          assert(nextCtx);
          *ctx = (HighlightContext*) nextCtx;
@@ -315,7 +316,7 @@ static inline int Highlight_tryMatch(Highlight* this, unsigned char* buffer, int
    return at;
 }
 
-void Highlight_setAttrs(Highlight* this, unsigned char* buffer, int* attrs, int len, int y) {
+void Highlight_setAttrs(Highlight* this, const unsigned char* buffer, int* attrs, int len, int y) {
    HighlightContext* ctx = this->currentContext;
    int at = 0;
    Method_PatternMatcher_match match;
@@ -360,6 +361,6 @@ void HighlightContext_delete(Object* cast) {
    free(this);
 }
 
-void HighlightContext_addRule(HighlightContext* this, char* rule, Color color, char nodeType) {
-   PatternMatcher_add(this->rules, (unsigned char*) rule, (int) color, nodeType);
+void HighlightContext_addRule(HighlightContext* this, char* rule, Color color, bool eager) {
+   PatternMatcher_add(this->rules, (unsigned char*) rule, (int) color, eager);
 }

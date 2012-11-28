@@ -59,7 +59,7 @@ bool FileReader_eof(FileReader* this) {
    return this->eof && !this->finalEnter && this->available == 0;
 }
 
-char* FileReader_readLine(FileReader* this, int* len) {
+char* FileReader_readLine(FileReader* this) {
    int chunkSize = 0;
    char* newline = NULL;
    while (true) {
@@ -94,7 +94,6 @@ char* FileReader_readLine(FileReader* this, int* len) {
       char* result = malloc(chunkSize + 1);
       memcpy(result, this->start, chunkSize);
       result[chunkSize] = '\0';
-      *len = chunkSize;
       if (newline)
          chunkSize++;
       this->start += chunkSize;
@@ -105,9 +104,7 @@ char* FileReader_readLine(FileReader* this, int* len) {
    }
    if (this->finalEnter) {
       this->finalEnter = false;
-      *len = 0;
       return strdup("");
    }
-   *len = 0;
    return NULL;
 }

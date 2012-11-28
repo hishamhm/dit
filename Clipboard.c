@@ -26,7 +26,7 @@ void Clipboard_delete(Clipboard* this) {
    free(this);
 }
 
-char* Clipboard_get(Clipboard* this, int* textLen) {
+Text Clipboard_get(Clipboard* this) {
    if (this->disk) {
       FILE* fd = fopen(this->clipFileName, "r");
       if (fd) {
@@ -36,25 +36,22 @@ char* Clipboard_get(Clipboard* this, int* textLen) {
          while (!feof(fd)) {
             if (size - len < 100) {
                size = len + 100;
-               out = realloc(out, size);
+               out = realloc(out, size+1);
             }
             char* walk = out + len;
             int amt = fread(walk, 1, 100, fd);
             len += amt;
          }
+         out[len] = '\0';
          fclose(fd);
-         if (textLen)
-            *textLen = len;
-         return out;
+         return Text_new(out);
       }
       this->disk = false;
    }
    if (this->text) {
-      if (textLen)
-         *textLen = this->len;
-      return strdup(this->text);
+      return Text_new(strdup(this->text));
    }
-   return NULL;
+   return Text_null();
 }
 
 void Clipboard_set(Clipboard* this, char* text, int len) {

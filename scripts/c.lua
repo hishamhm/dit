@@ -45,11 +45,13 @@ function highlight_line(line, y)
       for i = 1, #line do out[i] = " " end
       local marking = false
       for x, _ in pairs(errors[y]) do
-         out[x] = "*"
-         local xs = x
-         while line[xs]:match("[%w_]") do
-            out[xs] = "*"
-            xs = xs + 1
+         if x <= #line then
+            out[x] = "*"
+            local xs = x
+            while line[xs]:match("[%w_%->]") do
+               out[xs] = "*"
+               xs = xs + 1
+            end
          end
       end
       return table.concat(out)

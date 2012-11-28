@@ -15,22 +15,30 @@
 #include <lauxlib.h>
 
 #include "Prototypes.h"
+//#needs Line
 
 /*{
 
+#ifndef MIN
+#define MIN(a,b) ((a)<(b)?(a):(b))
+#endif
+
 #include <lua.h>
 
-#ifndef isword
-#define isword(x) (isalpha(x) || x == '_')
+#ifndef iswword
+#define iswword(x) (iswalpha(x) || x == '_')
 #endif
 
 #ifndef last_x_line
-#define last_x_line(this, line) (this->dosLineBreaks ? line->len - 1 : line->len)
+#define last_x_line(this, line) (this->dosLineBreaks ? Line_chars(line) - 1 : Line_chars(line))
 #endif
 
 #ifndef last_x
 #define last_x(this) last_x_line(this, this->line)
 #endif
+
+typedef int chars;
+typedef int cells;
 
 struct Buffer_ {
    char* fileName;
@@ -38,12 +46,12 @@ struct Buffer_ {
    bool readOnly;
    // logical position of the cursor in the line
    // (character of the line where cursor is.
-   int x;
+   chars x;
    int y;
    Line* line;
    // save X so that cursor returns to original X
    // after passing by a shorter line.
-   int savedX;
+   cells savedX;
    int savedY;
    Highlight* hl;
    // save context between calls to Buffer_draw
@@ -51,12 +59,12 @@ struct Buffer_ {
    // a redraw
    HighlightContext* savedContext;
    // coordinates of selection
-   int selectXfrom;
+   chars selectXfrom;
    int selectYfrom;
-   int selectXto;
+   chars selectXto;
    int selectYto;
    // coordinates of highlighted bracket
-   int bracketX;
+   cells bracketX;
    int bracketY;
    // block is being selected
    bool wasSelecting;
@@ -68,9 +76,9 @@ struct Buffer_ {
    // previous key for compound actions
    int lastKey;
    // document uses tab characters
-   int tabCharacters;
+   bool tabCharacters;
    // document uses DOS-style ctrl-M
-   int dosLineBreaks;
+   bool dosLineBreaks;
    int indentSpaces;
    // time tracker to disable auto-indent when pasting;
    double lastTime;
@@ -86,7 +94,7 @@ struct Buffer_ {
 };
 
 struct FilePosition_ {
-   int x;
+   chars x;
    int y;
    char* name;
    FilePosition* next;
@@ -99,7 +107,8 @@ inline void Buffer_restorePosition(Buffer* this) {
    
    FILE* fd = Files_openHome("r", "filepos", NULL);
    if (fd) {
-      int x, y;
+      chars x;
+      int y;
       char line[256];
       while (!feof(fd)) {
          fscanf(fd, "%d %d %255[^\n]\n", &x, &y, line);
@@ -162,19 +171,19 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
       int i = 0;
       if (file && !FileReader_eof(file)) {
          newFile = false;
-         int len = 0;
-         char* text = FileReader_readLine(file, &len);
+         Text text = Text_new(FileReader_readLine(file));
          this->hl = Highlight_new(fileName, text, this->L);
-         if (!this->tabCharacters && strchr(text, '\t')) this->tabCharacters = true;
-         if (!this->dosLineBreaks && strchr(text, '\015')) this->dosLineBreaks = true;
-         Line* line = Line_new(p->items, text, len, this->hl->mainContext);
+         if (!this->tabCharacters && Text_hasChar(text, '\t')) this->tabCharacters = true;
+         if (!this->dosLineBreaks && Text_hasChar(text, '\015')) this->dosLineBreaks = true;
+         Line* line = Line_new(p->items, text, this->hl->mainContext);
          Panel_set(p, i, (ListItem*) line);
          while (!FileReader_eof(file)) {
             i++;
-            char* text = FileReader_readLine(file, &len);
-            if (text) {
-               if (!this->tabCharacters && strchr(text, '\t')) this->tabCharacters = true;
-               Line* line = Line_new(p->items, text, len, this->hl->mainContext);
+            char* t = FileReader_readLine(file);
+            if (t) {
+               Text text = Text_new(t);
+               if (!this->tabCharacters && Text_hasChar(text, '\t')) this->tabCharacters = true;
+               Line* line = Line_new(p->items, text, this->hl->mainContext);
                Panel_set(p, i, (ListItem*) line);
             }
          }
@@ -188,8 +197,8 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
       this->readOnly = false;
    }
    if (newFile) {
-      this->hl = Highlight_new(fileName, "", this->L);
-      Panel_set(p, 0, (ListItem*) Line_new(p->items, strdup(""), 0, this->hl->mainContext));
+      this->hl = Highlight_new(fileName, Text_new(""), this->L);
+      Panel_set(p, 0, (ListItem*) Line_new(p->items, Text_new(strdup("")), this->hl->mainContext));
    }
 
    this->savedContext = this->hl->mainContext;
@@ -256,7 +265,7 @@ inline void Buffer_storePosition(Buffer* this) {
       return;
 }
 
-void Buffer_goto(Buffer* this, int x, int y) {
+void Buffer_goto(Buffer* this, chars x, int y) {
    if (y < 0)
       y += Panel_size(this->panel);
    Panel_setSelected(this->panel, y);
@@ -295,12 +304,12 @@ inline void Buffer_highlightBracket(Buffer* this) {
    char oth;
    int dir;
    int x = this->x;
-   if (l->len == 0) return;
-   char ch = l->text[x];
+   if (Line_chars(l) == 0) return;
+   int ch = Line_charAt(l, x);
    if (!Buffer_matchBracket(ch, &oth, &dir)) {
       if (x == 0)
          return;
-      ch = l->text[--x];
+      ch = Line_charAt(l, --x);
       if (!Buffer_matchBracket(ch, &oth, &dir)) {
          return;
       }
@@ -314,13 +323,13 @@ inline void Buffer_highlightBracket(Buffer* this) {
          if (l->super.prev) {
             l = (Line*) l->super.prev;
             y--;
-            x = l->len - 1;
+            x = Line_chars(l) - 1;
             if (y < this->y - this->panel->h) {
                return;
             }
          } else
             return;
-      } else if (x >= l->len) {
+      } else if (x >= Line_chars(l)) {
          if (l->super.next) {
             l = (Line*) l->super.next;
             y++;
@@ -332,7 +341,7 @@ inline void Buffer_highlightBracket(Buffer* this) {
             return;
          }
       }
-      char at = l->text[x];
+      char at = Line_charAt(l, x);
       if (at == ch) {
          level++;
       } else if (at == oth) {
@@ -394,19 +403,19 @@ int Buffer_y(Buffer* this) {
    return this->y;
 }
 
-char* Buffer_currentLine(Buffer* this) {
-   return this->line->text;
+const char* Buffer_currentLine(Buffer* this) {
+   return Line_toString(this->line);
 }
 
-inline char* Buffer_getLine(Buffer* this, int i) {
+inline const char* Buffer_getLine(Buffer* this, int i) {
    Line* line = (Line*) Panel_get(this->panel, i);
    if (line) 
-      return line->text;
+      return Line_toString(line);
    else
       return NULL;
 }
 
-char* Buffer_previousLine(Buffer* this) {
+const char* Buffer_previousLine(Buffer* this) {
    return Buffer_getLine(this, this->y - 1);
 }
 
@@ -426,11 +435,11 @@ void Buffer_delete(Buffer* this) {
 void Buffer_refreshHighlight(Buffer* this) {
    Highlight_delete(this->hl);
    Line* firstLine = (Line*) Panel_get(this->panel, 0);
-   char* firstText;
+   Text firstText;
    if (firstLine)
       firstText = firstLine->text;
    else
-      firstText = "";
+      firstText = Text_new("");
    Highlight* hl = Highlight_new(this->fileName, firstText, this->L);
    this->hl = hl;
    int size = Panel_size(this->panel);
@@ -476,19 +485,8 @@ void Buffer_undo(Buffer* this) {
    this->modified = modified;
 }
 
-inline void Buffer_breakIndenting(Buffer* this, int indent) {
-   indent = MIN(indent, last_x(this));
-   Undo_breakAt(this->undo, this->x, this->y, indent);
-   Line_breakAt(this->line, this->x, indent);
-   Script_onChange(this);
-}
-
 char Buffer_getLastKey(Buffer* this) {
    return this->lastKey;
-}
-
-inline int Buffer_getIndentSize(Buffer* this) {
-   return MIN(Line_getIndentChars(this->line), this->x);
 }
 
 void Buffer_breakLine(Buffer* this) {
@@ -498,20 +496,22 @@ void Buffer_breakLine(Buffer* this) {
 
    if (this->dosLineBreaks) {
       Undo_beginGroup(this->undo, this->x, this->y);
-      Buffer_defaultKeyHandler(this, '\015');
+      Buffer_defaultKeyHandler(this, '\015', false);
    }
-
-   int indent = Buffer_getIndentSize(this);
 
    /* Hack to disable auto-indent when pasting through X11, part 2 */
    struct timeval tv;
    gettimeofday(&tv, NULL);
    double now = tv.tv_sec * 1000000 + tv.tv_usec;
+   bool doIndent = true;
    if (now - this->lastTime < 10000)
-      indent = 0;
+      doIndent = false;
    this->lastTime = now;
 
-   Buffer_breakIndenting(this, indent);
+   int indent = Line_breakAt(this->line, this->x, doIndent);
+   Undo_breakAt(this->undo, this->x, this->y, indent);
+   Script_onChange(this);
+   
    Panel_onKey(this->panel, KEY_DOWN);
    this->line = (Line*) Panel_getSelected(this->panel);
    this->x = indent;
@@ -540,7 +540,7 @@ void Buffer_forwardChar(Buffer* this) {
 
 void Buffer_forwardWord(Buffer* this) {
    if (this->x < last_x(this)) {
-      this->x = String_forwardWord(this->line->text, last_x(this), this->x);
+      this->x = Text_forwardWord(this->line->text, this->x);
    } else if (this->line->super.next) {
       this->x = 0;
       Panel_onKey(this->panel, KEY_DOWN);
@@ -552,7 +552,7 @@ void Buffer_forwardWord(Buffer* this) {
 
 void Buffer_backwardWord(Buffer* this) {
    if (this->x > 0) {
-      this->x = String_backwardWord(this->line->text, last_x(this), this->x);
+      this->x = Text_backwardWord(this->line->text, this->x);
    } else if (this->y > 0) {
       Panel_onKey(this->panel, KEY_UP);
       this->line = (Line*) Panel_getSelected(this->panel);
@@ -587,7 +587,7 @@ void Buffer_endUndoGroup(Buffer* this) {
 void Buffer_beginningOfLine(Buffer* this) {
    int prevX = this->x;
    this->x = 0;
-   while (isblank(this->line->text[this->x])) {
+   while (iswblank(Line_charAt(this->line, this->x))) {
       this->x++;
    }
    if (prevX == this->x)
@@ -629,17 +629,17 @@ void Buffer_nextPage(Buffer* this) {
 
 void Buffer_wordWrap(Buffer* this, int wrap) {
    Undo_beginGroup(this->undo, this->x, this->y);
-   while (this->line->super.next && ((Line*)this->line->super.next)->len > 0) {
+   while (this->line->super.next && Line_chars((Line*)this->line->super.next) > 0) {
       this->x = last_x(this);
       if (this->dosLineBreaks) {
          Undo_deleteCharAt(this->undo, this->x, this->y, Line_charAt(this->line, this->x));
          Line_deleteChars(this->line, this->x, 1);
       }
-      if (this->line->text[this->x-1] != ' ')
-         Buffer_defaultKeyHandler(this, ' ');
+      if (Line_charAt(this->line, this->x-1) != ' ')
+         Buffer_defaultKeyHandler(this, ' ', false);
       Undo_joinNext(this->undo, this->x, this->y, false);
       Line_joinNext(this->line);
-      while (this->line->text[this->x] == ' ') {
+      while (Line_charAt(this->line, this->x) == ' ') {
          Buffer_deleteChar(this);
       }
       this->line = (Line*) Panel_getSelected(this->panel);
@@ -648,7 +648,7 @@ void Buffer_wordWrap(Buffer* this, int wrap) {
    while (last_x(this) > wrap) {
       Line* oldLine = this->line;
       for(int i = wrap; i > 0; i--) {
-         if (this->line->text[i] == ' ') {
+         if (Line_charAt(this->line, i) == ' ') {
             this->x = i;
             Buffer_deleteChar(this);
             Buffer_breakLine(this);
@@ -714,18 +714,18 @@ char* Buffer_copyBlock(Buffer* this, int *len) {
    return StringBuffer_deleteGet(str);
 }
 
-void Buffer_pasteBlock(Buffer* this, char* block, int len) {
+void Buffer_pasteBlock(Buffer* this, Text block) {
    Undo_beginGroup(this->undo, this->x, this->y);
    if (this->selecting)
       Buffer_deleteBlock(this);
-   if (len == 0) {
+   if (block.chars == 0) {
       Undo_endGroup(this->undo, this->x, this->y);
       return;
    }
    int newX;
    int newY = this->y;
-   Undo_insertBlock(this->undo, this->x, this->y, block, len);
-   bool multiline = Line_insertBlock(this->line, this->x, block, len, &newX, &newY);
+   Undo_insertBlock(this->undo, this->x, this->y, block);
+   bool multiline = Line_insertBlock(this->line, this->x, block, &newX, &newY);
 
    this->x = newX;
    if (multiline) {
@@ -742,19 +742,19 @@ void Buffer_pasteBlock(Buffer* this, char* block, int len) {
    this->modified = true;
 }
 
-bool Buffer_setLine(Buffer* this, int y, const char* text, int len) {
+bool Buffer_setLine(Buffer* this, int y, const Text text) {
    if (y < 0)
       y += Panel_size(this->panel);
    if (y < 0 || y > Panel_size(this->panel)-1)
       return false;
    Undo_beginGroup(this->undo, this->x, this->y);
    Line* line = (Line*) Panel_get(this->panel, y);
-   char* oldContent = calloc(line->len+1, 1);
-   memcpy(oldContent, line->text, line->len);
-   Undo_deleteBlock(this->undo, 0, y, oldContent, line->len);
-   Line_deleteChars(line, 0, line->len);
-   Undo_insertBlock(this->undo, 0, y, text, len);
-   Line_insertStringAt(line, 0, text, len);
+   char* oldContent = calloc(line->text.bytes+1, 1);
+   memcpy(oldContent, line->text.data, line->text.bytes);
+   Undo_deleteBlock(this->undo, 0, y, oldContent, line->text.bytes);
+   Line_deleteChars(line, 0, Line_chars(line));
+   Undo_insertBlock(this->undo, 0, y, text);
+   Line_insertTextAt(line, text, 0);
    Undo_endGroup(this->undo, this->x, this->y);
    Script_onChange(this);
    this->modified = true;
@@ -800,7 +800,7 @@ void Buffer_backwardDeleteChar(Buffer* this) {
             Undo_beginGroup(this->undo, this->x, this->y);
          }
          Line* prev = (Line*) this->line->super.prev;
-         this->x = prev->len;
+         this->x = Line_chars(prev);
          Undo_joinNext(this->undo, this->x, this->y - 1, true);
          Line_joinNext(prev);
          Script_onChange(this);
@@ -910,7 +910,7 @@ void Buffer_indent(Buffer* this) {
    int yStart, lines, spaces, move;
    if (this->tabCharacters) {
       if (!this->selecting) {
-         Buffer_defaultKeyHandler(this, '\t');
+         Buffer_defaultKeyHandler(this, '\t', false);
          return;
       }
       spaces = 0;
@@ -929,13 +929,13 @@ void Buffer_indent(Buffer* this) {
    this->modified = true;
 }
       
-void Buffer_defaultKeyHandler(Buffer* this, int ch) {
-   if ((ch >= 32 && ch <= 255) || ch == '\t' || ch == '\015') {
+void Buffer_defaultKeyHandler(Buffer* this, int ch, bool code) {
+   if (!code && ch >= 32 || ch == '\t' || ch == '\015') {
       if (this->selecting) {
          Buffer_deleteBlock(this);
       }
       Undo_insertCharAt(this->undo, this->x, this->y, ch);
-      Line_insertCharAt(this->line, ch, this->x);
+      Line_insertChar(this->line, this->x, ch);
       Script_onChange(this);
       this->x++;
       this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
@@ -955,95 +955,84 @@ void Buffer_defaultKeyHandler(Buffer* this, int ch) {
 
 char Buffer_currentChar(Buffer* this) {
    assert(this->line);
-   char* text = this->line->text;
    int len = last_x(this);
    int offset = MIN(this->x, len);
    if (this->x < len) {
-      return text[offset];
+      return Line_charAt(this->line, offset);
    } else {
       return '\0';
    }
 }
 
-int Buffer_currentWord(Buffer* this, char* result, int resultLen) {
-
+Text Buffer_currentWord(Buffer* this) {
    assert(this->line);
-   char* text = this->line->text;
    int len = last_x(this);
    int offset = MIN(this->x, len);
-   int at = 0;
-   int saveOffset = offset;
-   if (this->x <= len) {
-      while (offset > 0 && isword(text[offset-1]))
-         offset--;
-      for(int i = 0; i < resultLen && isword(text[offset]); i++) {
-         *result = text[offset];
-         result++;
-         offset++;
-         if (offset == saveOffset)
-            at = i+1;
-      }
-   }
-   *result = '\0';
-   return at;
+   return Text_wordAt(this->line->text, offset);
 }
 
-bool Buffer_find(Buffer* this, char* needle, bool findNext, bool caseSensitive, bool wholeWord, bool forward) {
+bool Buffer_find(Buffer* this, Text needle, bool findNext, bool caseSensitive, bool wholeWord, bool forward) {
    assert(this->line);
-   int needleLen = strlen(needle);
-   if (needleLen == 0)
+   if (!Text_chars(needle))
       return false;
    if (this->selecting && (!findNext || !forward) )
       this->x = this->selectXfrom;
    Line* line = this->line;
    Line* start = line;
    int y = this->y;
-   int x = this->x;
-   char* haystack = line->text;
-   int haystackLen = line->len;
-   assert(line->text[line->len] == '\0');
+   chars x = this->x;
+   Text haystack = line->text;
    bool last = false;
    for (;;) {
-      char* found = NULL;
+      int found = -1;
       if (forward) {
-         if (haystackLen - x >= needleLen) {
+         const Text haystackX = Text_textAt(haystack, x);
+         if (Text_chars(haystack) - x >= Text_chars(needle)) {
             if (caseSensitive)
-               found = strstr(haystack+x, needle);
+               found = Text_indexOf(haystackX, needle);
             else
-               found = strcasestr(haystack+x, needle);
+               found = Text_indexOfi(haystackX, needle);
+            if (found != -1)
+               found += x;
          }
       } else {
-         if (x >= needleLen) {
-            x -= needleLen;
+         if (x >= Text_chars(needle)) {
+            x -= Text_chars(needle);
             while (x >= 0) {
+               const Text haystackX = Text_textAt(haystack, x);
                int cmp;
                if (caseSensitive)
-                  cmp = strncmp(haystack+x, needle, needleLen);
+                  cmp = Text_strncmp(haystackX, needle);
                else
-                  cmp = strncasecmp(haystack+x, needle, needleLen);
+                  cmp = Text_strncasecmp(haystackX, needle);
                if (cmp == 0) {
-                  found = haystack+x;
+                  found = x;
                   break;
                }
                x--;
             }
          }
       }
-      if (wholeWord && found) {
-         if ((found > haystack && isword(*(found-1))) || (isword(*(found+needleLen)))) {
+
+      int pastFound = found + Text_chars(needle);
+      if (wholeWord && found > 0 && pastFound < Text_chars(haystack)) {
+         wchar_t prevChar = Text_at(haystack, found - 1);
+         wchar_t nextChar = Text_at(haystack, pastFound);
+         if ( iswword(prevChar) || iswword(nextChar) ) {
             if (forward)
-               x = (found - haystack) + needleLen;
+               x = pastFound;
             continue;
          }
       }
-      if (found) {
-         int x = found - haystack;
+
+      if (found != -1) {
+         int x = found;
          this->selectXfrom = x;
          this->selectYfrom = y;
-         this->selectXto = x + needleLen;
+         this->selectXto = pastFound;
          this->selectYto = y;
          this->selecting = true;
-         Buffer_goto(this, x + needleLen, y);
+         Buffer_goto(this, pastFound, y);
 
          int screenX = Line_widthUntil(this->line, this->x, this->tabWidth);
          int screenXfrom = Line_widthUntil(this->line, this->selectXfrom, this->tabWidth);
@@ -1073,11 +1062,10 @@ bool Buffer_find(Buffer* this, char* needle, bool findNext, bool caseSensitive, 
          }
       }
       haystack = line->text;
-      haystackLen = line->len;
       if (forward)
          x = 0;
       else
-         x = haystackLen;
+         x = Text_chars(haystack);
       if (last) {
          break;
       } else {
@@ -1095,7 +1083,7 @@ bool Buffer_save(Buffer* this) {
       return false;
    Line* l = (Line*) this->panel->items->head;
    while (l) {
-      fwrite(l->text, l->len, 1, fd);
+      fwrite(Line_toString(l), Line_bytes(l), 1, fd);
       l = (Line*) l->super.next;
       if (l)
          fwrite("\n", 1, 1, fd);

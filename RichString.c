@@ -84,17 +84,16 @@ static inline void RichString_setLen(RichString* this, int len) {
 
 #ifdef HAVE_LIBNCURSESW
 
-static inline void RichString_writeFrom(RichString* this, int attrs, const char* data_c, int from, int len) {
-   wchar_t data[len+1];
-   len = mbstowcs(data, data_c, len);
+static inline void RichString_writeFrom(RichString* this, int attrs, const char* data, int from, int len) {
    if (len<0)
       return;
    int newLen = from + len;
    RichString_setLen(this, newLen);
    memset(&this->chptr[from], 0, sizeof(CharType) * (newLen - from));
-   for (int i = from, j = 0; i < newLen; i++, j++) {
-      this->chptr[i].chars[0] = data[j];
+   for (int i = from; i < newLen; i++) {
+      this->chptr[i].chars[0] = UTF8_stringToCodePoint(data);
       this->chptr[i].attr = attrs;
+      data = UTF8_forward(data, 1);
    }
    this->chptr[newLen].chars[0] = 0;
 }

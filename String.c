@@ -4,39 +4,9 @@
 #include <strings.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <ctype.h>
+#include <wctype.h>
 
 #include "Prototypes.h"
-
-int String_forwardWord(char* s, int len, int cursor) {
-   char curr = s[cursor];
-   if (isalnum(curr)) {
-      while (isalnum(curr) && cursor < len)
-         curr = s[++cursor];
-   } else if (!isalnum(curr) && !isblank(curr)) {
-      while (!isalnum(curr) && !isblank(curr) && cursor < len)
-         curr = s[++cursor];
-   } else {
-      while (isblank(curr) && cursor < len)
-         curr = s[++cursor];
-   }
-   return cursor;
-}
-
-int String_backwardWord(char* s, int len, int cursor) {
-   char curr = s[cursor - 1];
-   if (isalnum(curr)) {
-      while (isalnum(curr) && cursor > 0)
-         curr = s[--cursor - 1];
-   } else if (!isalnum(curr) && !isblank(curr)) {
-      while (!isalnum(curr) && !isblank(curr) && cursor > 0)
-         curr = s[--cursor - 1];
-   } else {
-      while (isblank(curr) && cursor > 0)
-         curr = s[--cursor - 1];
-   }
-   return cursor;
-}
 
 inline void String_delete(char* s) {
    assert(s);
@@ -64,37 +34,6 @@ char* String_trim(char* in) {
    strncpy(out, in, len);
    out[len] = '\0';
    return out;
-}
-
-char* strdupUpTo(char* orig, char upTo) {
-   int len;
-   
-   int origLen = strlen(orig);
-   char* at = index(orig, upTo);
-   if (at != NULL)
-      len = at - orig;
-   else
-      len = origLen;
-   char* copy = (char*) malloc(len+1);
-   strncpy(copy, orig, len);
-   copy[len] = '\0';
-   return copy;
-}
-
-char* String_sub(char* orig, int from, int to) {
-   char* copy;
-   int len;
-   
-   len = strlen(orig);
-   if (to > len)
-      to = len;
-   if (from > len)
-      to = len;
-   len = to-from+1;
-   copy = (char*) malloc(len+1);
-   strncpy(copy, orig+from, len);
-   copy[len] = '\0';
-   return copy;
 }
 
 void String_println(char* s) {
