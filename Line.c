@@ -203,7 +203,7 @@ int Line_breakAt(Line* this, int at, bool doIndent) {
    int indentBytes = 0;
    if (doIndent) {
       // UTF-8: indent chars are always ASCII
-      for (; indentBytes < Text_chars(this->text) && isblank(this->text.data[indentBytes]); indentBytes++);
+      for (; indentBytes < Text_chars(this->text) && isblank(this->text.data[indentBytes]) && indentBytes < at; indentBytes++);
    }
    
    Text new = Text_breakIndenting(&(this->text), at, indentBytes);
