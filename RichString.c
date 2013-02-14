@@ -49,6 +49,8 @@
 #define CharType_setAttr(ch, attrs) *(ch) = (*(ch) & 0xff) | (attrs)
 #endif
 
+#define RichString_at(this, at) ((this).chptr + at)
+
 struct RichString_ {
    int chlen;
    CharType chstr[RICHSTRING_MAXLEN+1];

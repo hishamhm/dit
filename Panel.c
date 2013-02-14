@@ -235,7 +235,7 @@ void Panel_draw(Panel* this) {
       Display_mvhline(y, x, ' ', w);
       if (scrollH < headerLen) {
          assert(headerLen > 0);
-         Display_writeChstrAtn(y, x, this->header.chstr + scrollH,
+         Display_writeChstrAtn(y, x, RichString_at(this->header, scrollH),
                      MIN(headerLen - scrollH, w));
       }
       y++;
@@ -249,10 +249,8 @@ void Panel_draw(Panel* this) {
    } else {
       highlight = CRT_colors[UnfocusedSelectionColor];
    }
-
    Display_attrset(this->color);
    if (this->needsRedraw) {
-
       for(int i = first, j = 0; j < h && i < last; i++, j++) {
          Object* itemObj = (Object*) List_get(this->items, i);
          assert(itemObj);
@@ -268,14 +266,14 @@ void Panel_draw(Panel* this) {
             cursorY = y + j;
             Display_mvhline(cursorY, x+amt, ' ', w-amt);
             if (amt > 0)
-               Display_writeChstrAtn(y+j, x+0, itemRef.chstr + scrollH, amt);
+               Display_writeChstrAtn(y+j, x+0, RichString_at(itemRef, scrollH), amt);
             if (this->highlightBar)
                Display_attrset(this->color);
          } else {
             Display_mvhline(y+j, x+amt, ' ', w-amt);
 
             if (amt > 0)
-               Display_writeChstrAtn(y+j, x+0, itemRef.chstr + scrollH, amt);
+               Display_writeChstrAtn(y+j, x+0, RichString_at(itemRef, scrollH), amt);
          }
          RichString_end(itemRef);
       }
@@ -318,7 +316,7 @@ void Panel_draw(Panel* this) {
       Display_mvhline(y+ this->oldSelected - this->scrollV, x+0, ' ', w);
       int oldLen = RichString_sizeVal(oldRef);
       if (scrollH < oldLen)
-         Display_writeChstrAtn(y+ this->oldSelected - this->scrollV, x+0, oldRef.chstr + scrollH, MIN(oldLen - scrollH, w));
+         Display_writeChstrAtn(y+ this->oldSelected - this->scrollV, x+0, RichString_at(oldRef, scrollH), MIN(oldLen - scrollH, w));
       if (this->highlightBar)
          Display_attrset(highlight);
       cursorY = y+this->selected - this->scrollV;
@@ -327,7 +325,7 @@ void Panel_draw(Panel* this) {
          RichString_setAttr(&newRef, highlight);
       int newLen = RichString_sizeVal(newRef);
       if (scrollH < newLen)
-         Display_writeChstrAtn(y+this->selected - this->scrollV, x+0, newRef.chstr + scrollH, MIN(newLen - scrollH, w));
+         Display_writeChstrAtn(y+this->selected - this->scrollV, x+0, RichString_at(newRef, scrollH), MIN(newLen - scrollH, w));
       if (this->highlightBar)
          Display_attrset(this->color);
       RichString_end(oldRef);
