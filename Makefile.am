@@ -13,7 +13,7 @@ nobase_dist_pkgdata_DATA = bindings/default \
  terminals/linux terminals/xterm-color terminals/konsole terminals/rxvt \
  highlight/autoconf highlight/c highlight/c_mode highlight/css \
  highlight/diff highlight/highlight_rules highlight/html \
- highlight/html_mode highlight/java highlight/latex highlight/lua \
+ highlight/java highlight/latex highlight/lua \
  highlight/make highlight/perl highlight/php highlight/python \
  highlight/shell highlight/xml
 
