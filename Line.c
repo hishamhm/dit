@@ -46,7 +46,7 @@ Line* Line_new(List* list, Text text, HighlightContext* context) {
    Call0(ListItem, init, this);
    this->text = text;
    this->context = context;
-   assert(this->data[this->bytes] == '\0');
+   //FIXME// assert(this->data[this->bytes] == '\0');
    return this;
 }
 
@@ -273,7 +273,7 @@ static StringBuffer* getBlock(Line* this, int lines, int xFrom, int xTo, bool de
       }
       if (delete) Line_joinNext(first);
    }
-   assert(this->text[this->len] == '\0');
+   //FIXME// assert(this->text[this->len] == '\0');
    return str;
 }
 
@@ -306,7 +306,7 @@ void Line_indent(Line* this, int lines, int indentSpaces) {
       Line* next = (Line*) this->super.next;
       Line_indent(next, lines - 1, indentSpaces);
    }
-   assert(this->text[this->len] == '\0');
+   //FIXME// assert(this->text[this->len] == '\0');
 }
 
 int* Line_unindent(Line* this, int lines, int indentSpaces) {
@@ -332,7 +332,7 @@ int* Line_unindent(Line* this, int lines, int indentSpaces) {
          Line_deleteChars(l, 0, n);
       l = (Line*) l->super.next;
    }
-   assert(this->text[this->len] == '\0');
+   //FIXME// assert(this->text[this->len] == '\0');
    return result;
 }
 

@@ -36,7 +36,7 @@ struct UndoAction_ {
    int x;
    int y;
    union {
-      char c;
+      wchar_t ch;
       struct {
          char* fileName;
          char* md5;
@@ -118,23 +118,24 @@ void Undo_delete(Undo* this) {
    free(this);
 }
 
-inline void Undo_char(Undo* this, UndoActionKind kind, int x, int y, char data) {
+inline void Undo_char(Undo* this, UndoActionKind kind, int x, int y, wchar_t ch) {
    UndoAction* action = UndoAction_new(kind, x, y);
-   action->data.c = data;
+   action->data.ch = ch;
    Stack_push(this->actions, action, 0);
 }
 
-void Undo_deleteCharAt(Undo* this, int x, int y, char c) {
-   Undo_char(this, UndoDeleteChar, x, y, c);
+void Undo_deleteCharAt(Undo* this, int x, int y, wchar_t ch) {
+   Undo_char(this, UndoDeleteChar, x, y, ch);
 }
 
-void Undo_backwardDeleteCharAt(Undo* this, int x, int y, char c) {
-   Undo_char(this, UndoBackwardDeleteChar, x, y, c);
+void Undo_backwardDeleteCharAt(Undo* this, int x, int y, wchar_t ch) {
+   Undo_char(this, UndoBackwardDeleteChar, x, y, ch);
 }
 
-void Undo_insertCharAt(Undo* this, int x, int y, char c) {
+void Undo_insertCharAt(Undo* this, int x, int y, wchar_t ch) {
    UndoAction* top = (UndoAction*) Stack_peek(this->actions, NULL);
-   if (top && c != '\t') {
+   /* is this `ch != 't'` still valid? */
+   if (top && ch != '\t') {
       if ((top->kind == UndoInsertChar && top->y == y && top->x == x-1)
        || (top->kind == UndoInsertBlock && top->data.coord.yTo == y && top->data.coord.xTo == x)) {
          top->kind = UndoInsertBlock;
@@ -143,7 +144,7 @@ void Undo_insertCharAt(Undo* this, int x, int y, char c) {
          return;
       }
    }
-   Undo_char(this, UndoInsertChar, x, y, c);
+   Undo_char(this, UndoInsertChar, x, y, ch);
 }
 
 void Undo_breakAt(Undo* this, int x, int y, int indent) {
@@ -289,18 +290,18 @@ bool Undo_undo(Undo* this, int* x, int* y) {
    }
    case UndoBackwardDeleteChar:
    {
-      Line_insertChar(line, action->data.c, action->x);
+      Line_insertChar(line, action->x, action->data.ch);
       *x = action->x + 1;
       break;
    }
    case UndoDeleteChar:
    {
-      Line_insertChar(line, action->data.c, action->x);
+      Line_insertChar(line, action->x, action->data.ch);
       break;
    }
    case UndoInsertChar:
    {
-      assert(action->data.c == line->text[action->x]);
+      assert(action->data.ch == Line_charAt(line, action->x));
       Line_deleteChars(line, action->x, 1);
       break;
    }
@@ -326,7 +327,7 @@ bool Undo_undo(Undo* this, int* x, int* y) {
    {
       for (int i = 0; i < action->data.unindent.len; i++) {
          for (int j = 0; j < action->data.unindent.buf[i]; j++)
-            Line_insertChar(line, action->data.unindent.tab ? '\t' : ' ', 0);
+            Line_insertChar(line, 0, action->data.unindent.tab ? '\t' : ' ');
          line = (Line*) line->super.next;
          assert(line);
       }
@@ -392,7 +393,7 @@ void Undo_store(Undo* this, char* fileName) {
       case UndoBackwardDeleteChar:
       case UndoDeleteChar:
       case UndoInsertChar:
-         fwrite(&action->data.c, sizeof(char), 1, ufd);
+         fwrite(&action->data.ch, sizeof(wchar_t), 1, ufd);
          break;
       case UndoDeleteBlock:
          assert(action->data.str.len > 0);
@@ -470,7 +471,7 @@ void Undo_restore(Undo* this, char* fileName) {
       case UndoBackwardDeleteChar:
       case UndoDeleteChar:
       case UndoInsertChar:
-         read = fread(&action->data.c, sizeof(char), 1, ufd);
+         read = fread(&action->data.ch, sizeof(wchar_t), 1, ufd);
          if (read < 1) { fclose(ufd); return; }
          break;
       case UndoDeleteBlock:

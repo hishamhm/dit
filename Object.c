@@ -15,7 +15,7 @@
 #define Class(c) ((c ## Class*)& c ## Type)
 #define ClassAs(c,a) ((a ## Class*)& c ## Type)
 
-#define Alloc(c) ((c*)malloc(sizeof(c))); ((Object*)this)->class = (ObjectClass*)&(c ## Type)
+#define Alloc(c) ((c*)calloc(sizeof(c), 1)); ((Object*)this)->class = (ObjectClass*)&(c ## Type)
 #define Bless(c) ((Object*)this)->class = (ObjectClass*)&(c ## Type)
 
 typedef void(*Method_Object_display)(Object*, RichString*);
