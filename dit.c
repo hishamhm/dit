@@ -205,6 +205,8 @@ static void Dit_goto(Buffer* buffer, TabManager* tabs) {
          }
       }
       char* endptr;
+      if (!Dit_gotoField->current->text.data)
+         break;
       int y = strtol(Dit_gotoField->current->text.data, &endptr, 10);
       if (endptr && *endptr == '\0') {
          if (y > 0)
