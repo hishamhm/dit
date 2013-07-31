@@ -35,9 +35,11 @@ local function goto_result(decl, word)
       local buf = tabs:getBuffer(page)
       buf:goto(1, line)
       local text = buf:line()
-      local x = text:find(word)
-      if x then buf:goto(x, line) end
-      return file, line
+      if word then
+         local x = text:find(word)
+         if x then buf:goto(x, line) end
+         return file, line
+      end
    end
 end
 
