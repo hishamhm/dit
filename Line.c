@@ -78,8 +78,9 @@ void Line_display(Object* cast, RichString* str) {
 
    int inIdx = 0;
    int hlAttrs[this->text.bytes];
-   int attrs[this->text.chars * tabWidth + 1];
-   memset(attrs, 0, (this->text.chars * tabWidth + 1) * sizeof(int));
+   int sizeAttrs = this->text.chars * tabWidth + 1;
+   int* attrs = malloc(sizeAttrs * sizeof(int));
+   memset(attrs, 0, sizeAttrs * sizeof(int));
    
    int outIdx = 0;
    char out[this->text.bytes * tabWidth + 1];
@@ -161,6 +162,7 @@ void Line_display(Object* cast, RichString* str) {
       RichString_paintAttrs(str, attrs + scrollH);
    }
    this->context = Highlight_getContext(hl);
+   free(attrs);
 }
 
 int Line_widthUntil(Line* this, int n, int tabWidth) {
