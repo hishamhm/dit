@@ -275,7 +275,7 @@ static StringBuffer* getBlock(Line* this, int lines, int xFrom, int xTo, bool de
       }
       if (delete) Line_joinNext(first);
    }
-   //FIXME// assert(this->text[this->len] == '\0');
+   assert(this->text[this->len] == '\0');
    return str;
 }
 

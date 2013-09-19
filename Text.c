@@ -163,6 +163,7 @@ void Text_prune(Text* this) {
 }
 
 bool Text_hasChar(Text t, int c) {
+   if (!t.data) return false;
    if (c >> 7 == 0)
       return strchr(t.data, c);
    unsigned char seq[5];
@@ -185,7 +186,7 @@ int Text_bytesUntil(Text t, int n) {
 
 const Text Text_textAt(Text t, int n) {
    Text s;
-   s.data = (unsigned char*) UTF8_forward(t.data, n);
+   s.data = t.data ? (unsigned char*) UTF8_forward(t.data, n) : NULL;
    s.bytes = t.bytes - (s.data - t.data);
    s.chars = t.chars - n;
    return s;
@@ -346,8 +347,10 @@ void Text_deleteChars(Text* t, int at, int n) {
    n = MIN(n, t->chars - at);
    unsigned char* s = (unsigned char*) UTF8_forward(t->data, at);
    int offset = UTF8_forward(s, n) - s;
-   for(; *s; s++) {
+   for (;;) {
       *s = *(s + offset);
+      if (!*s) break;
+      s++;
    }
    t->bytes -= offset;
    t->chars -= n;
@@ -357,6 +360,7 @@ static inline void insert(Text* t, int at, const unsigned char* data, int bytes,
    if (t->bytes + bytes >= t->dataSize) {
       t->dataSize += MAX(bytes, t->dataSize) + 1;
       t->data = realloc(t->data, t->dataSize);
+      t->data[t->bytes] = '\0';
    }
    unsigned char* s = (unsigned char*) UTF8_forward(t->data, at);
    for (int i = t->bytes; t->data + i >= s; i--) {
@@ -387,7 +391,7 @@ void Text_insertString(Text* t, int at, const unsigned char* s, int bytes) {
 
 Text Text_breakIndenting(Text* t, int at, int indent) {
    Text new = Text_null();
-   int atBytes = Text_bytesUntil(*t, at);
+   int atBytes = at ? Text_bytesUntil(*t, at) : 0;
    int restBytes = t->bytes - atBytes;
 
    if (indent)
