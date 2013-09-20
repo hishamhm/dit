@@ -40,12 +40,17 @@
 #define RichString_setChar(this, at, ch) do{ (this)->chptr[(at)].chars[0] = ch; } while(0)
 #define CharType cchar_t
 #define CharType_setAttr(ch, attrs) (ch)->attr = (attrs)
-#else
+#elif HAVE_LIBNCURSES
 #define RichString_printVal(this, y, x) mvaddchstr(y, x, (this).chptr)
 #define RichString_printoffnVal(this, y, x, off, n) mvaddchnstr(y, x, (this).chptr + off, n)
 #define RichString_getCharVal(this, i) ((this).chptr[i])
 #define RichString_setChar(this, at, ch) do{ (this)->chptr[(at)] = ch; } while(0)
 #define CharType chtype
+#define CharType_setAttr(ch, attrs) *(ch) = (*(ch) & 0xff) | (attrs)
+#else
+#define RichString_getCharVal(this, i) ((this).chptr[i])
+#define RichString_setChar(this, at, ch) do{ (this)->chptr[(at)] = ch; } while(0)
+#define CharType short
 #define CharType_setAttr(ch, attrs) *(ch) = (*(ch) & 0xff) | (attrs)
 #endif
 
@@ -122,9 +127,9 @@ static inline void RichString_writeFrom(RichString* this, int attrs, const char*
 }
 
 int RichString_findChar(RichString* this, char c, int start) {
-   chtype* ch = this->chptr + start;
+   CharType* ch = this->chptr + start;
    for (int i = start; i < this->chlen; i++) {
-      if ((*ch & 0xff) == (chtype) c)
+      if ((*ch & 0xff) == (CharType) c)
          return i;
       ch++;
    }
