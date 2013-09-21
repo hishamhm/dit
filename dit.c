@@ -826,7 +826,7 @@ static void Dit_parseBindings(Dit_Action* keys) {
       char** tokens = String_split(buffer, 0);
       char* key = tokens[0]; if (!key) goto nextLine;
       char* action = tokens[1]; if (!action) goto nextLine;
-      int keynum = (int) Hashtable_getString(CRT_keys, key);
+      long int keynum = (long int) Hashtable_getString(CRT_keys, key);
       Dit_Action actionfn = (Dit_Action)(long) Hashtable_getString(Dit_actions, action);
       if (keynum && actionfn)
          keys[keynum] = actionfn;

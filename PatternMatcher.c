@@ -8,7 +8,7 @@
 
 /*{
 
-typedef int(*Method_PatternMatcher_match)(GraphNode*, const unsigned char*, int*, bool*);
+typedef int(*Method_PatternMatcher_match)(GraphNode*, const unsigned char*, long int*, bool*);
 
 struct GraphNode_ {
    unsigned char min;
@@ -203,7 +203,7 @@ bool PatternMatcher_partialMatch(GraphNode* node, unsigned char* input, int inpu
    return false;
 }
 
-int PatternMatcher_match(GraphNode* node, const unsigned char* input, int* value, bool* eager) {
+int PatternMatcher_match(GraphNode* node, const unsigned char* input, long int* value, bool* eager) {
    int i = 0;
    int match = 0;
    *value = 0;
@@ -221,7 +221,7 @@ int PatternMatcher_match(GraphNode* node, const unsigned char* input, int* value
    return match;
 }
 
-int PatternMatcher_match_toLower(GraphNode* node, const unsigned char* input, int* value, bool* eager) {
+int PatternMatcher_match_toLower(GraphNode* node, const unsigned char* input, long int* value, bool* eager) {
    int i = 0;
    int match = 0;
    *value = 0;

@@ -136,14 +136,15 @@ void CRT_parseTerminalFile(char* term) {
    }
    while (!feof(fd)) {
       char buffer[256];
-      fgets(buffer, 255, fd);
+      char* ok = fgets(buffer, 255, fd);
+      if (!ok) break;
       char** tokens = String_split(buffer, 0);
       char* sequence = tokens[0]; if (!sequence) goto nextLine;
       char* key = tokens[1]; if (!key) goto nextLine;
       String_convertEscape(sequence, "\\033", 033);
       String_convertEscape(sequence, "\\177", 0177);
       String_convertEscape(sequence, "^[", 033);
-      int keynum = (int) Hashtable_getString(CRT_keys, key);
+      long int keynum = (long int) Hashtable_getString(CRT_keys, key);
       if (keynum)
          Display_defineKey(sequence, keynum);
       nextLine:
@@ -321,7 +322,7 @@ void CRT_init() {
    for (int k = 'A'; k <= 'Z'; k++) {
       char ctrlkey[8];
       snprintf(ctrlkey, 7, "CTRL_%c", k);
-      Hashtable_putString(CRT_keys, ctrlkey, (void*) KEY_CTRL(k));
+      Hashtable_putString(CRT_keys, ctrlkey, (void*) (long int) KEY_CTRL(k));
    }
    Hashtable_putString(CRT_keys, "ESC", (void*) 27);
    Hashtable_putString(CRT_keys, "A1", (void*) KEY_A1);

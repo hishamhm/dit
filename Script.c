@@ -194,7 +194,7 @@ static int Script_Buffer___newindex(lua_State* L) {
    if (lua_gettop(L) == 3) {
       int y = luaL_checkint(L, 2) - 1;
       luaL_checkstring(L, 3);
-      int len;
+      size_t len;
       const char* text = lua_tolstring(L, 3, &len);
       Buffer_setLine(buffer, y, Text_new((unsigned char*)text));
    }
@@ -270,7 +270,7 @@ static luaL_Reg TabManager_functions[] = {
 static int Script_string___index(lua_State* L) {
    if (lua_isnumber(L, 2)) {
       int at = lua_tointeger(L, 2);
-      int len;
+      size_t len;
       char out[2];
       const char* str = lua_tolstring(L, 1, &len);
       if (at < 0) {
@@ -327,7 +327,7 @@ bool Script_load(lua_State* L, const char* scriptName) {
 
    lua_getglobal(L, "package");
    lua_getfield(L, -1, "path");
-   int len;
+   size_t len;
    const char* oldPackagePath = lua_tolstring(L, -1, &len);
    len += strlen(foundDir) + 18; // ";scripts/?.lua\0"
    char newPackagePath[len];

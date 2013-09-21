@@ -273,11 +273,11 @@ HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close,
    Vector_add(this->contexts, ctx);
    if (open) {
       assert(parent);
-      PatternMatcher_add(parent->follows, (unsigned char*) open, (int) ctx, false);
+      PatternMatcher_add(parent->follows, (unsigned char*) open, (long int) ctx, false);
    }
    if (close) {
       assert(parent);
-      PatternMatcher_add(ctx->follows, (unsigned char*) close, (int) parent, false);
+      PatternMatcher_add(ctx->follows, (unsigned char*) close, (long int) parent, false);
    } else {
       if (parent)
          ctx->nextLine = parent;
@@ -287,16 +287,16 @@ HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close,
 
 static inline int Highlight_tryMatch(Highlight* this, const unsigned char* buffer, int* attrs, int at, GraphNode* rules, GraphNode* follows, Method_PatternMatcher_match match, HighlightContext** ctx, bool paintUnmatched, int y) {
    const unsigned char* here = buffer + at;
-   int intColor;
+   long int intColor;
    bool eager;
-   int matchlen = match(rules, here, &intColor, &eager);
+   long int matchlen = match(rules, here, &intColor, &eager);
    Color color = (Color) intColor;
    assert(color >= 0 && color < Colors);
    if (matchlen && (eager || ( !(isword(here[matchlen-1]) && isword(here[matchlen]))))) {
       int attr = CRT_colors[color];
       for (int i = at; i < at+matchlen; i++)
          attrs[i] = attr;
-      int nextCtx = 0;
+      long int nextCtx = 0;
       int followMatchlen = match(follows, here, &nextCtx, &eager);
       if (followMatchlen == matchlen) {
          assert(nextCtx);
