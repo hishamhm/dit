@@ -477,8 +477,9 @@ void Undo_restore(Undo* this, char* fileName) {
       case UndoDeleteBlock:
          read = fread(&action->data.str.len, sizeof(int), 1, ufd);
          if (read < 1) { fclose(ufd); return; }
-         action->data.str.buf = malloc(sizeof(char) * action->data.str.len);
+         action->data.str.buf = malloc(sizeof(char) * (action->data.str.len + 1));
          read = fread(action->data.str.buf, sizeof(char), action->data.str.len, ufd);
+         action->data.str.buf[action->data.str.len] = '\0';
          if (read < action->data.str.len) { fclose(ufd); return; }
          break;
       case UndoInsertBlock:
