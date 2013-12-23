@@ -43,6 +43,7 @@ then
    echo '#include <stdbool.h>' >> "$new"
    echo '#include <stdio.h>' >> "$new"
    echo '#include <string.h>' >> "$new"
+   echo '#include <unistd.h>' >> "$new"
    echo >> "$new"
    echo '#include "Structures.h"' >> "$new"
    echo >> "$new"
