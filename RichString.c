@@ -13,6 +13,8 @@
 #include "config.h"
 #include <ctype.h>
 
+#define _XOPEN_SOURCE_EXTENDED
+
 #define RICHSTRING_MAXLEN 300
 
 #include <assert.h>

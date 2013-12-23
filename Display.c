@@ -28,6 +28,8 @@ static Hashtable* Display_terminalSequences;
 /*{
 #include "config.h"
 
+#define _XOPEN_SOURCE_EXTENDED
+
 #ifdef HAVE_NCURSESW_CURSES_H
    #include <ncursesw/curses.h>
    #define HAVE_CURSES 1
