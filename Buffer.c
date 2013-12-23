@@ -19,11 +19,15 @@
 
 /*{
 
+#ifndef MAX
+#define MAX(a,b) ((a)>(b)?(a):(b))
+#endif
 #ifndef MIN
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #endif
 
 #include <lua.h>
+#include <lauxlib.h>
 
 #ifndef iswword
 #define iswword(x) (iswalpha(x) || x == '_')
