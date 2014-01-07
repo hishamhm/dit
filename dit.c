@@ -61,23 +61,28 @@ static bool saveAs(Field* saveAsField, Buffer* buffer, char* name) {
 }
 
 static bool Dit_save(Buffer* buffer, TabManager* tabs) {
-   Field* saveAsField = Field_new("Save failed. Save as:", 0, lines-1, cols-2);
    bool saved = false;
    if (!buffer->fileName) {
       Field* saveAsField = Field_new("Save as:", 0, lines-1, cols-2);
-      if (!saveAs(saveAsField, buffer, ""))
+      if (!saveAs(saveAsField, buffer, "")) {
+         Field_delete(saveAsField);
          return false;
+      }
       Field_delete(saveAsField);
    }
+   Field* failedField = NULL;
    while (true) {
       saved = Buffer_save(buffer);
-      if (!saved) {
-         if (!saveAs(saveAsField, buffer, buffer->fileName))
-            break;
-      } else
+      if (saved)
          break;
+      if (!failedField)
+         failedField = Field_new("Save failed. Save as:", 0, lines-1, cols-2);
+      if (!saveAs(failedField, buffer, buffer->fileName)) {
+         break;
+      }
    }
-   Field_delete(saveAsField);
+   if (failedField)
+      Field_delete(failedField);
    TabManager_refreshCurrent(tabs);
    return saved;
 }
