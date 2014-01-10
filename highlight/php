@@ -32,6 +32,8 @@ context <?`[a`-z`]`* ?> veryspecial veryspecial normal
       rule \" brightalt
    /context
    context ' ' alt
+      rule \\ brightalt
+      rule \' brightalt
    /context
    context /* */ dim
    /context
