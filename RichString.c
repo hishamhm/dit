@@ -13,7 +13,9 @@
 #include "config.h"
 #include <ctype.h>
 
+#ifndef _XOPEN_SOURCE_EXTENDED
 #define _XOPEN_SOURCE_EXTENDED
+#endif
 
 #define RICHSTRING_MAXLEN 300
 

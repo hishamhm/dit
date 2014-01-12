@@ -28,7 +28,9 @@ static Hashtable* Display_terminalSequences;
 /*{
 #include "config.h"
 
+#ifndef _XOPEN_SOURCE_EXTENDED
 #define _XOPEN_SOURCE_EXTENDED
+#endif
 
 #ifdef HAVE_NCURSESW_CURSES_H
    #include <ncursesw/curses.h>
