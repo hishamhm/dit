@@ -196,7 +196,7 @@ void Undo_insertBlock(Undo* this, int x, int y, Text block) {
    UndoAction* action = UndoAction_new(UndoInsertBlock, x, y);
    // Don't keep block in undo structure. Just calculate its size.
    const unsigned char* walk = block.data;
-   int len = block.dataSize;
+   int len = block.bytes;
    int yTo = y;
    int xTo = 0;
    while (walk - block.data < len) {
