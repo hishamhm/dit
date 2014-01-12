@@ -252,6 +252,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
    int firstY = -1;
    bool caseSensitive = false;
    bool wholeWord = false;
+   bool failing = true;
    while (!quit) {
       Field_printfLabel(Dit_findField, "L:%d C:%d [%c%c] %sFind:", buffer->y + 1, buffer->x + 1, caseSensitive ? 'C' : ' ', wholeWord ? 'W' : ' ', wrapped ? "Wrapped " : "");
       bool searched = false;
@@ -288,7 +289,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             } else {
                Field_insertChar(Dit_findField, ch);
             }
-            wrapped = false;                  
+            wrapped = false;
             firstX = -1;
             firstY = -1;
             found = Buffer_find(buffer, Field_text(Dit_findField), false, caseSensitive, wholeWord, true);
@@ -358,6 +359,8 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             case KEY_CTRL('R'):
             {
                int rch = 0;
+               if (failing)
+                  continue;
                if (!Dit_replaceField)
                   Dit_replaceField = Field_new("", 0, lines - 1, cols - 3);
                Dit_replaceField->fieldColor = CRT_colors[FieldColor];
@@ -462,6 +465,12 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             firstY = -1;
             found = Buffer_find(buffer, Field_text(Dit_findField), true, caseSensitive, wholeWord, true);
             searched = true;
+         } else if (code && (ch == KEY_BACKSPACE || ch == KEY_DC)) {
+            wrapped = false;
+            firstX = -1;
+            firstY = -1;
+            found = Buffer_find(buffer, Field_text(Dit_findField), false, caseSensitive, wholeWord, true);
+            searched = true;
          }
       }
       if (searched) {
@@ -482,8 +491,11 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             }
             Dit_findField->fieldColor = CRT_colors[FieldColor];
             Buffer_draw(buffer);
-         } else
+            failing = false;
+         } else {
             Dit_findField->fieldColor = CRT_colors[FieldFailColor];
+            failing = true;
+         }
       }
    }
    buffer->selecting = false;
