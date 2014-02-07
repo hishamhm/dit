@@ -189,11 +189,11 @@ static void Dit_goto(Buffer* buffer, TabManager* tabs) {
       Dit_gotoField = Field_new("Go to:", 0, lines - 1, MIN(20, cols - 20));
 
    Field_start(Dit_gotoField);
-   bool quit = false;
    int saveX = buffer->x;
    int saveY = buffer->y;
    int lastY = buffer->y + 1;
-   while (!quit) {
+   bool switchedTab = false;
+   for(;;) {
       bool handled;
       bool code;
       int ch = Field_run(Dit_gotoField, false, &handled, &code);
@@ -202,11 +202,12 @@ static void Dit_goto(Buffer* buffer, TabManager* tabs) {
             Field_insertChar(Dit_gotoField, ch);
          } else if (isprint(ch)) {
             Field_insertChar(Dit_gotoField, ch);
-         } else if (ch == 13) {
-            quit = true; 
          } else if (ch == 27) {
-            quit = true;
+            if (switchedTab) {
+               TabManager_jumpBack(tabs);
+            }
             Buffer_goto(buffer, saveX, saveY);
+            break;
          }
       }
       char* endptr;
@@ -226,11 +227,15 @@ static void Dit_goto(Buffer* buffer, TabManager* tabs) {
          for (int i = 0; i < pages; i++) {
             const char* name = TabManager_getPageName(tabs, i);
                if (name && strcasestr(name, Dit_gotoField->current->text.data)) {
+                  switchedTab = true;
                   TabManager_setPage(tabs, i);
                   TabManager_draw(tabs, cols);
                   break;
                }
          }
+      }
+      if (ch == 13) {
+         break;
       }
    }
    TabManager_refreshCurrent(tabs);
