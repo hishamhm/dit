@@ -258,13 +258,40 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
    bool caseSensitive = false;
    bool wholeWord = false;
    bool failing = true;
+   
+   bool selectionAutoMatch = false;
+   if (buffer->selecting && buffer->selectYfrom == buffer->selectYto) {
+      int blockLen;
+      char* block = Buffer_copyBlock(buffer, &blockLen);
+      Text text = Text_new(block);
+      for (int i = 0; i < text.chars; i++) {
+         Field_insertChar(Dit_findField, Text_at(text, i));
+      }
+      free(block);
+      failing = false;
+      selectionAutoMatch = true;
+      firstX = buffer->selectXfrom;
+      firstY = buffer->selectYfrom;
+      buffer->x = buffer->selectXto;
+      buffer->y = buffer->selectYto;
+      buffer->selecting = true; // Buffer_copyBlock auto-deselects
+   }
+   
    while (!quit) {
       Field_printfLabel(Dit_findField, "L:%d C:%d [%c%c] %sFind:", buffer->y + 1, buffer->x + 1, caseSensitive ? 'C' : ' ', wholeWord ? 'W' : ' ', wrapped ? "Wrapped " : "");
       bool searched = false;
       bool found = false;
+      
+      if (selectionAutoMatch) {
+         searched = true;
+         found = true;
+         selectionAutoMatch = false;
+      }
+      
       bool handled;
       bool code;
       int ch = Field_run(Dit_findField, false, &handled, &code);
+     
       int lastY = buffer->y + 1;
       if (!handled) {
          if (!code && (ch >= 32 || ch == 9 || ch == KEY_CTRL('T'))) {
@@ -311,6 +338,8 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                break;
             case KEY_CTRL('V'):
                pasteInField(Dit_findField);
+               found = Buffer_find(buffer, Field_text(Dit_findField), true, caseSensitive, wholeWord, true);
+               searched = true;
                break;
             case KEY_CTRL('I'):
             case KEY_CTRL('C'):
