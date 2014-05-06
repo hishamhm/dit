@@ -9,6 +9,7 @@
 #include <stdbool.h>
 
 #include "Prototypes.h"
+//#needs PatternMatcher
 //#needs Object
 //#needs Text
 
@@ -42,6 +43,18 @@ struct ReadHighlightFileArgs_ {
    Highlight* this;
    const char* fileName;
    Text firstLine;
+};
+
+struct MatchArgs_ {
+   const unsigned char* buffer;
+   int* attrs;
+   GraphNode* rules;
+   GraphNode* follows;
+   HighlightContext* ctx;
+   Method_PatternMatcher_match match;
+   int attrsAt;
+   int y;
+   bool paintUnmatched;
 };
 
 #ifndef isword
@@ -285,55 +298,68 @@ HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close,
    return ctx;
 }
 
-static inline int Highlight_tryMatch(Highlight* this, const unsigned char* buffer, int* attrs, int at, GraphNode* rules, GraphNode* follows, Method_PatternMatcher_match match, HighlightContext** ctx, bool paintUnmatched, int y) {
-   const unsigned char* here = buffer + at;
+#define PAINT(_args, _here, _attr) do { _args->attrs[_args->attrsAt++] = _attr; _here = UTF8_forward(_here, 1); } while(0)
+
+static inline int Highlight_tryMatch(Highlight* this, MatchArgs* args, bool paintUnmatched) {
+   const unsigned char* here = args->buffer;
    long int intColor;
    bool eager;
-   long int matchlen = match(rules, here, &intColor, &eager);
+   long int matchlen = args->match(args->rules, args->buffer, &intColor, &eager);
    Color color = (Color) intColor;
    assert(color >= 0 && color < Colors);
    if (matchlen && (eager || ( !(isword(here[matchlen-1]) && isword(here[matchlen]))))) {
       int attr = CRT_colors[color];
-      for (int i = at; i < at+matchlen; i++)
-         attrs[i] = attr;
+      const unsigned char* nextStop = here + matchlen;
+      while (here < nextStop) {
+         PAINT(args, here, attr);
+      }
       long int nextCtx = 0;
-      int followMatchlen = match(follows, here, &nextCtx, &eager);
+      int followMatchlen = args->match(args->follows, args->buffer, &nextCtx, &eager);
       if (followMatchlen == matchlen) {
          assert(nextCtx);
-         *ctx = (HighlightContext*) nextCtx;
+         args->ctx = (HighlightContext*) nextCtx;
       }
-      at += matchlen;
    } else if (paintUnmatched) {
-      int attr = CRT_colors[(*ctx)->defaultColor];
-      int word = isword(*here);
-      if (word) {
-         while (isword(buffer[at]))
-            attrs[at++] = attr;
+      int attr = CRT_colors[args->ctx->defaultColor];
+      if (isword(*here)) {
+         do {
+            PAINT(args, here, attr);
+         } while (isword(*here));
       } else {
-         attrs[at++] = attr;
+         PAINT(args, here, attr);
       }
    }
-   return at;
+   args->buffer = here;
 }
 
 void Highlight_setAttrs(Highlight* this, const unsigned char* buffer, int* attrs, int len, int y) {
-   HighlightContext* ctx = this->currentContext;
-   int at = 0;
-   Method_PatternMatcher_match match;
+   MatchArgs args = {
+      .buffer = buffer,
+      .attrs = attrs,
+      .attrsAt = 0,
+      .ctx = this->currentContext,
+      .y = y,
+   };
    if (this->toLower)
-      match = PatternMatcher_match_toLower;
+      args.match = PatternMatcher_match_toLower;
    else
-      match = PatternMatcher_match;
-   if (ctx->rules->lineStart) {
-      if (!ctx->follows->lineStart)
-         ctx->follows->lineStart = GraphNode_new();
-      at = Highlight_tryMatch(this, buffer, attrs, at, ctx->rules->lineStart, ctx->follows->lineStart, match, &ctx, false, y);
+      args.match = PatternMatcher_match;
+   HighlightContext* curCtx = this->currentContext;
+   if (curCtx->rules->lineStart) {
+      if (!curCtx->follows->lineStart)
+         curCtx->follows->lineStart = GraphNode_new();
+      args.rules = curCtx->rules->lineStart;
+      args.follows = curCtx->follows->lineStart;
+
+      Highlight_tryMatch(this, &args, false);
    }
-   while (at < len) {
-      at = Highlight_tryMatch(this, buffer, attrs, at, ctx->rules->start, ctx->follows->start, match, &ctx, true, y);
+   while (args.buffer < buffer + len) {
+      args.rules = args.ctx->rules->start;
+      args.follows = args.ctx->follows->start;
+      Highlight_tryMatch(this, &args, true);
    }
    Script_highlightLine(this, buffer, attrs, len, y);
-   this->currentContext = ctx->nextLine;
+   this->currentContext = args.ctx->nextLine;
 }
 
 inline HighlightContext* Highlight_getContext(Highlight* this) {
