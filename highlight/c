@@ -60,7 +60,6 @@ rule + brightsymbol
 rule - brightsymbol
 rule * brightsymbol
 rule / brightsymbol
-rule % brightsymbol
 rule [ symbol
 rule ] symbol
 rule { symbol
