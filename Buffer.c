@@ -698,6 +698,9 @@ void Buffer_deleteBlock(Buffer* this) {
       this->panel->needsRedraw = true;
 }
 
+/*
+ * @param len Output parameters: returns the length of the copied block.
+ */
 char* Buffer_copyBlock(Buffer* this, int *len) {
    if (!this->selecting) {
       return NULL;
