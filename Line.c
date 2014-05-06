@@ -53,6 +53,7 @@ Line* Line_new(List* list, Text text, HighlightContext* context) {
 void Line_delete(Object* cast) {
    Line* this = (Line*) cast;
    Text_prune(&(this->text));
+   Pool_free(this->super.list->pool, this);
 }
 
 int Line_charAt(Line* this, int n) {
