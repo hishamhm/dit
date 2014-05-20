@@ -43,7 +43,7 @@ static Hashtable* Display_terminalSequences;
 #elif HAVE_NCURSES_H
    #include <ncurses.h>
    #define HAVE_CURSES 1
-#elif HAVE_CURSES
+#elif HAVE_CURSES_H
    #include <curses.h>
    #define HAVE_CURSES 1
 #else
