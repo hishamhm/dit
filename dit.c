@@ -10,6 +10,9 @@
 #include <string.h>
 #include <libgen.h>
 #include <locale.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <errno.h>
 
 #include "Prototypes.h"
 
@@ -52,7 +55,11 @@ static bool saveAs(Field* saveAsField, Buffer* buffer, char* name) {
    if (ch == 13) {
       free(buffer->fileName);
       char* name = Field_getValue(saveAsField);
-      char* rpath = realpath(name, NULL);
+      char* rpath = realpath(name, rpath);
+      if (!rpath) {
+         rpath = calloc(2+strlen(name)+1, sizeof(char));
+         sprintf(rpath, "./%s", name);
+      }
       free(name);
       buffer->fileName = rpath;
    } else
@@ -73,8 +80,14 @@ static bool Dit_save(Buffer* buffer, TabManager* tabs) {
    Field* failedField = NULL;
    while (true) {
       saved = Buffer_save(buffer);
-      if (saved)
+      if (saved) {
+         char* rpath = realpath(buffer->fileName, NULL);
+         if (rpath) {
+            free(buffer->fileName);
+            buffer->fileName = rpath;
+         }
          break;
+      }
       if (!failedField)
          failedField = Field_new("Save failed. Save as:", 0, lines-1, cols-2);
       if (!saveAs(failedField, buffer, buffer->fileName)) {

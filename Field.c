@@ -224,9 +224,10 @@ void Field_setValue(Field* this, Text value) {
 }
 
 char* Field_getValue(Field* this) {
-   if (!this->current)
-      return strdup("");
-   return strdup(Text_toString(this->current->text));
+   if (this->current && Text_toString(this->current->text)) {
+      return strdup(Text_toString(this->current->text));
+   }
+   return strdup("");
 }
 
 int Field_getLength(Field* this) {

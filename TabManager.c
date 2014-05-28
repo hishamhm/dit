@@ -106,7 +106,10 @@ void TabManager_delete(TabManager* this) {
 static inline int TabManager_nameLength(const char* name) {
    int len;
    if (name) {
-      char* base = strrchr(name, '/');
+      const char* base = strrchr(name, '/');
+      if (!base) {
+         base = name;
+      }
       len = strlen(base) + 4;
    } else {
       len = strlen(TabManager_Untitled) + 4;
