@@ -15,6 +15,14 @@
 
 /*{
 
+typedef enum HighlightParserState_  {
+   HPS_START,
+   HPS_READ_FILES,
+   HPS_SKIP_FILES,
+   HPS_READ_RULES,
+   HPS_ERROR
+} HighlightParserState;
+
 struct HighlightContextClass_ {
    ObjectClass super;
 };
@@ -43,6 +51,8 @@ struct ReadHighlightFileArgs_ {
    Highlight* this;
    const char* fileName;
    Text firstLine;
+   HighlightContext* context;
+   Stack* contexts;
 };
 
 struct MatchArgs_ {
@@ -134,23 +144,17 @@ void Highlight_delete(Highlight* this) {
    free(this);
 }
 
-bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
+HighlightParserState parseFile(ReadHighlightFileArgs* args, FILE* file, const char* name, HighlightParserState state) {
+   if (!file) {
+      return HPS_ERROR;
+   }
    Highlight* this = args->this;
    const char* fileName = args->fileName;
    Text firstLine = args->firstLine;
-   FILE* file = fopen(name, "r");
-   if (!file) return false;
 
-   char buffer[4096];
-   int state = 1;
-   bool success = true;
-   this->mainContext = Highlight_addContext(this, NULL, NULL, NULL, NormalColor);
-   HighlightContext* context = this->mainContext;
-   Stack* contexts = Stack_new(ClassAs(HighlightContext, Object), false);
-   Stack_push(contexts, context, 0);
    int lineno = 0;
-   this->toLower = false;
-   while (success && !feof(file)) {
+   while (state != HPS_ERROR && !feof(file)) {
+      char buffer[4096];
       fgets(buffer, 4095, file);
       lineno++;
       char* ch = strchr(buffer, '\n');
@@ -161,24 +165,35 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
 
       buffer[4095] = '\0';
       char** tokens = String_split(buffer, ' ');
+      
       int ntokens;
       for (ntokens = 0; tokens[ntokens]; ntokens++);
-      if (ntokens > 0 && tokens[0][0] != '#')
+      
+      if (ntokens == 0 || tokens[0][0] == '#') {
+         continue;
+      }
+
+      if (String_eq(tokens[0], "include") && ntokens == 2) {
+         state = parseFile(args, Files_open("r", "highlight/%s", tokens[1]), tokens[1], state);
+         continue;
+      }
+
       switch (state) {
-      case 1:
+      case HPS_START:
       {
          // Read FILES header
          if (!String_eq(tokens[0], "FILES") && ntokens == 1)
-            success = false;
-         state = 2;
+            state = HPS_ERROR;
+         else
+            state = HPS_READ_FILES;
          break;
       }
-      case 2:
+      case HPS_READ_FILES:
       {
          // Try to match FILES rule
          const char* subject = NULL;
          if (!fileName) {
-            success = false;
+            state = HPS_ERROR;
             break;
          }
          if (String_eq(tokens[0],"name")) {
@@ -188,37 +203,37 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
                subject = lastSlash + 1;
          } else if (String_eq(tokens[0], "firstline"))
             subject = firstLine.data;
-         else
-            success = false;
-         if (success) {
-            if (String_eq(tokens[1], "prefix") && ntokens == 3) {
-               if (String_startsWith(subject, tokens[2]))
-                  state = 3;
-            } else if (String_eq(tokens[1], "suffix") && ntokens == 3) {
-               if (String_endsWith(subject, tokens[2]))
-                  state = 3;
-            } else if (String_eq(tokens[1], "regex") && ntokens == 3) {
-               regex_t magic;
-               regcomp(&magic, tokens[2], REG_EXTENDED | REG_NOSUB);
-               if (regexec(&magic, subject, 0, NULL, 0) == 0)
-                  state = 3;
-               regfree(&magic);
-            } else {
-               success = false;
-            }
+         else {
+            state = HPS_ERROR;
+            break;
+         }
+         if (String_eq(tokens[1], "prefix") && ntokens == 3) {
+            if (String_startsWith(subject, tokens[2]))
+               state = HPS_SKIP_FILES;
+         } else if (String_eq(tokens[1], "suffix") && ntokens == 3) {
+            if (String_endsWith(subject, tokens[2]))
+               state = HPS_SKIP_FILES;
+         } else if (String_eq(tokens[1], "regex") && ntokens == 3) {
+            regex_t magic;
+            regcomp(&magic, tokens[2], REG_EXTENDED | REG_NOSUB);
+            if (regexec(&magic, subject, 0, NULL, 0) == 0)
+               state = HPS_SKIP_FILES;
+            regfree(&magic);
+         } else {
+            state = HPS_ERROR;
          }
          break;
       }
-      case 3:
+      case HPS_SKIP_FILES:
       {
          // FILES match succeeded. Skip over other FILES section,
          // waiting for RULES section
          if (String_eq(tokens[0], "RULES") && ntokens == 1) {
-            state = 4;
+            state = HPS_READ_RULES;
          }
          break;
       }
-      case 4:
+      case HPS_READ_RULES:
       {
          // Read RULES section
          if (String_eq(tokens[0], "context") && (ntokens == 4 || ntokens == 6)) {
@@ -226,27 +241,27 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
             char* close = (String_eq(tokens[2], "`$") ? NULL : tokens[2]);
             Color color;
             if (ntokens == 6) {
-               HighlightContext_addRule(context, open, Highlight_translateColor(tokens[3]), false);
+               HighlightContext_addRule(args->context, open, Highlight_translateColor(tokens[3]), false);
                color = Highlight_translateColor(tokens[5]);
             } else {
                color = Highlight_translateColor(tokens[3]);
-               HighlightContext_addRule(context, open, color, false);
+               HighlightContext_addRule(args->context, open, color, false);
             }
-            context = Highlight_addContext(this, open, close, Stack_peek(contexts, NULL), color);
+            args->context = Highlight_addContext(this, open, close, Stack_peek(args->contexts, NULL), color);
             if (close) {
                color = (ntokens == 6 ? Highlight_translateColor(tokens[4]) : color);
-               HighlightContext_addRule(context, close, color, false);
+               HighlightContext_addRule(args->context, close, color, false);
             }
-            Stack_push(contexts, context, 0);
+            Stack_push(args->contexts, args->context, 0);
          } else if (String_eq(tokens[0], "/context") && ntokens == 1) {
-            if (contexts->size > 1) {
-               Stack_pop(contexts, NULL);
-               context = Stack_peek(contexts, NULL);
+            if (args->contexts->size > 1) {
+               Stack_pop(args->contexts, NULL);
+               args->context = Stack_peek(args->contexts, NULL);
             }
          } else if (String_eq(tokens[0], "rule") && ntokens == 3) {
-            HighlightContext_addRule(context, tokens[1], Highlight_translateColor(tokens[2]), false);
+            HighlightContext_addRule(args->context, tokens[1], Highlight_translateColor(tokens[2]), false);
          } else if (String_eq(tokens[0], "eager_rule") && ntokens == 3) {
-            HighlightContext_addRule(context, tokens[1], Highlight_translateColor(tokens[2]), true);
+            HighlightContext_addRule(args->context, tokens[1], Highlight_translateColor(tokens[2]), true);
          } else if (String_eq(tokens[0], "insensitive") && ntokens == 1) {
             this->toLower = true;
          } else if (String_eq(tokens[0], "script") && ntokens == 2) {
@@ -255,7 +270,7 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
             Display_clear();
             Display_printAt(0,0,"Error reading %s: line %d: %s", name, lineno, buffer);
             CRT_readKey();
-            success = false;
+            state = HPS_ERROR;
          }
          break;
       }
@@ -265,14 +280,34 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
       free(tokens);
    }
    fclose(file);
-   if (contexts->size != 1) {
-      Display_clear();
-      Display_printAt(0,0,"Error reading %s: %d context%s still open", name, contexts->size - 1, contexts->size > 2 ? "s" : "");
-      CRT_readKey();
-      success = false;
+   return state;
+}
+
+bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
+   Highlight* this = args->this;
+   
+   if (!String_endsWith(name, ".dithl")) {
+      return false;
    }
-   Stack_delete(contexts);
-   if (success && state == 4) {
+
+   this->toLower = false;
+   this->mainContext = Highlight_addContext(this, NULL, NULL, NULL, NormalColor);
+   
+   args->context = this->mainContext;
+   args->contexts = Stack_new(ClassAs(HighlightContext, Object), false);
+   
+   Stack_push(args->contexts, args->context, 0);
+   
+   HighlightParserState state = parseFile(args, fopen(name, "r"), name, HPS_START);
+
+   if (args->contexts->size != 1) {
+      Display_clear();
+      Display_printAt(0,0,"Error reading %s: %d context%s still open", name, args->contexts->size - 1, args->contexts->size > 2 ? "s" : "");
+      CRT_readKey();
+      state = HPS_ERROR;
+   }
+   Stack_delete(args->contexts);
+   if (state == HPS_READ_RULES) {
       this->currentContext = this->mainContext;
       return true;
    }

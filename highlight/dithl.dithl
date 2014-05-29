@@ -1,5 +1,6 @@
 FILES
-firstline prefix FILES
+name suffix .dithl
+name suffix .dithlinc
 RULES
 context FILES RULES veryspecial veryspecial normal
    context name `$ normal
@@ -19,6 +20,7 @@ rule rule bright
 rule eager_rule bright
 rule context bright
 rule insensitive bright
+rule include bright
 
 rule normal normal
 rule bright bright

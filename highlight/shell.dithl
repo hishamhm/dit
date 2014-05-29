@@ -119,53 +119,13 @@ context ' ' alt
 /context
 
 context `` `` brightspecial brightspecial special
-   rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightspecial
-   rule ${`[a`-z`|A`-Z`|0`-9`|_[]%!@#-$*?_`s`]`+} brightspecial
-   rule ${`[!@#$*?_`]} brightspecial
-   rule $`[!@#$*?_`] brightspecial
-   rule \' special
-   rule \" special
-   context " " specialdiff
-      rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightspecialdiff
-      rule ${`[a`-z`|A`-Z`|0`-9`|_[]%!@#-$*?_`s`]`+} brightspecialdiff
-      rule ${`[!@#$*?_`]} brightspecialdiff
-      rule $`[!@#$*?_`] brightspecialdiff
-      rule \" special
-   /context
-   context ' ' specialdiff
-   /context
+   include shellbacktick.dithlinc
 /context
 
 context $( ) brightspecial brightspecial special
-   rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightspecial
-   rule ${`[a`-z`|A`-Z`|0`-9`|_[]%#*-@?`s`]`+} brightspecial
-   rule ${`[!@#$*?_`]} brightspecial
-   rule $`[!@#$*?_`] brightspecial
-   rule \$ special
-   rule \' special
-   context " " specialdiff
-      rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightspecialdiff
-      rule ${`[a`-z`|A`-Z`|0`-9`|_[]%!@#-$*?_`s`]`+} brightspecialdiff
-      rule ${`[!@#$*?_`]} brightspecialdiff
-      rule $`[!@#$*?_`] brightspecialdiff
-   /context
-   context ' ' specialdiff
-   /context
+   include shellbacktick.dithlinc
    context $( ) brightspecial brightspecial special
-      rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightspecial
-      rule ${`[a`-z`|A`-Z`|0`-9`|_[]%#*-@?`s`]`+} brightspecial
-      rule ${`[!@#$*?_`]} brightspecial
-      rule $`[!@#$*?_`] brightspecial
-      rule \$ special
-      rule \' special
-      context " " specialdiff
-         rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightspecialdiff
-         rule ${`[a`-z`|A`-Z`|0`-9`|_[]%!@#-$*?_`s`]`+} brightspecialdiff
-         rule ${`[!@#$*?_`]} brightspecialdiff
-         rule $`[!@#$*?_`] brightspecialdiff
-      /context
-      context ' ' specialdiff
-      /context
+      include shellbacktick.dithlinc
    /context
 /context
 
@@ -173,36 +133,10 @@ context " " alt
    rule \`` brightalt
    rule \\ brightalt
    context `` `` brightspecial brightspecial special
-      rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightspecial
-      rule ${`[a`-z`|A`-Z`|0`-9`|_[]%!@#-$*?_`s`]`+} brightspecial
-      rule ${`[!@#$*?_`]} brightspecial
-      rule $`[!@#$*?_`] brightspecial
-      rule \' special
-      rule \$ special
-      context " " specialdiff
-         rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightspecialdiff
-         rule ${`[a`-z`|A`-Z`|0`-9`|_[]%!@#-$*?_`s`]`+} brightspecialdiff
-         rule ${`[!@#$*?_`]} brightspecialdiff
-         rule $`[!@#$*?_`] brightspecialdiff
-      /context
-      context ' ' specialdiff
-      /context
+      include shellbacktick.dithlinc
    /context
    context $( ) brightspecial brightspecial special
-      rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightspecial
-      rule ${`[a`-z`|A`-Z`|0`-9`|_[]%#*-@?`s`]`+} brightspecial
-      rule ${`[!@#$*?_`]} brightspecial
-      rule $`[!@#$*?_`] brightspecial
-      rule \' special
-      rule \$ special
-      context " " specialdiff
-         rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightspecialdiff
-         rule ${`[a`-z`|A`-Z`|0`-9`|_[]%!@#-$*?_`s`]`+} brightspecialdiff
-         rule ${`[!@#$*?_`]} brightspecialdiff
-         rule $`[!@#$*?_`] brightspecialdiff
-      /context
-      context ' ' specialdiff
-      /context
+      include shellbacktick.dithlinc
    /context
    rule \$ brightalt
    rule $`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightalt

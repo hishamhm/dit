@@ -1,0 +1,7 @@
+FILES
+name suffix .html
+name suffix .htm
+RULES
+
+include html.dithlinc
+

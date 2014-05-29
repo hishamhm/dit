@@ -1,15 +1,3 @@
-FILES
-name suffix .c
-name suffix .cc
-name suffix .cpp
-name suffix .h
-name suffix .hh
-name suffix .hpp
-name suffix .h.in
-name suffix .c.in
-name suffix .xs
-RULES
-script c.lua
 
 rule auto diff
 rule char diff
@@ -100,3 +88,4 @@ context #include `$ brightspecial
    context < > special
    /context
 /context
+

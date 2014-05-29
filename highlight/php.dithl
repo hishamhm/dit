@@ -1,0 +1,47 @@
+FILES
+name suffix .php
+name suffix .inc
+RULES
+
+context <?`[a`-z`]`* ?> veryspecial veryspecial normal
+   rule continue bright
+   rule if  bright
+   rule else bright
+   rule for bright
+   rule foreach bright
+   rule as bright
+   rule include bright
+   rule function bright
+   rule global bright
+   rule echo bright
+   rule isset bright
+   rule switch bright
+   rule case bright
+   rule = bright
+   rule { bright
+   rule } bright
+   rule ( bright
+   rule ) bright
+   rule [ bright
+   rule ] bright
+   rule -> bright
+   rule $`[A`-Z_a`-z`]`[A`-Z_a`-z0`-9`]`* brightdiff
+   context " " alt
+      rule $`[A`-Z_a`-z`]`[A`-Z_a`-z0`-9`]`* brightalt
+      rule \\ brightalt
+      rule \" brightalt
+   /context
+   context ' ' alt
+      rule \\ brightalt
+      rule \' brightalt
+   /context
+   context /* */ dim
+   /context
+   context // `$ dim
+   /context
+   context # `$ dim
+   /context
+/context
+
+include html.dithlinc
+
