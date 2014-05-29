@@ -4,6 +4,8 @@ name prefix makefile
 name prefix GNUmakefile
 RULES
 
+include gitconflict.dithlinc
+
 context # `$ dim
 /context
 

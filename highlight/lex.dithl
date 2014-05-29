@@ -5,6 +5,7 @@ RULES
 rule %{ veryspecial
 rule %} veryspecial
 
+include gitconflict.dithlinc
 include c.dithlinc
 
 context %% %% veryspecial veryspecial normal

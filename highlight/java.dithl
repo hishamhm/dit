@@ -3,6 +3,8 @@ name suffix .java
 RULES
 script java.lua
 
+include gitconflict.dithlinc
+
 rule char bright
 rule void bright
 rule if bright

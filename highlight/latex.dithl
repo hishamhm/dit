@@ -4,6 +4,8 @@ name suffix .cls
 name suffix .sty
 RULES   
 
+include gitconflict.dithlinc
+
 context % `$ dim
 /context
 

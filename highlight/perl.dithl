@@ -5,6 +5,8 @@ name suffix .pm
 firstline regex ^#!.*/perl($|[:blank:])
 RULES
 
+include gitconflict.dithlinc
+
 rule $_ brightdiff
 rule $. brightdiff
 rule $/ brightdiff
@@ -360,6 +362,7 @@ context ' ' alt
 /context
 
 context ` ` brightspecial brightspecial special
+   include shellbacktick.dithlinc
 /context
 
 context __END__ guacamole_pudding dim

@@ -3,6 +3,8 @@ name suffix .hs
 RULES
 script haskell.lua
 
+include gitconflict.dithlinc
+
 rule import bright
 rule where bright
 rule let bright

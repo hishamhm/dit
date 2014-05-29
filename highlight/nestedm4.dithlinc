@@ -1,0 +1,12 @@
+context [ ] brightdiff brightdiff diff
+   context [ ] brightdiff brightdiff diff
+   /context
+   context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
+   /context
+/context
+context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
+   context [ ] brightdiff brightdiff diff
+   /context
+   context `[A`-Z`]`[A`-Z0`-9_`]`+( ) brightspecial brightspecial normal
+   /context
+/context

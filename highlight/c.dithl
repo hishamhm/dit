@@ -12,3 +12,4 @@ RULES
 script c.lua
 
 include c.dithlinc
+include gitconflict.dithlinc

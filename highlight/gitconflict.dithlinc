@@ -1,0 +1,8 @@
+
+context `^<<<<<<< `$ veryspecial 
+/context
+context `^======= `$ veryspecial 
+/context
+context `^>>>>>>> `$ veryspecial 
+/context
+

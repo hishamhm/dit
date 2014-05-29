@@ -5,6 +5,8 @@ name suffix .xml
 name suffix .xsl
 RULES
 
+include gitconflict.dithlinc
+
 context < > brightalt
    context " " diff
    /context

@@ -3,5 +3,6 @@ name suffix .html
 name suffix .htm
 RULES
 
+include gitconflict.dithlinc
 include html.dithlinc
 

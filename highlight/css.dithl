@@ -2,6 +2,8 @@ FILES
 name suffix .css
 RULES
 
+include gitconflict.dithlinc
+
 context url( ) brightalt brightalt alt
 /context
 

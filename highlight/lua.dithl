@@ -5,6 +5,8 @@ firstline regex ^#!.*lua.*
 RULES   
 script lua.lua
 
+include gitconflict.dithlinc
+
 rule and      bright
 rule break    bright
 rule do       bright
