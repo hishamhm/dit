@@ -83,6 +83,8 @@ struct Buffer_ {
    int tabulation;
    // backup variable for toggling tab mode
    int saveTabulation;
+   chars saveTabulationX;
+   int saveTabulationY;
    // document uses DOS-style ctrl-M
    bool dosLineBreaks;
    // time tracker to disable auto-indent when pasting;
@@ -144,11 +146,10 @@ void Buffer_autoConfigureIndent(Buffer* this, int indents[]) {
 
    if (indents[0]) {
       this->tabulation = 0;
-      this->saveTabulation = detectedIndent;
    } else {
       this->tabulation = detectedIndent;
-      this->saveTabulation = 0;
    }
+   this->saveTabulation = detectedIndent;
 }
 
 Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, TabManager* tabs) {
@@ -1143,9 +1144,24 @@ void Buffer_toggleMarking(Buffer* this) {
 }
 
 void Buffer_toggleTabCharacters(Buffer* this) {
-   int old = this->tabulation;
-   this->tabulation = this->saveTabulation;
-   this->saveTabulation = old;
+   if (this->saveTabulationX == this->x && this->saveTabulationY == this->y) {
+      switch (this->tabulation) {
+      case 0: this->tabulation = 2; break;
+      case 2: this->tabulation = 3; break;
+      case 3: this->tabulation = 4; break;
+      case 4: this->tabulation = 8; break;
+      case 8: this->tabulation = 0; break;
+      }
+   } else {
+      if (this->tabulation == 0) {
+         this->tabulation = this->saveTabulation;
+      } else {
+         this->saveTabulation = this->tabulation;
+         this->tabulation = 0;
+      }
+   }
+   this->saveTabulationX = this->x;
+   this->saveTabulationY = this->y;
 }
 
 void Buffer_toggleDosLineBreaks(Buffer* this) {
