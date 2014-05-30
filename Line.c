@@ -91,7 +91,6 @@ void Line_display(Object* cast, RichString* str) {
                              : hl->mainContext;
    Highlight_setContext(hl, context);
 
-   // FIXME UTF-8 highlighting
    Highlight_setAttrs(hl, this->text.data, hlAttrs, this->text.bytes, y + 1);
 
    const unsigned char* start = Text_toString(this->text);
