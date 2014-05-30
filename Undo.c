@@ -57,7 +57,7 @@ struct UndoAction_ {
       struct {
          int* buf;
          int len;
-         bool tab;
+         int tabul;
       } unindent;
       bool backspace;
    } data;
@@ -174,11 +174,11 @@ void Undo_indent(Undo* this, int x, int y, int lines, int width) {
    Stack_push(this->actions, action, 0);
 }
 
-void Undo_unindent(Undo* this, int x, int y, int* counts, int lines, bool tab) {
+void Undo_unindent(Undo* this, int x, int y, int* counts, int lines, int tabul) {
    UndoAction* action = UndoAction_new(UndoUnindent, x, y);
    action->data.unindent.buf = counts;
    action->data.unindent.len = lines;
-   action->data.unindent.tab = tab;
+   action->data.unindent.tabul = tabul;
    Stack_push(this->actions, action, 0);
 }
 
@@ -327,7 +327,7 @@ bool Undo_undo(Undo* this, int* x, int* y) {
    {
       for (int i = 0; i < action->data.unindent.len; i++) {
          for (int j = 0; j < action->data.unindent.buf[i]; j++)
-            Line_insertChar(line, 0, action->data.unindent.tab ? '\t' : ' ');
+            Line_insertChar(line, 0, action->data.unindent.tabul == 0 ? '\t' : ' ');
          line = (Line*) line->super.next;
          assert(line);
       }
@@ -407,7 +407,7 @@ void Undo_store(Undo* this, char* fileName) {
       case UndoUnindent:
          fwrite(&action->data.unindent.len, sizeof(int), 1, ufd);
          fwrite(action->data.unindent.buf, sizeof(int), action->data.unindent.len, ufd);
-         fwrite(&action->data.unindent.tab, sizeof(bool), 1, ufd);
+         fwrite(&action->data.unindent.tabul, sizeof(bool), 1, ufd);
          break;
       }
    }
@@ -494,7 +494,7 @@ void Undo_restore(Undo* this, char* fileName) {
          action->data.unindent.buf = malloc(sizeof(int) * action->data.unindent.len);
          read = fread(action->data.unindent.buf, sizeof(int), action->data.unindent.len, ufd);
          if (read < action->data.unindent.len) { fclose(ufd); return; }
-         read = fread(&action->data.unindent.tab, sizeof(bool), 1, ufd);
+         read = fread(&action->data.unindent.tabul, sizeof(bool), 1, ufd);
          if (read < 1) { fclose(ufd); return; }
          break;
       }

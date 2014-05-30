@@ -79,11 +79,12 @@ struct Buffer_ {
    Undo* undo;
    // previous key for compound actions
    int lastKey;
-   // document uses tab characters
-   bool tabCharacters;
+   // tabulation used in document: 0 means Tabs; n>0 means n spaces.
+   int tabulation;
+   // backup variable for toggling tab mode
+   int saveTabulation;
    // document uses DOS-style ctrl-M
    bool dosLineBreaks;
-   int indentSpaces;
    // time tracker to disable auto-indent when pasting;
    double lastTime;
    // width of Tab keys (\t)
@@ -117,13 +118,11 @@ inline void Buffer_restorePosition(Buffer* this) {
       while (!feof(fd)) {
          fscanf(fd, "%d %d %255[^\n]\n", &x, &y, line);
          if (strcmp(line, rpath) == 0) {
-         
             Line* line = (Line*) this->panel->items->head;
             for (int i = 0; line && i <= y; i++) {
                Line_display((Object*)line, NULL);
                line = (Line*) line->super.next;
             }
-         
             Buffer_goto(this, x, y);
             break;
          }
@@ -131,6 +130,25 @@ inline void Buffer_restorePosition(Buffer* this) {
       fclose(fd);
    }
    free(rpath);
+}
+
+void Buffer_autoConfigureIndent(Buffer* this, int indents[]) {
+   int detectedIndent = 8;
+   if (indents[3] > indents[2] && indents[3] > indents[4]) {
+      detectedIndent = 3;
+   } else if (indents[2] > 0 && indents[6] > 0) {
+      detectedIndent = 2;
+   } else if (indents[4] > 0) {
+      detectedIndent = 4;
+   }
+
+   if (indents[0]) {
+      this->tabulation = 0;
+      this->saveTabulation = detectedIndent;
+   } else {
+      this->tabulation = detectedIndent;
+      this->saveTabulation = 0;
+   }
 }
 
 Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, TabManager* tabs) {
@@ -150,9 +168,8 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
    this->bracketY = -1;
    this->lastKey = 0;
    this->modified = false;
-   this->tabCharacters = false;
+   this->tabulation = 4;
    this->dosLineBreaks = false;
-   this->indentSpaces = 3;
    this->tabWidth = 8;
    
    this->L = Script_newState(tabs, this);
@@ -168,6 +185,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
    this->fileName = NULL;
    bool newFile = true;
    if (fileName) {
+      int indents[9] = { 0,0,0,0,0,0,0,0,0 };
       this->fileName = strdup(fileName);
       this->readOnly = (access(fileName, R_OK) == 0 && access(fileName, W_OK) != 0);
      
@@ -177,23 +195,32 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
          newFile = false;
          Text text = Text_new(FileReader_readLine(file));
          this->hl = Highlight_new(fileName, text, this->L);
-         if (!this->tabCharacters && Text_hasChar(text, '\t')) this->tabCharacters = true;
-         if (!this->dosLineBreaks && Text_hasChar(text, '\015')) this->dosLineBreaks = true;
+         if (Text_toString(text)[0] == '\t') indents[0] = 1;
+         if (Text_hasChar(text, '\015')) this->dosLineBreaks = true;
          Line* line = Line_new(p->items, text, this->hl->mainContext);
          Panel_set(p, i, (ListItem*) line);
          while (!FileReader_eof(file)) {
             i++;
             char* t = FileReader_readLine(file);
-            if (t) {
-               Text text = Text_new(t);
-               if (!this->tabCharacters && Text_hasChar(text, '\t')) this->tabCharacters = true;
-               Line* line = Line_new(p->items, text, this->hl->mainContext);
-               Panel_set(p, i, (ListItem*) line);
+            if (!t)
+               continue;
+            Text text = Text_new(t);
+            if (t[0] == '\t') {
+               indents[0]++;
+            } else {
+               int spaces = 0;
+               while (*t == ' ' && spaces < 8) { spaces++; t++; }
+               if (spaces >= 2) {
+                  indents[spaces]++;
+               }
             }
+            Line* line = Line_new(p->items, text, this->hl->mainContext);
+            Panel_set(p, i, (ListItem*) line);
          }
          FileReader_delete(file);
          Buffer_restorePosition(this);
          Undo_restore(this->undo, fileName);
+         Buffer_autoConfigureIndent(this, indents);
       } else {
          this->modified = true;
       }
@@ -204,7 +231,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
       this->hl = Highlight_new(fileName, Text_new(""), this->L);
       Panel_set(p, 0, (ListItem*) Line_new(p->items, Text_new(strdup("")), this->hl->mainContext));
    }
-
+   
    this->savedContext = this->hl->mainContext;
 
    return this;
@@ -895,16 +922,16 @@ inline void Buffer_blockOperation(Buffer* this, Line** firstLine, int* yStart, i
 void Buffer_unindent(Buffer* this) {
    Line* firstLine;
    int yStart, lines, spaces, move;
-   if (this->tabCharacters) {
+   if (this->tabulation == 0) {
       spaces = 0;
       move = 1;
    } else {
-      spaces = this->indentSpaces;
+      spaces = this->tabulation;
       move = spaces;
    }
    Buffer_blockOperation(this, &firstLine, &yStart, &lines);
    int* unindented = Line_unindent(firstLine, lines, spaces);
-   Undo_unindent(this->undo, this->x, yStart, unindented, lines, this->tabCharacters);
+   Undo_unindent(this->undo, this->x, yStart, unindented, lines, this->tabulation);
    Script_onChange(this);
    if (unindented[0] > 0 && this->y >= yStart && this->y <= (yStart + lines - 1))
       this->x = MAX(0, this->x - move);
@@ -915,7 +942,7 @@ void Buffer_unindent(Buffer* this) {
 void Buffer_indent(Buffer* this) {
    Line* firstLine;
    int yStart, lines, spaces, move;
-   if (this->tabCharacters) {
+   if (this->tabulation == 0) {
       if (!this->selecting) {
          Buffer_defaultKeyHandler(this, '\t', false);
          return;
@@ -923,7 +950,7 @@ void Buffer_indent(Buffer* this) {
       spaces = 0;
       move = 1;
    } else {
-      spaces = this->indentSpaces;
+      spaces = this->tabulation;
       move = spaces;
    }
    Buffer_blockOperation(this, &firstLine, &yStart, &lines);
@@ -1116,7 +1143,9 @@ void Buffer_toggleMarking(Buffer* this) {
 }
 
 void Buffer_toggleTabCharacters(Buffer* this) {
-   this->tabCharacters = !this->tabCharacters;
+   int old = this->tabulation;
+   this->tabulation = this->saveTabulation;
+   this->saveTabulation = old;
 }
 
 void Buffer_toggleDosLineBreaks(Buffer* this) {

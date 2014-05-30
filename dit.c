@@ -971,10 +971,14 @@ int main(int argc, char** argv) {
       Display_getyx(&y, &x);
 
       Display_attrset(CRT_colors[TabColor]);
-      Display_printAt(lines - 1, 0, "L:%d C:%d %s%s",
-                             buffer->y + 1, buffer->x + 1,
-                             (buffer->tabCharacters ? " TABS" : ""),
-                             (buffer->dosLineBreaks ? " DOS" : ""));
+      Display_printAt(lines - 1, 0, "L:%d C:%d", buffer->y + 1, buffer->x + 1);
+
+      const char* lineBreaks = (buffer->dosLineBreaks ? "DOS" : "");
+      if (buffer->tabulation == 0) {
+         Display_printAt(lines - 1, 14, "TAB%s", lineBreaks);
+      } else {
+         Display_printAt(lines - 1, 14, "%dsp%s", buffer->tabulation, lineBreaks);
+      }
 
       Display_attrset(A_NORMAL);
       buffer->lastKey = ch;
