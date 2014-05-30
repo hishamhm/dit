@@ -144,6 +144,14 @@ void Highlight_delete(Highlight* this) {
    free(this);
 }
 
+static void freeTokens(char** tokens) {
+   if (tokens) {
+      for (int i = 0; tokens[i]; i++)
+         free(tokens[i]);
+      free(tokens);
+   }
+}
+
 HighlightParserState parseFile(ReadHighlightFileArgs* args, FILE* file, const char* name, HighlightParserState state) {
    if (!file) {
       return HPS_ERROR;
@@ -153,7 +161,10 @@ HighlightParserState parseFile(ReadHighlightFileArgs* args, FILE* file, const ch
    Text firstLine = args->firstLine;
 
    int lineno = 0;
+   char** tokens = NULL;
    while (state != HPS_ERROR && !feof(file)) {
+      freeTokens(tokens);
+      tokens = NULL;
       char buffer[4096];
       fgets(buffer, 4095, file);
       lineno++;
@@ -164,7 +175,7 @@ HighlightParserState parseFile(ReadHighlightFileArgs* args, FILE* file, const ch
       if (*ch == '\0') continue;
 
       buffer[4095] = '\0';
-      char** tokens = String_split(buffer, ' ');
+      tokens = String_split(buffer, ' ');
       
       int ntokens;
       for (ntokens = 0; tokens[ntokens]; ntokens++);
@@ -275,10 +286,8 @@ HighlightParserState parseFile(ReadHighlightFileArgs* args, FILE* file, const ch
          break;
       }
       }
-      for (int i = 0; tokens[i]; i++)
-         free(tokens[i]);
-      free(tokens);
    }
+   freeTokens(tokens);
    fclose(file);
    return state;
 }
@@ -356,12 +365,17 @@ static inline int Highlight_tryMatch(Highlight* this, MatchArgs* args, bool pain
       }
    } else if (paintUnmatched) {
       int attr = CRT_colors[args->ctx->defaultColor];
-      if (isword(*here)) {
-         do {
+      if (*here) {
+         if (isword(*here)) {
+            do {
+               PAINT(args, here, attr);
+            } while (isword(*here));
+         } else {
             PAINT(args, here, attr);
-         } while (isword(*here));
+         }
       } else {
-         PAINT(args, here, attr);
+         args->attrs[args->attrsAt++] = attr;
+         here++;
       }
    }
    args->buffer = here;
