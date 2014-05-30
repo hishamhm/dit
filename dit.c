@@ -131,7 +131,7 @@ static bool confirmClose(Buffer* buffer, TabManager* tabs, char* question) {
 
 static Clipboard* Dit_clipboard = NULL;
 
-static int xclipOk = 0;
+static int xclipOk = 1;
 
 static void copyOrCut(Buffer* buffer, bool cut) {
    if (!Dit_clipboard)
@@ -855,6 +855,10 @@ void Dit_checkFileAccess(char** argv, char* name, int* jump, int* column) {
           name[len - 1] = ':';
        }
    }
+
+   // Let's disable the sudo hack for now.
+   return;
+   
    char* rpath = realpath(name, NULL);
    char* dir = dirname(rpath);
    bool canWriteDir = (access(dir, W_OK) == 0);
