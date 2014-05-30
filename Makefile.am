@@ -10,12 +10,13 @@ BUILT_SOURCES = Prototypes.h Structures.h
 
 # find bindings terminals highlight | grep -v \\.svn
 nobase_dist_pkgdata_DATA = bindings/default \
- terminals/linux terminals/xterm-color terminals/konsole terminals/rxvt \
- highlight/autoconf highlight/c highlight/c_mode highlight/css \
- highlight/diff highlight/highlight_rules highlight/html \
- highlight/java highlight/latex highlight/lua \
- highlight/make highlight/perl highlight/php highlight/python \
- highlight/shell highlight/xml
+ terminals/rxvt terminals/konsole terminals/linux terminals/xterm-color \
+ highlight/yacc.dithl highlight/python.dithl highlight/lua.dithl highlight/html.dithl \
+ highlight/haskell.dithl highlight/java.dithl highlight/css.dithl highlight/c.dithl \
+ highlight/latex.dithl highlight/xml.dithl highlight/autoconf.dithl highlight/lex.dithl \
+ highlight/perl.dithl highlight/shell.dithl highlight/dithl.dithl highlight/c.dithlinc \
+ highlight/shellbacktick.dithlinc highlight/diff.dithl highlight/php.dithl highlight/html.dithlinc \
+ highlight/make.dithl
 
 EXTRA_DIST = tools/GenHeaders extras/dit.keytab lua-$(DIT_LUA_VERSION)/src/*.[ch] lua-$(DIT_LUA_VERSION)/src/Makefile lua-$(DIT_LUA_VERSION)/COPYRIGHT
 
@@ -39,3 +40,6 @@ clean-local:
 install-data-local:
 	$(mkinstalldirs) "$(DESTDIR)$(datadir)/apps/konsole/"
 	$(INSTALL_DATA) "$(srcdir)/extras/dit.keytab" "$(DESTDIR)$(datadir)/apps/konsole/dit.keytab"
+
+debug:
+	$(MAKE) CFLAGS="-g -O0 -DLUA_USE_LINUX"

@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(dit, 0.1, loderunner@users.sf.net)
+AC_INIT(dit, 0.2, loderunner@users.sf.net)
 AC_CONFIG_SRCDIR([dit.c])
 AM_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE
