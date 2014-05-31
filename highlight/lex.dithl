@@ -2,6 +2,8 @@ FILES
 name suffix .l
 RULES
 
+script c.lua
+
 rule %{ veryspecial
 rule %} veryspecial
 

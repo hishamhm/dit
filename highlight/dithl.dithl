@@ -41,5 +41,5 @@ rule ``^ veryspecial
 rule ``$ veryspecial
 rule ```[``[-]+*?|ts`] brightdiff
 
-context ### `$ dim
+context `^# `$ dim
 /context

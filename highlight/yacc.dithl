@@ -2,6 +2,8 @@ FILES
 name suffix .y
 RULES
 
+script c.lua
+
 include gitconflict.dithlinc
 
 rule %{ veryspecial

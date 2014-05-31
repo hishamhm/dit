@@ -4,5 +4,4 @@ name prefix Recipe
 firstline regex ^#!.*/[a-z]*sh($|[[:blank:]].*)
 RULES
 
-
 include shell.dithlinc
