@@ -475,9 +475,13 @@ void Buffer_refreshHighlight(Buffer* this) {
    Highlight* hl = Highlight_new(this->fileName, firstText, this->L);
    this->hl = hl;
    int size = Panel_size(this->panel);
+   
+   HighlightContext* context = hl->mainContext;
    for (int i = 0; i < size; i++) {
       Line* line = (Line*) Panel_get(this->panel, i);
-      line->context = hl->mainContext;
+      int hlAttrs[line->text.bytes];
+      Highlight_setAttrs(hl, line->text.data, hlAttrs, line->text.bytes, i + 1);
+      line->context = Highlight_getContext(hl);
    }
    
    this->panel->needsRedraw = true;
