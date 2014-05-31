@@ -159,22 +159,22 @@ HighlightParserState parseFile(ReadHighlightFileArgs* args, FILE* file, const ch
    Highlight* this = args->this;
    const char* fileName = args->fileName;
    Text firstLine = args->firstLine;
-
    int lineno = 0;
    char** tokens = NULL;
    while (state != HPS_ERROR && !feof(file)) {
       freeTokens(tokens);
       tokens = NULL;
       char buffer[4096];
-      fgets(buffer, 4095, file);
+      char* ok = fgets(buffer, 4095, file);
+      if (!ok) break;
+      buffer[4095] = '\0';
       lineno++;
       char* ch = strchr(buffer, '\n');
       if (ch) *ch = '\0';
       ch = buffer;
-      while (!(isalpha(*ch) || *ch == '\0')) ch++;
+      while (*ch == ' ' || *ch == '\t') ch++;
       if (*ch == '\0') continue;
 
-      buffer[4095] = '\0';
       tokens = String_split(buffer, ' ');
       
       int ntokens;
@@ -306,7 +306,7 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
    args->contexts = Stack_new(ClassAs(HighlightContext, Object), false);
    
    Stack_push(args->contexts, args->context, 0);
-   
+
    HighlightParserState state = parseFile(args, fopen(name, "r"), name, HPS_START);
 
    if (args->contexts->size != 1) {
