@@ -77,9 +77,19 @@ AC_ARG_ENABLE(bundled-lua, [AC_HELP_STRING([--enable-bundled-lua], [compile bund
 
 if test x"$enable_bundled_lua" = x"no"
 then
-   AX_LUA_HEADERS
    AX_LUA_LIBS
-   AX_LUA_TRY_LIB_VERSION([501], [502], [], [enable_bundled_lua="yes"])
+   if test x"$LUA_LIB" = x""
+   then
+      enable_bundled_lua=yes
+   else
+      AX_LUA_HEADERS
+      if test x"$LUA_INCLUDE" = x""
+      then
+         enable_bundled_lua=yes
+      else
+         AX_LUA_TRY_LIB_VERSION([501], [502], [], [enable_bundled_lua="yes"])
+      fi
+   fi
 fi
 
 if test x"$enable_bundled_lua" = x"yes"
