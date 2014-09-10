@@ -9,13 +9,19 @@ include gitconflict.dithlinc
 context # `$ dim
 /context
 
-context `^`[A`-Za`-z_-.0`-9/()$`]`+: `$ brightdiff normal normal
+context `^`[A`-Za`-z_-.0`-9/%()$`]`+: `$ brightdiff normal normal
    rule $(`[A`-Za`-z_0`-9`]`+) brightalt
+   rule $@ brightdiff
+   rule $^ brightspecial
+   rule $< brightspecial
 /context
 
 context `[+?`]`?= `$ brightdiff normal alt
    rule $(`[A`-Za`-z_0`-9`]`+) brightalt
    rule ${`[A`-Za`-z_0`-9`]`+} special
+   rule $@ brightdiff
+   rule $^ brightspecial
+   rule $< brightspecial
 /context
 
 context `t `$ veryspecial normal normal

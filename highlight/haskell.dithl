@@ -5,11 +5,35 @@ script haskell.lua
 
 include gitconflict.dithlinc
 
+rule as bright
+rule case bright
+rule of bright
+rule data bright
+rule family bright
+rule instance bright
+rule default bright
+rule deriving bright
+rule do bright
+rule forall bright
+rule foreign bright
+rule hiding bright
+rule if bright
+rule then bright
+rule else bright
 rule import bright
-rule where bright
+rule infix bright
+rule infixl bright
+rule infixr bright
 rule let bright
 rule in bright
-rule do bright
+rule mdo bright
+rule module bright
+rule newtype bright
+rule proc bright
+rule qualified bright
+rule rec bright
+rule type bright
+rule where bright
 
 rule [ symbol
 rule ] symbol
@@ -22,6 +46,7 @@ rule /= symbol
 rule > symbol
 rule < symbol
 rule -> symbol
+rule <- symbol
 rule `` symbol
 rule ++ symbol
 rule : symbol
@@ -37,6 +62,9 @@ context " " alt
    rule \`[0`-3`]`[0`-7`]`[0`-7`] brightalt
    rule " alt
 /context
+
+rule '\`[\'`]' brightalt
+rule '`[A`-Z`|a`-z`|!@#$%^&*(){}][<>"/=+?_|:-,.`]' brightalt
 
 context -- `$ dim
    rule TODO veryspecial
