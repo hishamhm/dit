@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+which tac &> /dev/null || tac() { tail -r "$@"; }
 
 process() {
    for proc in "${processed[@]}"
