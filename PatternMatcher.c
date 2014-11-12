@@ -8,14 +8,14 @@
 
 /*{
 
-typedef int(*Method_PatternMatcher_match)(GraphNode*, const unsigned char*, long int*, bool*);
+typedef int(*Method_PatternMatcher_match)(GraphNode*, const unsigned char*, intptr_t*, bool*);
 
 struct GraphNode_ {
    unsigned char min;
    unsigned char max;
    bool endNode;
    bool eager;
-   int value;
+   intptr_t value;
    union {
       GraphNode* simple;
       struct {
@@ -82,7 +82,7 @@ static inline GraphNode* GraphNode_follow(GraphNode* this, unsigned char c) {
    }
 }
 
-void GraphNode_build(GraphNode* current, unsigned char* input, unsigned char* special, int value, bool eager) {
+void GraphNode_build(GraphNode* current, unsigned char* input, unsigned char* special, intptr_t value, bool eager) {
 #define SPECIAL(c) (*special && *input == c)
 #define NEXT do { special++; input++; } while (0)
    assert(current); assert(input); assert(special);
@@ -145,7 +145,7 @@ void GraphNode_build(GraphNode* current, unsigned char* input, unsigned char* sp
 #undef NEXT
 }
 
-void PatternMatcher_add(PatternMatcher* this, unsigned char* pattern, int value, bool eager) {
+void PatternMatcher_add(PatternMatcher* this, unsigned char* pattern, intptr_t value, bool eager) {
    assert(this); assert(pattern);
    int len = strlen((char*)pattern) + 1;
    unsigned char input[len];
@@ -203,7 +203,7 @@ bool PatternMatcher_partialMatch(GraphNode* node, unsigned char* input, int inpu
    return false;
 }
 
-int PatternMatcher_match(GraphNode* node, const unsigned char* input, long int* value, bool* eager) {
+int PatternMatcher_match(GraphNode* node, const unsigned char* input, intptr_t* value, bool* eager) {
    int i = 0;
    int match = 0;
    *value = 0;
@@ -221,7 +221,7 @@ int PatternMatcher_match(GraphNode* node, const unsigned char* input, long int* 
    return match;
 }
 
-int PatternMatcher_match_toLower(GraphNode* node, const unsigned char* input, long int* value, bool* eager) {
+int PatternMatcher_match_toLower(GraphNode* node, const unsigned char* input, intptr_t* value, bool* eager) {
    int i = 0;
    int match = 0;
    *value = 0;
