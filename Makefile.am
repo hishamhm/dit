@@ -26,7 +26,7 @@ dit_LDADD = $(LUA_LIB)
 dit_DEPENDENCIES = $(LUA_DEP)
 
 lua-$(DIT_LUA_VERSION)/src/liblua.a:
-	cd lua-$(DIT_LUA_VERSION)/src && make MYCFLAGS="-DLUA_USE_LINUX" MYLIBS="-Wl,-E -ldl" liblua.a 
+	cd lua-$(DIT_LUA_VERSION)/src && make CC="$(CC)" MYCFLAGS="-DLUA_USE_LINUX" MYLIBS="-Wl,-E -ldl" liblua.a 
 
 Prototypes.h: $(my_dit_C_sources)
 	tools/GenHeaders Prototypes.h
