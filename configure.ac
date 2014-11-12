@@ -77,9 +77,19 @@ AC_ARG_ENABLE(bundled-lua, [AC_HELP_STRING([--enable-bundled-lua], [compile bund
 
 if test x"$enable_bundled_lua" = x"no"
 then
-   AX_LUA_HEADERS
    AX_LUA_LIBS
-   AX_LUA_TRY_LIB_VERSION([501], [502], [], [enable_bundled_lua="yes"])
+   if test x"$LUA_LIB" = x""
+   then
+      enable_bundled_lua=yes
+   else
+      AX_LUA_HEADERS
+      if test x"$LUA_INCLUDE" = x""
+      then
+         enable_bundled_lua=yes
+      else
+         AX_LUA_TRY_LIB_VERSION([501], [502], [], [enable_bundled_lua="yes"])
+      fi
+   fi
 fi
 
 if test x"$enable_bundled_lua" = x"yes"
@@ -90,7 +100,7 @@ then
    AC_CHECK_LIB([dl], [dlopen], [lua_extra_libs="$lua_extra_libs -ldl"], [])
    LUA_INCLUDE=-Ilua-${DIT_LUA_VERSION}/src
    LUA_LIB="lua-${DIT_LUA_VERSION}/src/liblua.a $lua_extra_libs"
-   LUA_DEP="lua-${DIT_LUA_VERSION}/src/liblua.a $lua_extra_libs"
+   LUA_DEP="lua-${DIT_LUA_VERSION}/src/liblua.a"
 fi
 
 AC_SUBST([LUA_INCLUDE])

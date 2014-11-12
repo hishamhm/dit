@@ -119,7 +119,7 @@ static Color Highlight_translateColor(char* color) {
 }
 
 Highlight* Highlight_new(const char* fileName, Text firstLine, lua_State* L) {
-   Highlight* this = (Highlight*) malloc(sizeof(Highlight));
+   Highlight* this = (Highlight*) calloc(1, sizeof(Highlight));
    this->L = L;
    this->hasScript = false;
 
@@ -330,11 +330,11 @@ HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close,
    Vector_add(this->contexts, ctx);
    if (open) {
       assert(parent);
-      PatternMatcher_add(parent->follows, (unsigned char*) open, (long int) ctx, false);
+      PatternMatcher_add(parent->follows, (unsigned char*) open, (intptr_t) ctx, false);
    }
    if (close) {
       assert(parent);
-      PatternMatcher_add(ctx->follows, (unsigned char*) close, (long int) parent, false);
+      PatternMatcher_add(ctx->follows, (unsigned char*) close, (intptr_t) parent, false);
    } else {
       if (parent)
          ctx->nextLine = parent;
@@ -344,11 +344,11 @@ HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close,
 
 #define PAINT(_args, _here, _attr) do { _args->attrs[_args->attrsAt++] = _attr; _here = UTF8_forward(_here, 1); } while(0)
 
-static inline int Highlight_tryMatch(Highlight* this, MatchArgs* args, bool paintUnmatched) {
+static inline void Highlight_tryMatch(Highlight* this, MatchArgs* args, bool paintUnmatched) {
    const unsigned char* here = args->buffer;
-   long int intColor;
+   intptr_t intColor;
    bool eager;
-   long int matchlen = args->match(args->rules, args->buffer, &intColor, &eager);
+   intptr_t matchlen = args->match(args->rules, args->buffer, &intColor, &eager);
    Color color = (Color) intColor;
    assert(color >= 0 && color < Colors);
    if (matchlen && (eager || ( !(isword(here[matchlen-1]) && isword(here[matchlen]))))) {
@@ -357,7 +357,7 @@ static inline int Highlight_tryMatch(Highlight* this, MatchArgs* args, bool pain
       while (here < nextStop) {
          PAINT(args, here, attr);
       }
-      long int nextCtx = 0;
+      intptr_t nextCtx = 0;
       int followMatchlen = args->match(args->follows, args->buffer, &nextCtx, &eager);
       if (followMatchlen == matchlen) {
          assert(nextCtx);

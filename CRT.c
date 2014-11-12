@@ -9,7 +9,7 @@
 #endif
 #ifdef __CYGWIN__
 #include <sys/ioctl.h>
-#include <sys/termios.h>
+#include <termios.h>
 #endif
 
 #include "Prototypes.h"
