@@ -100,7 +100,7 @@ then
    AC_CHECK_LIB([dl], [dlopen], [lua_extra_libs="$lua_extra_libs -ldl"], [])
    LUA_INCLUDE=-Ilua-${DIT_LUA_VERSION}/src
    LUA_LIB="lua-${DIT_LUA_VERSION}/src/liblua.a $lua_extra_libs"
-   LUA_DEP="lua-${DIT_LUA_VERSION}/src/liblua.a $lua_extra_libs"
+   LUA_DEP="lua-${DIT_LUA_VERSION}/src/liblua.a"
 fi
 
 AC_SUBST([LUA_INCLUDE])
