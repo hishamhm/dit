@@ -25,6 +25,9 @@
 /* Define to 1 if you have the `ncursesw' library (-lncursesw). */
 #undef HAVE_LIBNCURSESW
 
+/* Define to 1 if you have the `tinfow' library (-ltinfow). */
+#undef HAVE_LIBTINFOW
+
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
 

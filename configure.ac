@@ -29,6 +29,7 @@ if test "x$enable_unicode" = xyes; then
          missing_libraries="$missing_libraries libncursesw"
          AC_MSG_ERROR([You may want to use --disable-unicode or install libncursesw.])
       ])
+      AC_CHECK_LIB([tinfow], [tgoto], [], [])
       AC_CHECK_HEADERS([ncursesw/curses.h],[:],
            [AC_CHECK_HEADERS([ncurses/ncurses.h],[:],
              [AC_CHECK_HEADERS([ncurses.h],[:],[missing_headers="$missing_headers $ac_header"])])])
