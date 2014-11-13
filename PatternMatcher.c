@@ -8,7 +8,7 @@
 
 /*{
 
-typedef int(*Method_PatternMatcher_match)(GraphNode*, const unsigned char*, intptr_t*, bool*);
+typedef int(*Method_PatternMatcher_match)(GraphNode*, const char*, intptr_t*, bool*);
 
 struct GraphNode_ {
    unsigned char min;
@@ -181,7 +181,8 @@ void PatternMatcher_add(PatternMatcher* this, unsigned char* pattern, intptr_t v
    }
 }
 
-bool PatternMatcher_partialMatch(GraphNode* node, unsigned char* input, int inputLen, char* rest, int restLen) {
+bool PatternMatcher_partialMatch(GraphNode* node, const char* sinput, int inputLen, char* rest, int restLen) {
+   const unsigned char* input = (const unsigned char*) sinput;
    int i = 0;
    while (i < inputLen) {
       node = GraphNode_follow(node, input[i]);
@@ -203,7 +204,8 @@ bool PatternMatcher_partialMatch(GraphNode* node, unsigned char* input, int inpu
    return false;
 }
 
-int PatternMatcher_match(GraphNode* node, const unsigned char* input, intptr_t* value, bool* eager) {
+int PatternMatcher_match(GraphNode* node, const char* sinput, intptr_t* value, bool* eager) {
+   const unsigned char* input = (const unsigned char*) sinput;
    int i = 0;
    int match = 0;
    *value = 0;
@@ -221,7 +223,8 @@ int PatternMatcher_match(GraphNode* node, const unsigned char* input, intptr_t* 
    return match;
 }
 
-int PatternMatcher_match_toLower(GraphNode* node, const unsigned char* input, intptr_t* value, bool* eager) {
+int PatternMatcher_match_toLower(GraphNode* node, const char* sinput, intptr_t* value, bool* eager) {
+   const unsigned char* input = (const unsigned char*) sinput;
    int i = 0;
    int match = 0;
    *value = 0;

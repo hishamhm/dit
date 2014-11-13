@@ -49,8 +49,8 @@ void Object_delete(Object* this) {
 }
 
 void Object_display(Object* this, RichString* out) {
-   unsigned char objAddress[50];
-   sprintf((char*)objAddress, "O:%p C:%p", (void*) this, (void*) this->class);
+   char objAddress[50];
+   sprintf(objAddress, "O:%p C:%p", (void*) this, (void*) this->class);
    RichString_write(out, 0, objAddress);
 }
 

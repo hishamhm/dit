@@ -367,7 +367,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             }
             case KEY_CTRL('G'):
             {
-               const unsigned char* text = Text_toString(Field_text(Dit_findField));
+               const char* text = Text_toString(Field_text(Dit_findField));
                if (!text) break;
                int y = atoi(text);
                if (y > 0)

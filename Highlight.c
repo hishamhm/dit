@@ -56,7 +56,7 @@ struct ReadHighlightFileArgs_ {
 };
 
 struct MatchArgs_ {
-   const unsigned char* buffer;
+   const char* buffer;
    int* attrs;
    GraphNode* rules;
    GraphNode* follows;
@@ -349,7 +349,7 @@ HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close,
 #define PAINT(_args, _here, _attr) do { _args->attrs[_args->attrsAt++] = _attr; _here = UTF8_forward(_here, 1); } while(0)
 
 static inline void Highlight_tryMatch(Highlight* this, MatchArgs* args, bool paintUnmatched) {
-   const unsigned char* here = args->buffer;
+   const char* here = args->buffer;
    intptr_t intColor;
    bool eager;
    intptr_t matchlen = args->match(args->rules, args->buffer, &intColor, &eager);
@@ -357,7 +357,7 @@ static inline void Highlight_tryMatch(Highlight* this, MatchArgs* args, bool pai
    assert(color >= 0 && color < Colors);
    if (matchlen && (eager || ( !(isword(here[matchlen-1]) && isword(here[matchlen]))))) {
       int attr = CRT_colors[color];
-      const unsigned char* nextStop = here + matchlen;
+      const char* nextStop = here + matchlen;
       while (here < nextStop) {
          PAINT(args, here, attr);
       }
@@ -385,7 +385,7 @@ static inline void Highlight_tryMatch(Highlight* this, MatchArgs* args, bool pai
    args->buffer = here;
 }
 
-void Highlight_setAttrs(Highlight* this, const unsigned char* buffer, int* attrs, int len, int y) {
+void Highlight_setAttrs(Highlight* this, const char* buffer, int* attrs, int len, int y) {
    MatchArgs args = {
       .buffer = buffer,
       .attrs = attrs,

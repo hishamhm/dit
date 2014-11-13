@@ -259,7 +259,7 @@ void TabManager_resize(TabManager* this, int w, int h) {
    this->redrawBar = true;
 }
 
-int TabManager_find(TabManager* this, const char* name) {
+int TabManager_find(TabManager* this, char* name) {
    int items = Vector_size(this->items);
    for (int i = 0; i < items; i++) {
       TabPage* page = (TabPage*) Vector_get(this->items, i);
@@ -340,7 +340,7 @@ char* TabManager_getPageName(TabManager* this, int i) {
    }
 }
 
-void TabManager_load(TabManager* this, const char* fileName, int limit) {
+void TabManager_load(TabManager* this, char* fileName, int limit) {
    FILE* fd = Files_openHome("r", fileName, NULL);
    if (fd) {
       char line[4097];
@@ -350,8 +350,8 @@ void TabManager_load(TabManager* this, const char* fileName, int limit) {
             char* enter = strrchr(line, '\n');
             if (enter) *enter = '\0';
             if (*line == '\0') continue;
-            if (TabManager_find(this, line) == -1 && access(line, F_OK) == 0) {
-               TabManager_add(this, line, NULL);
+            if (TabManager_find(this, (char*) line) == -1 && access(line, F_OK) == 0) {
+               TabManager_add(this, (char*) line, NULL);
                limit--;
                if (!limit) break;
             }
@@ -361,7 +361,7 @@ void TabManager_load(TabManager* this, const char* fileName, int limit) {
    }
 }
 
-void TabManager_save(TabManager* this, const char* fileName) {
+void TabManager_save(TabManager* this, char* fileName) {
    FILE* fd = Files_openHome("w", fileName, NULL);
    if (fd) {
       int items = Vector_size(this->items);

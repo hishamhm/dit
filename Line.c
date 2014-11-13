@@ -92,10 +92,10 @@ void Line_display(Object* cast, RichString* str) {
 
    Highlight_setAttrs(hl, this->text.data, hlAttrs, this->text.bytes, y + 1);
 
-   const unsigned char* start = Text_toString(this->text);
+   const char* start = Text_toString(this->text);
    int attrIdx = 0;
 
-   for (const unsigned char* curr = start; *curr; ) {
+   for (const char* curr = start; *curr; ) {
       int inIdx = curr - start;
       if (*curr == '\t') {
          int tabSize = tabWidth - (outIdx % tabWidth);
@@ -216,26 +216,26 @@ int Line_breakAt(Line* this, int at, bool doIndent) {
 void Line_joinNext(Line* this) {
    assert(this->super.next);
    Line* next = (Line*) this->super.next;
-   Text_strcat(&(this->text), next->text);
+   (void) Text_strcat(&(this->text), next->text);
    ListItem_remove((ListItem*) next);
 }
 
-static int lineToBufferFromTo(StringBuffer* str, Line* l, int xFrom, int xTo) {
+static void lineToBufferFromTo(StringBuffer* str, Line* l, int xFrom, int xTo) {
    const char* from = Text_stringAt(l->text, xFrom);
    const char* to = Text_stringAt(l->text, xTo);
    StringBuffer_addN(str, from, to - from);
 }
 
-static int lineToBufferFrom(StringBuffer* str, Line* l, int xFrom) {
-   const unsigned char* from = Text_stringAt(l->text, xFrom);
+static void lineToBufferFrom(StringBuffer* str, Line* l, int xFrom) {
+   const char* from = Text_stringAt(l->text, xFrom);
    StringBuffer_addN(str, from, Text_toString(l->text) + Text_bytes(l->text) - from);
 }
 
-static int lineToBufferTo(StringBuffer* str, Line* l, int xTo) {
+static void lineToBufferTo(StringBuffer* str, Line* l, int xTo) {
    StringBuffer_addN(str, Text_toString(l->text), Text_bytesUntil(l->text, xTo));
 }
 
-static int lineToBuffer(StringBuffer* str, Line* l) {
+static void lineToBuffer(StringBuffer* str, Line* l) {
    StringBuffer_addN(str, Text_toString(l->text), Text_bytes(l->text));
 }
 
@@ -340,7 +340,7 @@ int* Line_unindent(Line* this, int lines, int indentSpaces) {
 bool Line_insertBlock(Line* this, int x, Text block, int* newX, int* newY) {
    // newY must contain the current value of y on input
    int blockBytes = Text_bytes(block);
-   unsigned char* nl = memchr(block.data, '\n', block.bytes);
+   char* nl = memchr(block.data, '\n', block.bytes);
    Line* at = this;
    bool multiline = (nl);
    if (!multiline) {
@@ -351,11 +351,11 @@ bool Line_insertBlock(Line* this, int x, Text block, int* newX, int* newY) {
       Line_breakAt(this, x, 0);
       Line* last = (Line*) this->super.next;
       Text_insertString(&(this->text), x, block.data, lineLen);
-      unsigned char* walk = ++nl;
+      char* walk = ++nl;
       (*newY)++;
       while ( (nl = memchr(walk, '\n', blockBytes - (walk - block.data) )) ) {
          lineLen = nl - walk;
-         char* text = malloc(lineLen+1);
+         char* text = (char*) malloc(lineLen+1);
          text[lineLen] = '\0';
          memcpy(text, walk, lineLen);
          Line* newLine = Line_new(this->super.list, Text_new(text), this->context);

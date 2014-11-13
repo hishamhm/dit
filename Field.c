@@ -143,7 +143,7 @@ int Field_run(Field* this, bool setCursor, bool* handled, bool* code) {
       Display_move(this->y, this->x + this->labelLen + 2 + this->cursor);
       Display_attrset(A_REVERSE);
       if (this->cursor < Text_chars(curr->text)) {
-         const unsigned char* ch = Text_stringAt(curr->text, this->cursor);
+         const char* ch = Text_stringAt(curr->text, this->cursor);
          Display_writeAtn(this->y, x + this->cursor, ch, UTF8_bytes(*ch));
       } else {
          Display_writeAtn(this->y, x + this->cursor, " ", 1);

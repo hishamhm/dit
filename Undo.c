@@ -195,7 +195,7 @@ void Undo_endGroup(Undo* this, int x, int y) {
 void Undo_insertBlock(Undo* this, int x, int y, Text block) {
    UndoAction* action = UndoAction_new(UndoInsertBlock, x, y);
    // Don't keep block in undo structure. Just calculate its size.
-   const unsigned char* walk = block.data;
+   const char* walk = block.data;
    int len = block.bytes;
    int yTo = y;
    int xTo = 0;

@@ -7,7 +7,7 @@
 /*{
 
 struct Text_ {
-   unsigned char* data;
+   char* data;
    int dataSize;
    int bytes;
    int chars;
@@ -20,14 +20,17 @@ struct Text_ {
 
 }*/
 
-int UTF8_bytes(const unsigned char c) {
+int UTF8_bytes(const char sc) {
+   const unsigned char c = (const unsigned char) sc;
    if (c >> 7 == 0)         return 1;
    else if (c >> 5 == 0x06) return 2;
    else if (c >> 4 == 0x0e) return 3;
    else if (c >> 3 == 0x1e) return 4;
+   // TODO handle invalid UTF-8 sequences
+   return 1;
 }
 
-static int UTF8_chars(const unsigned char* s) {
+static int UTF8_chars(const char* s) {
    int i = 0;
    unsigned char* c = (unsigned char*) s;
    while (*c) {
@@ -38,7 +41,9 @@ static int UTF8_chars(const unsigned char* s) {
    return i;
 }
 
-int UTF8_copyChar(unsigned char* dest, const unsigned char* src) {
+int UTF8_copyChar(char* sdest, const char* ssrc) {
+   unsigned char* dest = (unsigned char*) sdest;
+   const unsigned char* src = (const unsigned char*) ssrc;
    int offset = 1;
    *dest = *src;
    return offset;
@@ -52,7 +57,8 @@ int UTF8_copyChar(unsigned char* dest, const unsigned char* src) {
    return offset;
 }
 
-wchar_t UTF8_stringToCodePoint(const unsigned char* s) {
+wchar_t UTF8_stringToCodePoint(const char* ss) {
+   const unsigned char* s = (const unsigned char*) ss;
    if (*s >> 7 == 0)
       return *s;
    if (*s >> 5 == 0x06)
@@ -64,7 +70,8 @@ wchar_t UTF8_stringToCodePoint(const unsigned char* s) {
    return 0;
 }
 
-static int UTF8_codePointToString(unsigned char* dest, wchar_t c) {
+static int UTF8_codePointToString(char* sdest, wchar_t c) {
+   unsigned char* dest = (unsigned char*) sdest;
    if (c >> 7 == 0) {
       dest[0] = c; dest[1] = '\0';
       return 1;
@@ -87,35 +94,37 @@ static int UTF8_codePointToString(unsigned char* dest, wchar_t c) {
       dest[4] = '\0';
       return 4;
    }
+   // TODO handle invalid UTF-8 sequences
+   return 1;
 }
 
-static const unsigned char* UTF8_backward(const unsigned char* s) {
-   int i = 0;
-   unsigned char* c = (unsigned char*) s;
+static const char* UTF8_backward(const char* ss) {
+   unsigned char* c = (unsigned char*) ss;
    c--;
    while (*c >> 6 == 2)
       c--;
-   return c;
+   return (const char*) c;
 }
 
-const unsigned char* UTF8_forward(const unsigned char* s, int n) {
+const char* UTF8_forward(const char* ss, int n) {
    int i = 0;
-   unsigned char* c = (unsigned char*) s;
+   unsigned char* c = (unsigned char*) ss;
    while (*c) {
       if (i == n)
-         return c;
+         return (const char*) c;
       c++;
       while (*c >> 6 == 2)
          c++;
       i++;
    }
-   return c;
+   return (const char*) c;
 }
 
-static int UTF8_offset(const unsigned char* s, const unsigned char* substr) {
+static int UTF8_offset(const char* ss, const char* ssubstr) {
+   if (!ss || !ssubstr) return 0;
+   unsigned char* c = (unsigned char*) ss;
+   const unsigned char* substr = (const unsigned char*) ssubstr;
    int i = 0;
-   if (!s || !substr) return 0;
-   unsigned char* c = (unsigned char*) s;
    while (*c) {
       if (c == substr)
          return i;
@@ -127,7 +136,7 @@ static int UTF8_offset(const unsigned char* s, const unsigned char* substr) {
    return i;
 }
 
-Text Text_new(unsigned char* data) {
+Text Text_new(char* data) {
    Text t;
    t.data = data;
    t.bytes = strlen(data);
@@ -166,7 +175,7 @@ bool Text_hasChar(Text t, int c) {
    if (!t.data) return false;
    if (c >> 7 == 0)
       return strchr(t.data, c);
-   unsigned char seq[5];
+   char seq[5];
    UTF8_codePointToString(seq, c);
    return strstr(t.data, seq);
 }
@@ -175,25 +184,25 @@ wchar_t Text_at(Text t, int n) {
    return UTF8_stringToCodePoint(UTF8_forward(t.data, n));
 }
 
-const unsigned char* Text_stringAt(Text t, int n) {
+const char* Text_stringAt(Text t, int n) {
    return UTF8_forward(t.data, n);
 }
 
 int Text_bytesUntil(Text t, int n) {
-   const unsigned char* offset = UTF8_forward(t.data, n);
+   const char* offset = UTF8_forward(t.data, n);
    return offset - t.data;
 }
 
 const Text Text_textAt(Text t, int n) {
    Text s;
-   s.data = t.data ? (unsigned char*) UTF8_forward(t.data, n) : NULL;
+   s.data = t.data ? (char*) UTF8_forward(t.data, n) : NULL;
    s.bytes = t.bytes - (s.data - t.data);
    s.chars = t.chars - n;
    return s;
 }
 
 int Text_forwardWord(Text this, int cursor) {
-   const unsigned char* s = UTF8_forward(this.data, cursor);
+   const char* s = UTF8_forward(this.data, cursor);
    wchar_t curr = UTF8_stringToCodePoint(s);
    if (iswalnum(curr)) {
       while (iswalnum(curr) && cursor < this.chars) {
@@ -220,7 +229,7 @@ int Text_forwardWord(Text this, int cursor) {
 int Text_backwardWord(Text this, int cursor) {
    if (cursor == 0) return 0;
    cursor--;
-   const unsigned char* s = UTF8_forward(this.data, cursor);
+   const char* s = UTF8_forward(this.data, cursor);
    wchar_t curr = UTF8_stringToCodePoint(s);
    if (iswalnum(curr)) {
       for (; cursor > 0; cursor--) {
@@ -248,12 +257,12 @@ Text Text_wordAt(Text this, int cursor) {
    if (!this.data) {
       return Text_new(strdup(""));
    }
-   const unsigned char* start = UTF8_forward(this.data, cursor);
-   const unsigned char* end = start;
+   const char* start = UTF8_forward(this.data, cursor);
+   const char* end = start;
 
    int scursor = cursor;
    while (scursor > 0) {
-      const unsigned char* prev = UTF8_backward(start);
+      const char* prev = UTF8_backward(start);
       if (iswword(UTF8_stringToCodePoint(prev))) {
          start = prev;
          scursor--;
@@ -267,7 +276,7 @@ Text Text_wordAt(Text this, int cursor) {
    }
    
    int bytes = end - start + 1;
-   unsigned char* word = malloc(bytes + 1);
+   char* word = malloc(bytes + 1);
    memcpy(word, start, bytes);
    word[bytes] = '\0';
 
@@ -279,14 +288,14 @@ Text Text_wordAt(Text this, int cursor) {
 }
 
 int Text_indexOf(Text haystack, Text needle) {
-   unsigned char* found = strstr(haystack.data, needle.data);
+   char* found = strstr(haystack.data, needle.data);
    if (found)
       return UTF8_offset(haystack.data, found);
    return -1;
 }
 
 int Text_indexOfi(Text haystack, Text needle) {
-   unsigned char* found = strcasestr(haystack.data, needle.data);
+   char* found = strcasestr(haystack.data, needle.data);
    if (found)
       return UTF8_offset(haystack.data, found);
    return -1;
@@ -297,10 +306,10 @@ int Text_strncmp(Text haystack, Text needle) {
 }
 
 int Text_strncasecmp(Text haystack, Text needle) {
-   return strncmp(haystack.data, needle.data, needle.bytes);
+   return strncasecmp(haystack.data, needle.data, needle.bytes);
 }
 
-int Text_strcat(Text* dest, Text src) {
+Text* Text_strcat(Text* dest, Text src) {
    int newSize = dest->bytes + src.bytes + 1;
    if (dest->dataSize < newSize) {
       dest->data = realloc(dest->data, newSize);
@@ -318,7 +327,7 @@ int Text_cellsUntil(Text t, int n, int tabWidth) {
    n = MIN(n, t.chars);
    int offset = 0;
    for (int i = 0; i < n; i++) {
-      unsigned char curr = t.data[offset];
+      char curr = t.data[offset];
       if (curr == '\t') {
          width += tabWidth - (width % tabWidth);
          offset++;
@@ -333,7 +342,7 @@ int Text_cellsUntil(Text t, int n, int tabWidth) {
 void Text_deleteChar(Text* t, int at) {
    if (t->chars == 0 || at >= t->chars)
       return;
-   unsigned char* s = (unsigned char*) UTF8_forward(t->data, at);
+   char* s = (char*) UTF8_forward(t->data, at);
    int offset = UTF8_bytes(*s);
    for(; *s; s++) {
       *s = *(s + offset);
@@ -346,7 +355,7 @@ void Text_deleteChars(Text* t, int at, int n) {
    if (t->chars == 0 || at >= t->chars)
       return;
    n = MIN(n, t->chars - at);
-   unsigned char* s = (unsigned char*) UTF8_forward(t->data, at);
+   char* s = (char*) UTF8_forward(t->data, at);
    int offset = UTF8_forward(s, n) - s;
    for (;;) {
       *s = *(s + offset);
@@ -357,13 +366,13 @@ void Text_deleteChars(Text* t, int at, int n) {
    t->chars -= n;
 }
 
-static inline void insert(Text* t, int at, const unsigned char* data, int bytes, int chars) {
+static inline void insert(Text* t, int at, const char* data, int bytes, int chars) {
    if (t->bytes + bytes >= t->dataSize) {
       t->dataSize += MAX(bytes, t->dataSize) + 1;
       t->data = realloc(t->data, t->dataSize);
       t->data[t->bytes] = '\0';
    }
-   unsigned char* s = (unsigned char*) UTF8_forward(t->data, at);
+   char* s = (char*) UTF8_forward(t->data, at);
    for (int i = t->bytes; t->data + i >= s; i--) {
       t->data[i+bytes] = t->data[i];
    }
@@ -375,7 +384,7 @@ static inline void insert(Text* t, int at, const unsigned char* data, int bytes,
 
 void Text_insertChar(Text* t, int at, wchar_t ch) {
    assert(at >= 0 && at <= t->chars);
-   unsigned char seq[5];
+   char seq[5];
    int offset = UTF8_codePointToString(seq, ch);
    insert(t, at, seq, offset, 1);
 }
@@ -385,7 +394,7 @@ void Text_insert(Text* t, int at, Text new) {
    insert(t, at, new.data, new.bytes, new.chars);
 }
 
-void Text_insertString(Text* t, int at, const unsigned char* s, int bytes) {
+void Text_insertString(Text* t, int at, const char* s, int bytes) {
    assert(at >= 0 && at <= t->chars);
    insert(t, at, s, bytes, UTF8_offset(s, s + bytes));
 }

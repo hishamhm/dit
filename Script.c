@@ -195,7 +195,7 @@ static int Script_Buffer___newindex(lua_State* L) {
       luaL_checkstring(L, 3);
       size_t len;
       const char* text = lua_tolstring(L, 3, &len);
-      Buffer_setLine(buffer, y, Text_new((unsigned char*)text));
+      Buffer_setLine(buffer, y, Text_new((char*) text));
    }
    return 0;
 }
@@ -377,7 +377,7 @@ void Script_highlightFile(Highlight* this, const char* fileName) {
    this->hasScript = callFunction(this->L, "highlight_file", fileName);
 }
 
-void Script_highlightLine(Highlight* this, const unsigned char* buffer, int* attrs, int len, int y) {
+void Script_highlightLine(Highlight* this, const char* buffer, int* attrs, int len, int y) {
    lua_State* L = this->L;
    if (!this->hasScript)
       return;
