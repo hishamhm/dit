@@ -367,7 +367,8 @@ void Undo_store(Undo* this, char* fileName) {
    int items = this->actions->size;
    items = MIN(items, 1000);
    fwrite(&items, sizeof(int), 1, ufd);
-   int x, y;
+   int x = -1;
+   int y = -1;
    for (int i = items - 1; i >= 0; i--) {
       UndoAction* action = (UndoAction*) Stack_peekAt(this->actions, i, NULL);
       fwrite(&action->kind, sizeof(UndoActionKind), 1, ufd);
@@ -411,6 +412,7 @@ void Undo_store(Undo* this, char* fileName) {
          break;
       }
    }
+   assert(x != -1 && y != -1);
    fclose(ufd);
    Undo_diskState(this, x, y, NULL, fileName);
 }

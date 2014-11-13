@@ -285,6 +285,10 @@ HighlightParserState parseFile(ReadHighlightFileArgs* args, FILE* file, const ch
          }
          break;
       }
+      case HPS_ERROR:
+      {
+         assert(0);
+      }
       }
    }
    freeTokens(tokens);

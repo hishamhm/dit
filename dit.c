@@ -37,7 +37,7 @@ static bool saveAs(Field* saveAsField, Buffer* buffer, char* name) {
    if (ch == 13) {
       free(buffer->fileName);
       char* name = Field_getValue(saveAsField);
-      char* rpath = realpath(name, rpath);
+      char* rpath = realpath(name, NULL);
       if (!rpath) {
          rpath = calloc(2+strlen(name)+1, sizeof(char));
          sprintf(rpath, "./%s", name);

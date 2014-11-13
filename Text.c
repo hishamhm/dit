@@ -310,6 +310,7 @@ int Text_strcat(Text* dest, Text src) {
    dest->bytes += src.bytes;
    dest->chars += src.chars;
    dest->data[dest->bytes] = '\0';
+   return dest;
 }
 
 int Text_cellsUntil(Text t, int n, int tabWidth) {

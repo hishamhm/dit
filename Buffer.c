@@ -968,7 +968,7 @@ void Buffer_indent(Buffer* this) {
 }
       
 void Buffer_defaultKeyHandler(Buffer* this, int ch, bool code) {
-   if (!code && ch >= 32 || ch == '\t' || ch == '\015') {
+   if ((!code && ch >= 32) || ch == '\t' || ch == '\015') {
       if (this->selecting) {
          Buffer_deleteBlock(this);
       }
