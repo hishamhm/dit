@@ -30,24 +30,6 @@ static void printVersionFlag() {
    exit(0);
 }
 
-static void clearStatusBar() {
-   int y, x;
-   Display_getyx(&y, &x);
-   Display_attrset(CRT_colors[StatusColor]);
-   Display_mvhline(lines - 1, 0, ' ', cols);
-   Display_move(y, x);
-}
-
-static void statusMessage(char* message) {
-   int y, x;
-   Display_getyx(&y, &x);
-   Display_attrset(CRT_colors[StatusColor]);
-   Display_mvhline(lines - 1, 0, ' ', cols);
-   Display_printAt(lines - 1, 0, message);
-   Display_attrset(CRT_colors[NormalColor]);
-   Display_move(y, x);
-}
-
 static bool saveAs(Field* saveAsField, Buffer* buffer, char* name) {
    if (name) Field_setValue(saveAsField, Text_new(name));
    bool quitMask[255] = {0};

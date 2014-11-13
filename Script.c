@@ -190,7 +190,6 @@ static int Script_Buffer___index(lua_State* L) {
 
 static int Script_Buffer___newindex(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
-   const char* line;
    if (lua_gettop(L) == 3) {
       int y = luaL_checkint(L, 2) - 1;
       luaL_checkstring(L, 3);
@@ -395,7 +394,6 @@ void Script_highlightLine(Highlight* this, const unsigned char* buffer, int* att
    if (err == 0) {
       if (lua_gettop(L) > 0 && lua_isstring(L, -1)) {
          const char* ret = lua_tostring(L, -1);
-         int attr = CRT_colors[VerySpecialColor];
          for (int i = 0; ret[i] && i < len; i++) {
             if (ret[i] != ' ') {
                int attr = CRT_colors[Highlight_translateColorKey(ret[i])];

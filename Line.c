@@ -77,7 +77,6 @@ void Line_display(Object* cast, RichString* str) {
    Highlight* hl = buffer->hl;
    int tabWidth = buffer->tabWidth;
 
-   int inIdx = 0;
    int hlAttrs[this->text.bytes];
    int sizeAttrs = this->text.chars * tabWidth + 1;
    int* attrs = malloc(sizeAttrs * sizeof(int));
