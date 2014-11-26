@@ -30,36 +30,27 @@ static void printVersionFlag() {
    exit(0);
 }
 
-static bool saveAs(Field* saveAsField, Buffer* buffer, char* name) {
-   if (name) Field_setValue(saveAsField, Text_new(name));
+static char* saveAs(const char* label, char* defaultName) {
+   Field* field = Field_new(label, 0, lines-1, cols-2);
+   if (defaultName) Field_setValue(field, Text_new(defaultName));
    bool quitMask[255] = {0};
-   int ch = Field_quickRun(saveAsField, quitMask);
-   if (ch == 13) {
-      free(buffer->fileName);
-      char* name = Field_getValue(saveAsField);
-      char* rpath = realpath(name, NULL);
-      if (!rpath) {
-         rpath = calloc(2+strlen(name)+1, sizeof(char));
-         sprintf(rpath, "./%s", name);
-      }
-      free(name);
-      buffer->fileName = rpath;
-   } else
-      return false;
-   return true;
+   int ch = Field_quickRun(field, quitMask);
+   char* name = (ch == 13)
+                ? Field_getValue(field)
+                : NULL;
+   Field_delete(field);
+   return name;
 }
 
 static bool Dit_save(Buffer* buffer, TabManager* tabs) {
-   bool saved = false;
    if (!buffer->fileName) {
-      Field* saveAsField = Field_new("Save as:", 0, lines-1, cols-2);
-      if (!saveAs(saveAsField, buffer, "")) {
-         Field_delete(saveAsField);
+      char* name = saveAs("Save as:", "");
+      if (!name) {
          return false;
       }
-      Field_delete(saveAsField);
+      buffer->fileName = name;
    }
-   Field* failedField = NULL;
+   bool saved = false;
    while (true) {
       saved = Buffer_save(buffer);
       if (saved) {
@@ -70,23 +61,24 @@ static bool Dit_save(Buffer* buffer, TabManager* tabs) {
          }
          break;
       }
-      if (!failedField)
-         failedField = Field_new("Save failed. Save as:", 0, lines-1, cols-2);
-      if (!saveAs(failedField, buffer, buffer->fileName)) {
+      char* name = saveAs("Save failed. Save as:", buffer->fileName);
+      if (!name) {
          break;
       }
+      free(buffer->fileName);
+      buffer->fileName = name;
    }
-   if (failedField)
-      Field_delete(failedField);
    TabManager_refreshCurrent(tabs);
    return saved;
 }
 
 void Dit_saveAs(Buffer* buffer, TabManager* tabs) {
-   Field* saveAsField = Field_new("Save as:", 0, lines-1, cols-2);
-   if (!saveAs(saveAsField, buffer, buffer->fileName ? buffer->fileName : ""))
+   char* name = saveAs("Save as:", buffer->fileName ? buffer->fileName : "");
+   if (!name) {
       return;
-   Field_delete(saveAsField);
+   }
+   free(buffer->fileName);
+   buffer->fileName = name;
    Dit_save(buffer, tabs);
 }
 
