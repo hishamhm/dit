@@ -52,7 +52,7 @@ FieldItemClass FieldItemType = {
    }
 };
 
-Field* Field_new(char* label, int x, int y, int w) {
+Field* Field_new(const char* label, int x, int y, int w) {
    Field* this = (Field*) malloc(sizeof(Field));
    this->x = x;
    this->y = y;
