@@ -104,7 +104,7 @@ void Line_display(Object* cast, RichString* str) {
             out[outIdx++] = ' ';
          }
          curr++;
-      } else if (*curr < 32) {
+      } else if (*curr >= 0 && *curr < 32) {
          attrs[attrIdx++] = CRT_colors[AlertColor];
          out[outIdx++] = *curr + 'A' - 1;
          curr++;
