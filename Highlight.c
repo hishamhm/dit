@@ -34,6 +34,7 @@ struct HighlightContext_ {
    HighlightContext* nextLine;
    Color defaultColor;
    PatternMatcher* rules;
+   bool singleLine;
 };
 
 extern HighlightContextClass HighlightContextType;
@@ -330,7 +331,7 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
 
 HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close, HighlightContext* parent, Color color) {
    int id = Vector_size(this->contexts);
-   HighlightContext* ctx = HighlightContext_new(id, color);
+   HighlightContext* ctx = HighlightContext_new(id, color, close == NULL);
    Vector_add(this->contexts, ctx);
    if (open) {
       assert(parent);
@@ -340,8 +341,18 @@ HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close,
       assert(parent);
       PatternMatcher_add(ctx->follows, (unsigned char*) close, (intptr_t) parent, false);
    } else {
-      if (parent)
-         ctx->nextLine = parent;
+      // When multiple contexts ending with `$ are nested,
+      // they should jump out to the outermost context.
+      for(;;) {
+         if (parent) {
+            ctx->nextLine = parent;
+            if (parent->singleLine && parent->nextLine != parent) {
+               parent = parent->nextLine;
+               continue;
+            }
+         }
+         break;
+      }
    }
    return ctx;
 }
@@ -423,13 +434,14 @@ inline void Highlight_setContext(Highlight* this, HighlightContext* context) {
    this->currentContext = (HighlightContext*) context;
 }
 
-HighlightContext* HighlightContext_new(int id, Color defaultColor) {
+HighlightContext* HighlightContext_new(int id, Color defaultColor, bool singleLine) {
    HighlightContext* this = Alloc(HighlightContext);
    this->id = id;
    this->follows = PatternMatcher_new();
    this->defaultColor = defaultColor;
    this->rules = PatternMatcher_new();
    this->nextLine = this;
+   this->singleLine = singleLine;
    return this;
 }
 
