@@ -113,6 +113,12 @@ AC_DEFUN([AX_LUA_VERSION],
   if test "x$LUA" != x; then
     lua_text_version=$(LUA_INIT= $LUA -v 2>&1 | head -n 1 | cut -d' ' -f2)
     case $lua_text_version in
+    5.3*)
+      lua_version=503
+      ;;
+    5.2*)
+      lua_version=502
+      ;;
     5.1*)
       lua_version=501
       ;;
@@ -142,11 +148,19 @@ AC_DEFUN([AX_LUA_HEADERS],
   if test "x$with_lua_includes" != x; then
     LUA_INCLUDE="-I$with_lua_includes"
   elif test "x$with_lua_prefix" != x; then
-    if test -e "$with_lua_prefix/include/lua5.1"; then
+    if test -e "$with_lua_prefix/include/lua5.3"; then
+      LUA_INCLUDE="-I$with_lua_prefix/include/lua5.3"
+    elif test -e "$with_lua_prefix/include/lua5.2"; then
+      LUA_INCLUDE="-I$with_lua_prefix/include/lua5.2"
+    elif test -e "$with_lua_prefix/include/lua5.1"; then
       LUA_INCLUDE="-I$with_lua_prefix/include/lua5.1"
     else
       LUA_INCLUDE="-I$with_lua_prefix/include"
     fi
+  elif test -e "/usr/include/lua5.3"; then
+    LUA_INCLUDE="-I/usr/include/lua5.3"
+  elif test -e "/usr/include/lua5.2"; then
+    LUA_INCLUDE="-I/usr/include/lua5.2"
   elif test -e "/usr/include/lua5.1"; then
     LUA_INCLUDE="-I/usr/include/lua5.1"
   fi

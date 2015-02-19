@@ -1,4 +1,6 @@
 
+AUTOMAKE_OPTIONS = subdir-objects
+
 bin_PROGRAMS = dit
 
 my_dit_C_sources = dit.c Buffer.c CRT.c Clipboard.c DebugMemory.c Field.c \
@@ -26,7 +28,7 @@ dit_LDADD = $(LUA_LIB)
 dit_DEPENDENCIES = $(LUA_DEP)
 
 lua-$(DIT_LUA_VERSION)/src/liblua.a:
-	cd lua-$(DIT_LUA_VERSION)/src && make CC="$(CC)" MYCFLAGS="-DLUA_USE_LINUX" MYLIBS="-Wl,-E -ldl" liblua.a 
+	cd lua-$(DIT_LUA_VERSION)/src && make CC="$(CC)" MYCFLAGS="-DLUA_COMPAT_5_1 -DLUA_USE_LINUX" MYLIBS="-Wl,-E -ldl" liblua.a 
 
 Prototypes.h: $(my_dit_C_sources)
 	tools/GenHeaders Prototypes.h

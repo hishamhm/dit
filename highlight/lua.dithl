@@ -61,7 +61,7 @@ rule \" alt
 rule ' alt
 rule [[ alt
 
-context function ) bright bright brightalt
+context function ) bright bright brightdiff
    context ( ) bright bright normal
       handover_rule ) bright
       rule , bright
