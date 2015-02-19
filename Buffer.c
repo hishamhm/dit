@@ -10,12 +10,9 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
-
 #include "Prototypes.h"
 //#needs Line
+//#needs Script
 
 /*{
 
@@ -25,9 +22,6 @@
 #ifndef MIN
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #endif
-
-#include <lua.h>
-#include <lauxlib.h>
 
 #ifndef iswword
 #define iswword(x) (iswalpha(x) || x == '_')
@@ -92,7 +86,7 @@ struct Buffer_ {
    // width of Tab keys (\t)
    int tabWidth;
    // Lua state
-   lua_State* L;
+   ScriptState script;
    bool skipOnChange;
    bool skipOnKey;
    bool skipOnCtrl;
@@ -173,7 +167,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
    this->dosLineBreaks = false;
    this->tabWidth = 8;
    
-   this->L = Script_newState(tabs, this);
+   Script_initState(&this->script, tabs, this);
    
    /* Hack to disable auto-indent when pasting through X11, part 1 */
    struct timeval tv;
@@ -195,7 +189,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
       if (file && !FileReader_eof(file)) {
          newFile = false;
          Text text = Text_new(FileReader_readLine(file));
-         this->hl = Highlight_new(fileName, text, this->L);
+         this->hl = Highlight_new(fileName, text, &this->script);
          if (Text_toString(text)[0] == '\t') indents[0] = 1;
          if (Text_hasChar(text, '\015')) this->dosLineBreaks = true;
          Line* line = Line_new(p->items, text, this->hl->mainContext);
@@ -229,7 +223,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
       this->readOnly = false;
    }
    if (newFile) {
-      this->hl = Highlight_new(fileName, Text_new(""), this->L);
+      this->hl = Highlight_new(fileName, Text_new(""), &this->script);
       Panel_set(p, 0, (ListItem*) Line_new(p->items, Text_new(strdup("")), this->hl->mainContext));
    }
    
@@ -460,7 +454,7 @@ void Buffer_delete(Buffer* this) {
 
    Undo_delete(this->undo);
    Highlight_delete(this->hl);
-   lua_close(this->L);
+   Script_doneState(&this->script);
    free(this);
 }
 
@@ -472,7 +466,7 @@ void Buffer_refreshHighlight(Buffer* this) {
       firstText = firstLine->text;
    else
       firstText = Text_new("");
-   Highlight* hl = Highlight_new(this->fileName, firstText, this->L);
+   Highlight* hl = Highlight_new(this->fileName, firstText, &this->script);
    this->hl = hl;
    int size = Panel_size(this->panel);
    

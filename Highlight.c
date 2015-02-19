@@ -9,6 +9,7 @@
 #include <stdbool.h>
 
 #include "Prototypes.h"
+//#needs Script
 //#needs PatternMatcher
 //#needs Object
 //#needs Text
@@ -29,12 +30,12 @@ struct HighlightContextClass_ {
 
 struct HighlightContext_ {
    Object super;
-   int id;
    PatternMatcher* follows;
+   HighlightContext* parent;
    HighlightContext* nextLine;
-   Color defaultColor;
    PatternMatcher* rules;
-   bool singleLine;
+   int id;
+   Color defaultColor;
 };
 
 extern HighlightContextClass HighlightContextType;
@@ -44,7 +45,7 @@ struct Highlight_ {
    HighlightContext* mainContext;
    HighlightContext* currentContext;
    bool toLower;
-   lua_State* L;
+   ScriptState* script;
    bool hasScript;
 };
 
@@ -59,8 +60,6 @@ struct ReadHighlightFileArgs_ {
 struct MatchArgs_ {
    const char* buffer;
    int* attrs;
-   GraphNode* rules;
-   GraphNode* follows;
    HighlightContext* ctx;
    Method_PatternMatcher_match match;
    int attrsAt;
@@ -119,9 +118,9 @@ static Color Highlight_translateColor(char* color) {
    return NormalColor;
 }
 
-Highlight* Highlight_new(const char* fileName, Text firstLine, lua_State* L) {
+Highlight* Highlight_new(const char* fileName, Text firstLine, ScriptState* script) {
    Highlight* this = (Highlight*) calloc(1, sizeof(Highlight));
-   this->L = L;
+   this->script = script;
    this->hasScript = false;
 
    this->contexts = Vector_new(ClassAs(HighlightContext, Object), true, DEFAULT_SIZE);
@@ -253,16 +252,16 @@ HighlightParserState parseFile(ReadHighlightFileArgs* args, FILE* file, const ch
             char* close = (String_eq(tokens[2], "`$") ? NULL : tokens[2]);
             Color color;
             if (ntokens == 6) {
-               HighlightContext_addRule(args->context, open, Highlight_translateColor(tokens[3]), false);
+               HighlightContext_addRule(args->context, open, Highlight_translateColor(tokens[3]), false, false);
                color = Highlight_translateColor(tokens[5]);
             } else {
                color = Highlight_translateColor(tokens[3]);
-               HighlightContext_addRule(args->context, open, color, false);
+               HighlightContext_addRule(args->context, open, color, false, false);
             }
             args->context = Highlight_addContext(this, open, close, Stack_peek(args->contexts, NULL), color);
             if (close) {
                color = (ntokens == 6 ? Highlight_translateColor(tokens[4]) : color);
-               HighlightContext_addRule(args->context, close, color, false);
+               HighlightContext_addRule(args->context, close, color, false, false);
             }
             Stack_push(args->contexts, args->context, 0);
          } else if (String_eq(tokens[0], "/context") && ntokens == 1) {
@@ -271,13 +270,15 @@ HighlightParserState parseFile(ReadHighlightFileArgs* args, FILE* file, const ch
                args->context = Stack_peek(args->contexts, NULL);
             }
          } else if (String_eq(tokens[0], "rule") && ntokens == 3) {
-            HighlightContext_addRule(args->context, tokens[1], Highlight_translateColor(tokens[2]), false);
+            HighlightContext_addRule(args->context, tokens[1], Highlight_translateColor(tokens[2]), false, false);
          } else if (String_eq(tokens[0], "eager_rule") && ntokens == 3) {
-            HighlightContext_addRule(args->context, tokens[1], Highlight_translateColor(tokens[2]), true);
+            HighlightContext_addRule(args->context, tokens[1], Highlight_translateColor(tokens[2]), true, false);
+         } else if (String_eq(tokens[0], "handover_rule") && ntokens == 3) {
+            HighlightContext_addRule(args->context, tokens[1], Highlight_translateColor(tokens[2]), false, true);
          } else if (String_eq(tokens[0], "insensitive") && ntokens == 1) {
             this->toLower = true;
          } else if (String_eq(tokens[0], "script") && ntokens == 2) {
-            this->hasScript = Script_load(this->L, tokens[1]);
+            this->hasScript = Script_load(this->script, tokens[1]);
          } else {
             Display_clear();
             Display_printAt(0,0,"Error reading %s: line %d: %s", name, lineno, buffer);
@@ -331,27 +332,23 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
 
 HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close, HighlightContext* parent, Color color) {
    int id = Vector_size(this->contexts);
-   HighlightContext* ctx = HighlightContext_new(id, color, close == NULL);
+   HighlightContext* ctx = HighlightContext_new(id, color, parent);
    Vector_add(this->contexts, ctx);
    if (open) {
       assert(parent);
-      PatternMatcher_add(parent->follows, (unsigned char*) open, (intptr_t) ctx, false);
+      PatternMatcher_add(parent->follows, (unsigned char*) open, (intptr_t) ctx, false, false);
    }
    if (close) {
       assert(parent);
-      PatternMatcher_add(ctx->follows, (unsigned char*) close, (intptr_t) parent, false);
+      PatternMatcher_add(ctx->follows, (unsigned char*) close, (intptr_t) parent, false, false);
    } else {
-      // When multiple contexts ending with `$ are nested,
-      // they should jump out to the outermost context.
-      for(;;) {
-         if (parent) {
-            ctx->nextLine = parent;
-            if (parent->singleLine && parent->nextLine != parent) {
-               parent = parent->nextLine;
-               continue;
-            }
+      if (parent) {
+         // When multiple contexts ending with `$ are nested,
+         // they should jump out to the outermost context.
+         while (parent && parent->nextLine && parent->nextLine != parent) {
+            parent = parent->nextLine;
          }
-         break;
+         ctx->nextLine = parent;
       }
    }
    return ctx;
@@ -360,10 +357,13 @@ HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close,
 #define PAINT(_args, _here, _attr) do { _args->attrs[_args->attrsAt++] = _attr; _here = UTF8_forward(_here, 1); } while(0)
 
 static inline void Highlight_tryMatch(Highlight* this, MatchArgs* args, bool paintUnmatched) {
+   GraphNode* rules = args->ctx->rules->start;
+   GraphNode* follows = args->ctx->follows->start;
    const char* here = args->buffer;
    intptr_t intColor;
-   bool eager;
-   intptr_t matchlen = args->match(args->rules, args->buffer, &intColor, &eager);
+   bool eager, handOver;
+   int saveAttrsAt = args->attrsAt;
+   intptr_t matchlen = args->match(rules, args->buffer, &intColor, &eager, &handOver);
    Color color = (Color) intColor;
    assert(color >= 0 && color < Colors);
    if (matchlen && (eager || ( !(isword(here[matchlen-1]) && isword(here[matchlen]))))) {
@@ -372,8 +372,14 @@ static inline void Highlight_tryMatch(Highlight* this, MatchArgs* args, bool pai
       while (here < nextStop) {
          PAINT(args, here, attr);
       }
+      if (handOver) {
+         args->ctx = args->ctx->parent;
+         args->attrsAt = saveAttrsAt;
+         Highlight_tryMatch(this, args, paintUnmatched);
+         return;
+      }
       intptr_t nextCtx = 0;
-      int followMatchlen = args->match(args->follows, args->buffer, &nextCtx, &eager);
+      int followMatchlen = args->match(follows, args->buffer, &nextCtx, &eager, &handOver);
       if (followMatchlen == matchlen) {
          assert(nextCtx);
          args->ctx = (HighlightContext*) nextCtx;
@@ -412,14 +418,9 @@ void Highlight_setAttrs(Highlight* this, const char* buffer, int* attrs, int len
    if (curCtx->rules->lineStart) {
       if (!curCtx->follows->lineStart)
          curCtx->follows->lineStart = GraphNode_new();
-      args.rules = curCtx->rules->lineStart;
-      args.follows = curCtx->follows->lineStart;
-
       Highlight_tryMatch(this, &args, false);
    }
    while (args.buffer < buffer + len) {
-      args.rules = args.ctx->rules->start;
-      args.follows = args.ctx->follows->start;
       Highlight_tryMatch(this, &args, true);
    }
    Script_highlightLine(this, buffer, attrs, len, y);
@@ -434,14 +435,14 @@ inline void Highlight_setContext(Highlight* this, HighlightContext* context) {
    this->currentContext = (HighlightContext*) context;
 }
 
-HighlightContext* HighlightContext_new(int id, Color defaultColor, bool singleLine) {
+HighlightContext* HighlightContext_new(int id, Color defaultColor, HighlightContext* parent) {
    HighlightContext* this = Alloc(HighlightContext);
    this->id = id;
    this->follows = PatternMatcher_new();
    this->defaultColor = defaultColor;
    this->rules = PatternMatcher_new();
    this->nextLine = this;
-   this->singleLine = singleLine;
+   this->parent = parent;
    return this;
 }
 
@@ -452,6 +453,6 @@ void HighlightContext_delete(Object* cast) {
    free(this);
 }
 
-void HighlightContext_addRule(HighlightContext* this, char* rule, Color color, bool eager) {
-   PatternMatcher_add(this->rules, (unsigned char*) rule, (int) color, eager);
+void HighlightContext_addRule(HighlightContext* this, char* rule, Color color, bool eager, bool handOver) {
+   PatternMatcher_add(this->rules, (unsigned char*) rule, (int) color, eager, handOver);
 }

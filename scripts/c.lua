@@ -18,7 +18,7 @@ end
 
 function on_ctrl(key)
    if key == "D" then
-      cscope.goto_definition()
+      cscope.go_to_definition()
    elseif key == "H" then
       open_header()
    elseif key == "_" then

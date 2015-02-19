@@ -25,7 +25,7 @@ local function get_context()
    return token, dir, cscope_db
 end
 
-local function goto_result(decl, word)
+local function go_to_result(decl, word)
    local file, _, line = decl:match("([^%s]+) ([^%s]+) ([^%s]+)")
    line = tonumber(line)
    if file then
@@ -33,42 +33,42 @@ local function goto_result(decl, word)
       tabs:markJump()
       tabs:setPage(page)
       local buf = tabs:getBuffer(page)
-      buf:goto(1, line)
+      buf:go_to(1, line)
       local text = buf:line()
       if word then
          local x = text:find(word)
-         if x then buf:goto(x, line) end
+         if x then buf:go_to(x, line) end
          return file, line
       end
    end
 end
 
-function goto_definition()
+function go_to_definition()
    local token, dir, cscope_db = get_context()
    if not token then return end
    local decl = cmd.run("cscope -s '%s' -f '%s' -L -1 '%s'", dir, cscope_db, token)
    local thisfile = buffer:basename()
    local thisx, thisy = buffer:xy()
-   local file, y = goto_result(decl, token)
+   local file, y = go_to_result(decl, token)
    if file then
       file = file:match("^.*/([^/]+)$")
       if file == thisfile and y == thisy then
          local all = cmd.run("cscope -s '%s' -f '%s' -L -0 '%s'", dir, cscope_db, token)
          for line in all:gmatch("[^\n]+") do
             if line:match("^([^%s]+%.h) ") then
-               goto_result(line, token)
+               go_to_result(line, token)
             end
          end
       end
    end
 end
 
-function goto_definition_in_files(pattern)
+function go_to_definition_in_files(pattern)
    local token, dir, cscope_db = get_context()
    if not token then return end
    local cscope_files = get_cscope_files(dir, pattern)
    local decl = cmd.run("cscope -i '%s' -f '%s' -L -1 '%s'", cscope_files, cscope_db, token)
    local file, word, line = decl:match("([^%s]+) ([^%s]+) ([^%s]+)")
-   goto_result(decl)
+   go_to_result(decl)
 end
 

@@ -74,9 +74,21 @@ AC_CHECK_FUNCS([gettimeofday memchr memmove memset mkdir putenv realpath regcomp
 
 DIT_LUA_VERSION=5.1.5
 
-AC_ARG_ENABLE(bundled-lua, [AC_HELP_STRING([--enable-bundled-lua], [compile bundled copy of Lua])],, enable_bundled_lua="no")
+AC_ARG_ENABLE(bundled-lua, [AC_HELP_STRING([--enable-bundled-lua], [compile bundled copy of Lua])],, enable_bundled_lua="default")
 
 if test x"$enable_bundled_lua" = x"no"
+then
+   AX_LUA_LIBS
+   if test x"$LUA_LIB" = x""
+   then
+      AC_MSG_ERROR([Could not find Lua libraries in the system.])
+   else
+      AX_LUA_HEADERS
+      AX_LUA_TRY_LIB_VERSION([501], [504], [], [
+         AC_MSG_ERROR([Could not find a suitable version of Lua.])
+      ])
+   fi
+elif test x"$enable_bundled_lua" = x"default"
 then
    AX_LUA_LIBS
    if test x"$LUA_LIB" = x""
@@ -84,12 +96,7 @@ then
       enable_bundled_lua=yes
    else
       AX_LUA_HEADERS
-      if test x"$LUA_INCLUDE" = x""
-      then
-         enable_bundled_lua=yes
-      else
-         AX_LUA_TRY_LIB_VERSION([501], [502], [], [enable_bundled_lua="yes"])
-      fi
+      AX_LUA_TRY_LIB_VERSION([501], [503], [], [enable_bundled_lua="yes"])
    fi
 fi
 

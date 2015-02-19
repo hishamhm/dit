@@ -8,14 +8,15 @@
 
 /*{
 
-typedef int(*Method_PatternMatcher_match)(GraphNode*, const char*, intptr_t*, bool*);
+typedef int(*Method_PatternMatcher_match)(GraphNode*, const char*, intptr_t*, bool*, bool*);
 
 struct GraphNode_ {
    unsigned char min;
    unsigned char max;
+   intptr_t value;
    bool endNode;
    bool eager;
-   intptr_t value;
+   bool handOver;
    union {
       GraphNode* simple;
       struct {
@@ -82,7 +83,7 @@ static inline GraphNode* GraphNode_follow(GraphNode* this, unsigned char c) {
    }
 }
 
-void GraphNode_build(GraphNode* current, unsigned char* input, unsigned char* special, intptr_t value, bool eager) {
+void GraphNode_build(GraphNode* current, unsigned char* input, unsigned char* special, intptr_t value, bool eager, bool handOver) {
 #define SPECIAL(c) (*special && *input == c)
 #define NEXT do { special++; input++; } while (0)
    assert(current); assert(input); assert(special);
@@ -93,6 +94,11 @@ void GraphNode_build(GraphNode* current, unsigned char* input, unsigned char* sp
       unsigned char ch = 0;
       if (SPECIAL('[')) {
          NEXT;
+         bool invertMask = false;
+         if (SPECIAL('^')) {
+            NEXT;
+            invertMask = true;
+         }
          while (*input && !SPECIAL(']')) {
             unsigned char first = *input;
             mask[first] = 1;
@@ -105,6 +111,11 @@ void GraphNode_build(GraphNode* current, unsigned char* input, unsigned char* sp
             }
             if (SPECIAL('|'))
                NEXT;
+         }
+         if (invertMask) {
+            for (int i = 0; i < 256; i++) {
+               mask[i] = (mask[i] == 1 ? 0 : 1);
+            }
          }
          if (!*input)
             break;
@@ -126,7 +137,7 @@ void GraphNode_build(GraphNode* current, unsigned char* input, unsigned char* sp
          NEXT;
          GraphNode* next = GraphNode_new();
          GraphNode_link(current, mask, next);
-         GraphNode_build(current, input, special, value, eager);
+         GraphNode_build(current, input, special, value, eager, handOver);
          current = next;
       } else {
          GraphNode* next = NULL;
@@ -140,12 +151,13 @@ void GraphNode_build(GraphNode* current, unsigned char* input, unsigned char* sp
    }
    current->value = value;
    current->eager = eager;
+   current->handOver = handOver;
    current->endNode = true;
 #undef SPECIAL
 #undef NEXT
 }
 
-void PatternMatcher_add(PatternMatcher* this, unsigned char* pattern, intptr_t value, bool eager) {
+void PatternMatcher_add(PatternMatcher* this, unsigned char* pattern, intptr_t value, bool eager, bool handOver) {
    assert(this); assert(pattern);
    int len = strlen((char*)pattern) + 1;
    unsigned char input[len];
@@ -175,9 +187,9 @@ void PatternMatcher_add(PatternMatcher* this, unsigned char* pattern, intptr_t v
       if (!this->lineStart)
          this->lineStart = GraphNode_new();
       start = this->lineStart;
-      GraphNode_build(start, input+1, special+1, value, eager);
+      GraphNode_build(start, input+1, special+1, value, eager, handOver);
    } else {
-      GraphNode_build(start, input, special, value, eager);
+      GraphNode_build(start, input, special, value, eager, handOver);
    }
 }
 
@@ -204,7 +216,7 @@ bool PatternMatcher_partialMatch(GraphNode* node, const char* sinput, int inputL
    return false;
 }
 
-int PatternMatcher_match(GraphNode* node, const char* sinput, intptr_t* value, bool* eager) {
+int PatternMatcher_match(GraphNode* node, const char* sinput, intptr_t* value, bool* eager, bool* handOver) {
    const unsigned char* input = (const unsigned char*) sinput;
    int i = 0;
    int match = 0;
@@ -218,12 +230,13 @@ int PatternMatcher_match(GraphNode* node, const char* sinput, intptr_t* value, b
          match = i;
          *value = node->value;
          *eager = node->eager;
+         *handOver = node->handOver;
       }
    }
    return match;
 }
 
-int PatternMatcher_match_toLower(GraphNode* node, const char* sinput, intptr_t* value, bool* eager) {
+int PatternMatcher_match_toLower(GraphNode* node, const char* sinput, intptr_t* value, bool* eager, bool* handOver) {
    const unsigned char* input = (const unsigned char*) sinput;
    int i = 0;
    int match = 0;
@@ -237,6 +250,7 @@ int PatternMatcher_match_toLower(GraphNode* node, const char* sinput, intptr_t* 
          match = i;
          *value = node->value;
          *eager = node->eager;
+         *handOver = node->handOver;
       }
    }
    return match;

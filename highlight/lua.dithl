@@ -61,13 +61,18 @@ rule \" alt
 rule ' alt
 rule [[ alt
 
-context function `$ bright bright normal
-   rule function bright
-   context ( `$ bright bright normal
-      rule :`s`*`[a`-zA`-Z_{}->|`]`* diff
-      rule ( bright
-      rule ) bright
-      context ) `$ bright bright diff
+context function ) bright bright brightalt
+   context ( ) bright bright normal
+      handover_rule ) bright
+      rule , bright
+      context : `[,)`] brightdiff bright diff
+         handover_rule ) bright
+         context ( ) diff
+            context ( ) diff
+               context ( ) diff
+               /context
+            /context
+         /context
       /context
    /context
 /context

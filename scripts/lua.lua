@@ -96,7 +96,7 @@ function on_ctrl(key)
          local fchar, lchar = note[1], note[2]
          if fchar == x then
             if note.ast.localdefinition and note.ast.localdefinition.lineinfo then
-               buffer:goto(note.ast.localdefinition.lineinfo.first[2], note.ast.localdefinition.lineinfo.first[1] + 1)
+               buffer:go_to(note.ast.localdefinition.lineinfo.first[2], note.ast.localdefinition.lineinfo.first[1] + 1)
             end
             break
          elseif fchar > x then

@@ -3,11 +3,21 @@
 
 /*{
 
+#include <lua.h>
+
+struct ScriptState_ {
+   lua_State* L;
+};
+
 typedef struct Proxy_ {
    void* ptr;
 } Proxy;
 
 }*/
+
+#include <lualib.h>
+#include <lauxlib.h>
+#include "lua-compat-5.3/compat-5.3.h"
 
 static void error(lua_State* L) {
    int lines, cols;
@@ -25,7 +35,7 @@ static void Script_pushObject(lua_State* L, void* ptr, const char* klass, const 
    Proxy* proxy = lua_newuserdata(L, sizeof(Proxy));
    proxy->ptr = ptr;
    if (luaL_newmetatable(L, klass)) {
-      luaL_register(L, NULL, functions);
+      luaL_setfuncs(L, functions, 0);
       lua_pushvalue(L, -1);
       lua_setfield(L, -2, "__index");
    }
@@ -34,8 +44,8 @@ static void Script_pushObject(lua_State* L, void* ptr, const char* klass, const 
 
 static int Script_Buffer_goto(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
-   int x = luaL_checkint(L, 2);
-   int y = luaL_checkint(L, 3);
+   int x = luaL_checkinteger(L, 2);
+   int y = luaL_checkinteger(L, 3);
    Buffer_validateCoordinate(buffer, &x, &y);
    Buffer_goto(buffer, x-1, y-1);
    buffer->savedX = buffer->x;
@@ -52,7 +62,7 @@ static int Script_Buffer_line(lua_State* L) {
       lua_pushinteger(L, buffer->y + 1);
       return 3;
    } else {
-      int y = luaL_checkint(L, 2);
+      int y = luaL_checkinteger(L, 2);
       line = Buffer_getLine(buffer, y-1);
       if (line) lua_pushstring(L, line);
       else lua_pushliteral(L, "");
@@ -62,10 +72,10 @@ static int Script_Buffer_line(lua_State* L) {
 
 static int Script_Buffer_select(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
-   int xFrom = luaL_checkint(L, 2) - 1;
-   int yFrom = luaL_checkint(L, 3) - 1;
-   int xTo = luaL_checkint(L, 4) - 1;
-   int yTo = luaL_checkint(L, 5) - 1;
+   int xFrom = luaL_checkinteger(L, 2) - 1;
+   int yFrom = luaL_checkinteger(L, 3) - 1;
+   int xTo = luaL_checkinteger(L, 4) - 1;
+   int yTo = luaL_checkinteger(L, 5) - 1;
    Buffer_validateCoordinate(buffer, &xFrom, &yFrom);
    Buffer_validateCoordinate(buffer, &xTo, &yTo);
    buffer->selecting = true;
@@ -159,28 +169,11 @@ static int Script_Buffer_endUndoGroup(lua_State* L) {
    return 0;
 }
 
-static luaL_Reg Buffer_functions[] = {
-   // getters:
-   { "line", Script_Buffer_line },
-   { "selection", Script_Buffer_selection },
-   { "token", Script_Buffer_token },
-   { "xy", Script_Buffer_xy },
-   { "dir", Script_Buffer_dir },
-   { "basename", Script_Buffer_basename },
-   { "filename", Script_Buffer_filename },
-   // actions:
-   { "goto", Script_Buffer_goto },
-   { "select", Script_Buffer_select },
-   { "begin_undo", Script_Buffer_beginUndoGroup },
-   { "end_undo", Script_Buffer_endUndoGroup },
-   { NULL, NULL }
-};
-
 static int Script_Buffer___index(lua_State* L) {
    if (lua_isnumber(L, 2)) {
       return Script_Buffer_line(L);
    } else {
-      luaL_register(L, "Buffer_functions", Buffer_functions);
+      lua_getfield(L, LUA_REGISTRYINDEX, "Buffer_functions");
       lua_pushvalue(L, -2); // push key (function name)
       lua_gettable(L, -2);  // get it from Buffer_functions
       lua_remove(L, -2);    // remove Buffer_functions table from stack
@@ -191,7 +184,7 @@ static int Script_Buffer___index(lua_State* L) {
 static int Script_Buffer___newindex(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
    if (lua_gettop(L) == 3) {
-      int y = luaL_checkint(L, 2) - 1;
+      int y = luaL_checkinteger(L, 2) - 1;
       luaL_checkstring(L, 3);
       size_t len;
       const char* text = lua_tolstring(L, 3, &len);
@@ -232,7 +225,7 @@ static int Script_TabManager_open(lua_State* L) {
 
 static int Script_TabManager_setPage(lua_State* L) {
    TabManager* tabs = (TabManager*) ((Proxy*)luaL_checkudata(L, 1, "TabManager"))->ptr;
-   int page = luaL_checkint(L, 2);
+   int page = luaL_checkinteger(L, 2);
    
    TabManager_setPage(tabs, page);
    
@@ -249,7 +242,7 @@ static int Script_TabManager_markJump(lua_State* L) {
 
 static int Script_TabManager_getBuffer(lua_State* L) {
    TabManager* tabs = (TabManager*) ((Proxy*)luaL_checkudata(L, 1, "TabManager"))->ptr;
-   int page = luaL_checkint(L, 2);
+   int page = luaL_checkinteger(L, 2);
    
    Buffer* buffer = TabManager_getBuffer(tabs, page);
    if (!buffer)
@@ -295,8 +288,26 @@ static int Script_string___index(lua_State* L) {
    }
 }
 
-lua_State* Script_newState(TabManager* tabs, Buffer* buffer) {
+static luaL_Reg Buffer_functions[] = {
+   // getters:
+   { "line", Script_Buffer_line },
+   { "selection", Script_Buffer_selection },
+   { "token", Script_Buffer_token },
+   { "xy", Script_Buffer_xy },
+   { "dir", Script_Buffer_dir },
+   { "basename", Script_Buffer_basename },
+   { "filename", Script_Buffer_filename },
+   // actions:
+   { "go_to", Script_Buffer_goto },
+   { "select", Script_Buffer_select },
+   { "begin_undo", Script_Buffer_beginUndoGroup },
+   { "end_undo", Script_Buffer_endUndoGroup },
+   { NULL, NULL }
+};
+
+void Script_initState(ScriptState* state, TabManager* tabs, Buffer* buffer) {
    lua_State* L = luaL_newstate();
+   state->L = L;
    luaL_openlibs(L);
 
    lua_pushstring(L, "buffer");                 // push a random string
@@ -306,16 +317,23 @@ lua_State* Script_newState(TabManager* tabs, Buffer* buffer) {
    lua_setfield(L, -2, "__index");              // set it in metatable
    lua_pop(L, 1);                               // pop metatable
 
+   lua_newtable(L);
+   luaL_setfuncs(L, Buffer_functions, 0);
+   lua_pushstring(L, "Buffer_functions");
+   lua_settable(L, LUA_REGISTRYINDEX);
 
    Script_pushObject(L, tabs, "TabManager", TabManager_functions);
    lua_setglobal(L, "tabs");
    Script_Buffer_new(L, buffer);
    lua_setglobal(L, "buffer");
-
-   return L;
 }
 
-bool Script_load(lua_State* L, const char* scriptName) {
+void Script_doneState(ScriptState* state) {
+   lua_close(state->L);
+}
+
+bool Script_load(ScriptState* this, const char* scriptName) {
+   lua_State* L = this->L;
    int dirEndsAt;
    char* foundFile = Files_findFile("scripts/%s", scriptName, &dirEndsAt);
    if (!foundFile) {
@@ -374,11 +392,12 @@ static inline bool callFunction(lua_State* L, const char* fn, const char* arg) {
 void Script_highlightFile(Highlight* this, const char* fileName) {
    if (!this->hasScript)
       return;
-   this->hasScript = callFunction(this->L, "highlight_file", fileName);
+   lua_State* L = this->script->L;
+   this->hasScript = callFunction(L, "highlight_file", fileName);
 }
 
 void Script_highlightLine(Highlight* this, const char* buffer, int* attrs, int len, int y) {
-   lua_State* L = this->L;
+   lua_State* L = this->script->L;
    if (!this->hasScript)
       return;
    lua_pushcfunction(L, errorHandler);
@@ -408,44 +427,49 @@ void Script_highlightLine(Highlight* this, const char* buffer, int* attrs, int l
 }
 
 void Script_onKey(Buffer* this, int key) {
+   lua_State* L = this->script.L;
    if (this->skipOnKey) return;
    
-   lua_pushcfunction(this->L, errorHandler);
-   int errFunc = lua_gettop(this->L);
-   lua_getglobal(this->L, "on_key");
-   if (!lua_isfunction(this->L, -1)) {
+   lua_pushcfunction(L, errorHandler);
+   int errFunc = lua_gettop(L);
+   lua_getglobal(L, "on_key");
+   if (!lua_isfunction(L, -1)) {
       this->skipOnKey = true;
       return;
    }
-   lua_pushinteger(this->L, key);
-   int err = lua_pcall(this->L, 1, 0, errFunc);
-   if (err) error(this->L);
-   lua_pop(this->L, lua_gettop(this->L));
+   lua_pushinteger(L, key);
+   int err = lua_pcall(L, 1, 0, errFunc);
+   if (err) error(L);
+   lua_pop(L, lua_gettop(L));
 }
 
 void Script_onCtrl(Buffer* this, int key) {
    if (this->skipOnCtrl) return;
    
+   lua_State* L = this->script.L;
    char ch[2] = { 'A' + key - 1, '\0' };
-   this->skipOnCtrl = !callFunction(this->L, "on_ctrl", ch);
+   this->skipOnCtrl = !callFunction(L, "on_ctrl", ch);
 }
 
 void Script_onFKey(Buffer* this, int key) {
    if (this->skipOnFKey) return;
    
+   lua_State* L = this->script.L;
    char ch[10];
    snprintf(ch, 10, "F%d", key - KEY_F(1) + 1);
-   this->skipOnFKey = !callFunction(this->L, "on_fkey", ch);
+   this->skipOnFKey = !callFunction(L, "on_fkey", ch);
 }
 
 void Script_onSave(Buffer* this, const char* fileName) {
    if (this->skipOnSave) return;
    
-   this->skipOnSave = !callFunction(this->L, "on_save", fileName);
+   lua_State* L = this->script.L;
+   this->skipOnSave = !callFunction(L, "on_save", fileName);
 }
 
 void Script_onChange(Buffer* this) {
    if (this->skipOnChange) return;
    
-   this->skipOnChange = !callFunction(this->L, "on_change", NULL);
+   lua_State* L = this->script.L;
+   this->skipOnChange = !callFunction(L, "on_change", NULL);
 }
