@@ -163,7 +163,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
    this->bracketY = -1;
    this->lastKey = 0;
    this->modified = false;
-   this->tabulation = 4;
+   this->tabulation = 3;
    this->dosLineBreaks = false;
    this->tabWidth = 8;
    
