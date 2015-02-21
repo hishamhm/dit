@@ -3,6 +3,8 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 bin_PROGRAMS = dit
 
+LUA_FLAGS=-DLUA_COMPAT_5_1 -DLUA_USE_LINUX
+
 my_dit_C_sources = dit.c Buffer.c CRT.c Clipboard.c DebugMemory.c Field.c \
  FileReader.c FunctionBar.c Hashtable.c Highlight.c Line.c List.c Object.c \
  Panel.c PatternMatcher.c Pool.c RichString.c Script.c \
@@ -28,7 +30,7 @@ dit_LDADD = $(LUA_LIB)
 dit_DEPENDENCIES = $(LUA_DEP)
 
 lua-$(DIT_LUA_VERSION)/src/liblua.a:
-	cd lua-$(DIT_LUA_VERSION)/src && make CC="$(CC)" MYCFLAGS="-DLUA_COMPAT_5_1 -DLUA_USE_LINUX" MYLIBS="-Wl,-E -ldl" liblua.a 
+	cd lua-$(DIT_LUA_VERSION)/src && make CC="$(CC)" MYCFLAGS="$(LUA_FLAGS)" MYLIBS="-Wl,-E -ldl" liblua.a 
 
 Prototypes.h: $(my_dit_C_sources)
 	tools/GenHeaders Prototypes.h
@@ -44,4 +46,4 @@ install-data-local:
 	$(INSTALL_DATA) "$(srcdir)/extras/dit.keytab" "$(DESTDIR)$(datadir)/apps/konsole/dit.keytab"
 
 debug:
-	$(MAKE) CFLAGS="-g -O0 -DLUA_USE_LINUX"
+	$(MAKE) CFLAGS="-g -O0 $(LUA_FLAGS)"
