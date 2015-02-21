@@ -854,11 +854,7 @@ static void Dit_parseBindings(Dit_Action* keys) {
       keys[i] = 0;
    FILE* fd = Files_open("r", "bindings/default", NULL);
    if (!fd) {
-      Display_clear();
-      Display_printAt(0,0,"Warning: could not parse key bindings file bindings/default");
-      Display_printAt(1,0,"Press any key to load hardcoded defaults.");
-      bool code;
-      Display_getch(&code);
+      Display_errorScreen("Warning: could not parse key bindings file bindings/default. Loading hardcoded defaults.");
       Dit_loadHardcodedBindings(keys);
       return;
    }

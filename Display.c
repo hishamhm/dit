@@ -223,12 +223,35 @@ void Display_getScreenSize(int* w, int* h) {
 #else
 void Display_printAt(int y, int x, const char* fmt, ...) {
    va_list ap;
-   printf("\033[%d;%df", y+1, x+1);
    va_start(ap, fmt);
+   printf("\033[%d;%df", y+1, x+1);
    vprintf(fmt, ap);
    va_end(ap);
 }
 #endif
+
+void Display_errorScreen(const char* fmt, ...) {
+   va_list ap;
+   char buffer[256];
+   va_start(ap, fmt);
+   vsnprintf(buffer, sizeof(buffer)-1, fmt, ap);
+   va_end(ap);
+   Display_clear();
+#if HAVE_CURSES
+   mvaddnstr(0, 0, buffer, sizeof(buffer)-1);
+#else
+   printf("\033[%d;%df", 1, 1);
+   fwrite(buffer, sizeof(char), strlen(buffer), stdout);
+#endif
+   int c = 0; char* p = buffer;
+   while (p = strchr(p, '\n')) c++;
+   Display_printAt(2+c, 0, "Press any key.");
+   int key = Display_waitKey();
+   if (key == KEY_CTRL('C')) {
+      exit(1);
+   }
+}
+
 
 #if HAVE_CURSES
 #define Display_writeAt mvaddstr
@@ -397,12 +420,11 @@ int Display_getch(bool* code) {
          int isCode = get_wch(&ch);
          *code = (isCode == KEY_CODE_YES || isCode == ERR);
          if (isCode == ERR) return ERR;
-         return ch;
       #else
          int ch = getch();
          *code = (ch > 0xff || ch == ERR);
-         return ch;
       #endif
+      return (int)ch;
    #else
       char sequence[11] = { 0 };
       // TODO: UTF-8 loop
@@ -428,6 +450,12 @@ int Display_getch(bool* code) {
       return ch;
    #endif
 }
+
+int Display_waitKey() {
+   bool code;
+   return Display_getch(&code);
+}
+
 
 #if HAVE_CURSES
 #define Display_defineKey define_key

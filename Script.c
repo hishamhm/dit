@@ -22,9 +22,7 @@ typedef struct Proxy_ {
 static void error(lua_State* L) {
    int lines, cols;
    Display_getScreenSize(&cols, &lines);
-   Display_clear();
-   Display_printAt(0,0,"%s", lua_tostring(L, -1));
-   CRT_readKey();
+   Display_errorScreen("%s", lua_tostring(L, -1));
    lua_getglobal(L, "tabs");
    TabManager* tabs = (TabManager*) ((Proxy*)lua_touserdata(L, -1))->ptr;
    TabManager_refreshCurrent(tabs);
@@ -357,9 +355,7 @@ bool Script_load(ScriptState* this, const char* scriptName) {
    int err = luaL_dofile(L, foundFile);
    free(foundFile);
    if (err != 0) {
-      Display_clear();
-      Display_printAt(0,0,"Error loading script %s", lua_tostring(L, -1));
-      CRT_readKey();
+      Display_errorScreen("Error loading script %s", lua_tostring(L, -1));
       return false;
    }
    return true;

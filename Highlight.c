@@ -280,9 +280,7 @@ HighlightParserState parseFile(ReadHighlightFileArgs* args, FILE* file, const ch
          } else if (String_eq(tokens[0], "script") && ntokens == 2) {
             this->hasScript = Script_load(this->script, tokens[1]);
          } else {
-            Display_clear();
-            Display_printAt(0,0,"Error reading %s: line %d: %s", name, lineno, buffer);
-            CRT_readKey();
+            Display_errorScreen(0,0,"Error reading %s: line %d: %s", name, lineno, buffer);
             state = HPS_ERROR;
          }
          break;
@@ -316,9 +314,7 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
    HighlightParserState state = parseFile(args, fopen(name, "r"), name, HPS_START);
 
    if (args->contexts->size != 1) {
-      Display_clear();
-      Display_printAt(0,0,"Error reading %s: %d context%s still open", name, args->contexts->size - 1, args->contexts->size > 2 ? "s" : "");
-      CRT_readKey();
+      Display_errorScreen("Error reading %s: %d context%s still open", name, args->contexts->size - 1, args->contexts->size > 2 ? "s" : "");
       state = HPS_ERROR;
    }
    Stack_delete(args->contexts);

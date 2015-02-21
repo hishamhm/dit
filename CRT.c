@@ -130,9 +130,7 @@ void CRT_parseTerminalFile(char* term) {
 
    FILE* fd = Files_open("r", "terminals/%s", term);
    if (!fd) {
-      Display_printAt(0,0,"Warning: could not parse terminal rules file terminals/%s", term);
-      Display_printAt(1,0,"Press any key.");
-      CRT_readKey();
+      Display_errorScreen("Warning: could not parse terminal rules file terminals/%s", term);
       return;
    }
    while (!feof(fd)) {
@@ -467,16 +465,6 @@ void CRT_init() {
 void CRT_done() {
    Hashtable_delete(CRT_keys);
    Display_done();
-}
-
-int CRT_readKey() {
-   //nocbreak();
-   //cbreak();
-   bool code;
-   int ret = Display_getch(&code);
-   //if (CRT_delay)
-   //   halfdelay(CRT_delay);
-   return ret;
 }
 
 void CRT_handleSIGSEGV(int signal) {
