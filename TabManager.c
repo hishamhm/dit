@@ -42,7 +42,7 @@ extern bool CRT_hasColors;
 
 }*/
 
-static const char* TabManager_Untitled = "*untitled*";
+static const char* TabManager_Untitled = "<untitled>";
 
 void Jump_purge(Jump* jump) {
    while (jump) {
@@ -188,6 +188,10 @@ static inline void TabManager_drawBar(TabManager* this, int width) {
             Display_writeAtn(this->y + this->h - 1, x+3+lenToSlash, label + lenToSlash, MIN(tabWidth - lenToSlash, cols-x-1));
          } else {
             Display_writeAtn(this->y + this->h - 1, x+3, label, MIN(tabWidth-2, cols-x-1));
+         }
+         const int lenLabel = strlen(label);
+         if (lenLabel < tabWidth) {
+            Display_writeAtn(this->y + this->h - 1, x+3+lenLabel, "                              ", MIN(tabWidth - lenLabel, cols-x-1));
          }
       }
       x += tabWidth;
