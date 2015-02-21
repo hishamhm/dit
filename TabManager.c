@@ -139,26 +139,15 @@ static inline void TabManager_drawBar(TabManager* this, int width) {
    int lines, cols;
    Display_getScreenSize(&cols, &lines);
    int items = Vector_size(this->items);
-   int current = this->currentPage;
+   const int current = this->currentPage;
    assert(current < items);
    int x = this->x + this->tabOffset;
    Display_attrset(CRT_colors[TabColor]);
    Display_mvhline(lines - 1, x, ' ', cols - x);
    char buffer[256];
-   int tabWidth = -1;
-   int i = 0;
-   if (this->width + this->tabOffset > width + 1) {
-      tabWidth = MAX(((width - this->tabOffset) / items), 15);
-      int fit = (width - this->tabOffset) / tabWidth;
-      if (current >= fit - 2)
-         i+= MAX( (current - fit) + 2, 0);
-   }
-   for (; i < items; i++) {
+   int tabWidth = 15;
+   for (int i = 0; i < items; i++) {
       TabPage* page = (TabPage*) Vector_get(this->items, i);
-      if (i == current)
-         Display_attrset(CRT_colors[CurrentTabColor]);
-      else
-         Display_attrset(CRT_colors[TabColor]);
       char modified;
       const char* label = TabManager_Untitled;
       if (page->buffer) {
@@ -170,19 +159,38 @@ static inline void TabManager_drawBar(TabManager* this, int width) {
          if (page->name)
             label = page->name;
       }
+      Display_attrset(CRT_colors[TabColor]);
+      Display_printAt(this->y + this->h - 1, x+1, "│");
       char* base = strrchr(label, '/');
-      if (base) label = base + 1;
+      if (i == current) {
+         Display_attrset(CRT_colors[CurrentTabColor]);
+         tabWidth = 30;
+         int offset = strlen(label) - (tabWidth - 2);
+         if (offset > 0) {
+            label += offset;
+         }
+      } else {
+         tabWidth = 15;
+         if (base) label = base + 1;
+      }
       if (x+1 < cols-1) {
-         if (i == current && tabWidth == -1)
-            Display_printAt(this->y + this->h - 1, x, " ");
+         Display_printAt(this->y + this->h - 1, x+2, "%c", modified);
          if ((!CRT_hasColors) && i == current) {
-            snprintf(buffer, 255, "{%c}%s ", modified, label);
+            snprintf(buffer, 255, ">%c<%s", modified, label);
          } else {
             snprintf(buffer, 255, "[%c]%s ", modified, label);
          }
-         Display_writeAtn(this->y + this->h - 1, x+1, buffer, MIN(tabWidth, cols - x-1));
+         if (i == current && base > label) {
+            int lenToSlash = base - label + 1;
+            Display_attrset(CRT_colors[CurrentTabShadeColor]);
+            Display_writeAtn(this->y + this->h - 1, x+3, label, MIN(lenToSlash, cols-x-1));
+            Display_attrset(CRT_colors[CurrentTabColor]);
+            Display_writeAtn(this->y + this->h - 1, x+3+lenToSlash, label + lenToSlash, MIN(tabWidth - lenToSlash, cols-x-1));
+         } else {
+            Display_writeAtn(this->y + this->h - 1, x+3, label, MIN(tabWidth-2, cols-x-1));
+         }
       }
-      x += (tabWidth == -1 ? strlen(label) + 4 : tabWidth);
+      x += tabWidth;
    }
    Display_attrset(CRT_colors[NormalColor]);
    this->redrawBar = false;
