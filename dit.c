@@ -923,7 +923,7 @@ int main(int argc, char** argv) {
    Display_getScreenSize(&cols, &lines);
    
    TabManager* tabs = TabManager_new(0, 0, cols, lines, 20);
-   tabs->defaultTabSize = tabSize;
+   if (tabSize > 0) tabs->defaultTabSize = tabSize;
 
    Dit_open(tabs, name);
 

@@ -75,7 +75,7 @@ void Line_display(Object* cast, RichString* str) {
    int scrollH = buffer->panel->scrollH;
    int y = buffer->panel->displaying;
    Highlight* hl = buffer->hl;
-   int tabSize = buffer->tabSize;
+   const int tabSize = buffer->tabSize;
 
    int hlAttrs[this->text.bytes];
    const int sizeAttrs = ((this->text.chars + 1) * tabSize) * sizeof(int);
@@ -98,8 +98,8 @@ void Line_display(Object* cast, RichString* str) {
    for (const char* curr = start; *curr; ) {
       int inIdx = curr - start;
       if (*curr == '\t') {
-         int tabSize = tabSize - (outIdx % tabSize);
-         for (int i = 0; i < tabSize; i++) {
+         int tab = tabSize - (outIdx % tabSize);
+         for (int i = 0; i < tab; i++) {
             attrs[attrIdx++] = hlAttrs[inIdx];
             out[outIdx++] = ' ';
          }

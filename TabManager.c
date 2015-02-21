@@ -93,7 +93,7 @@ TabManager* TabManager_new(int x, int y, int w, int h, int tabOffset) {
    this->currentPage = 0;
    this->redrawBar = true;
    this->bufferModified = false;
-   this->defaultTabSize = 3;
+   this->defaultTabSize = 8;
    return this;
 }
 
