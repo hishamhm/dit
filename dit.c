@@ -880,7 +880,7 @@ int main(int argc, char** argv) {
 
    int jump = 0;
    int column = 1;
-   int tabWidth = 8;
+   int tabSize = 3;
    
    if (getenv("KONSOLE_DCOP")) setenv("TERM", "konsole", 1);
    
@@ -889,7 +889,7 @@ int main(int argc, char** argv) {
       if (String_eq(argv[1], "--version")) {
          printVersionFlag();
       } else if (String_eq(argv[1], "-t")) {
-         tabWidth = atoi(argv[2]);
+         tabSize = atoi(argv[2]);
          name = argv[3];
       } else if (argv[1][0] == '+') {
          argv[1]++;
@@ -921,7 +921,7 @@ int main(int argc, char** argv) {
    Display_getScreenSize(&cols, &lines);
    
    TabManager* tabs = TabManager_new(0, 0, cols, lines, 20);
-   tabs->defaultTabWidth = tabWidth;
+   tabs->defaultTabSize = tabSize;
 
    Dit_open(tabs, name);
 

@@ -30,11 +30,10 @@ struct TabManager_ {
    int h;
    int tabOffset;
    int currentPage;
+   int width;
+   int defaultTabSize;
    bool redrawBar;
    bool bufferModified;
-   int width;
-   // Default width for Tab key
-   int defaultTabWidth;
 };
 
 extern TabPageClass TabPageType;
@@ -208,7 +207,7 @@ Buffer* TabManager_getBuffer(TabManager* this, int pageNr) {
       }
    } else {
       page->buffer = Buffer_new(this->x, this->y, this->w, this->h-1, page->name, false, this);
-      page->buffer->tabWidth = this->defaultTabWidth;
+      page->buffer->tabWidth = this->defaultTabSize;
       if (page->name && !TabManager_checkLock(this, page->name)) {
          page->buffer->modified = true;
          this->bufferModified = true;

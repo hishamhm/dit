@@ -83,8 +83,8 @@ struct Buffer_ {
    bool dosLineBreaks;
    // time tracker to disable auto-indent when pasting;
    double lastTime;
-   // width of Tab keys (\t)
-   int tabWidth;
+   // size of Tab (\t) in cells
+   int tabSize;
    // Lua state
    ScriptState script;
    bool skipOnChange;
@@ -165,7 +165,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
    this->modified = false;
    this->tabulation = 3;
    this->dosLineBreaks = false;
-   this->tabWidth = 8;
+   this->tabSize = 8;
    
    Script_initState(&this->script, tabs, this);
    
@@ -373,7 +373,7 @@ inline void Buffer_highlightBracket(Buffer* this) {
       } else if (at == oth) {
          level--;
          if (level == 0) {
-            this->bracketX = Line_widthUntil(l, x, this->tabWidth);
+            this->bracketX = Line_widthUntil(l, x, this->tabSize);
             this->bracketY = y;
             if (y != this->y)
                this->panel->needsRedraw = true;
@@ -403,7 +403,7 @@ void Buffer_draw(Buffer* this) {
       this->x = last_x(this);
 
    /* actual X position (expanding tabs, etc) */
-   int screenX = Line_widthUntil(this->line, this->x, this->tabWidth);
+   int screenX = Line_widthUntil(this->line, this->x, this->tabSize);
 
    if (screenX - p->scrollH >= p->w) {
       p->scrollH = screenX - p->w + 1;
@@ -509,7 +509,7 @@ void Buffer_undo(Buffer* this) {
    Panel_setSelected(this->panel, uy);
    this->line = (Line*) Panel_getSelected(this->panel);
    this->panel->needsRedraw = true;
-   this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
+   this->savedX = Line_widthUntil(this->line, this->x, this->tabSize);
    this->selecting = false;
    this->modified = modified;
 }
@@ -563,7 +563,7 @@ void Buffer_forwardChar(Buffer* this) {
       Panel_onKey(this->panel, KEY_DOWN);
       this->y++;
    }
-   this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
+   this->savedX = Line_widthUntil(this->line, this->x, this->tabSize);
    this->selecting = false;
 }
 
@@ -575,7 +575,7 @@ void Buffer_forwardWord(Buffer* this) {
       Panel_onKey(this->panel, KEY_DOWN);
       this->y++;
    }
-   this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
+   this->savedX = Line_widthUntil(this->line, this->x, this->tabSize);
    this->selecting = false;
 }
 
@@ -588,7 +588,7 @@ void Buffer_backwardWord(Buffer* this) {
       this->x = last_x(this);
       this->y--;
    }
-   this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
+   this->savedX = Line_widthUntil(this->line, this->x, this->tabSize);
    this->selecting = false;
 }
 
@@ -601,7 +601,7 @@ void Buffer_backwardChar(Buffer* this) {
       this->x = last_x(this);
       this->y--;
    }
-   this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
+   this->savedX = Line_widthUntil(this->line, this->x, this->tabSize);
    this->selecting = false;
 }
 
@@ -621,13 +621,13 @@ void Buffer_beginningOfLine(Buffer* this) {
    }
    if (prevX == this->x)
       this->x = 0;
-   this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
+   this->savedX = Line_widthUntil(this->line, this->x, this->tabSize);
    this->selecting = false;
 }
 
 void Buffer_endOfLine(Buffer* this) {
    this->x = last_x(this);
-   this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
+   this->savedX = Line_widthUntil(this->line, this->x, this->tabSize);
    this->selecting = false;
 }
 
@@ -716,7 +716,7 @@ void Buffer_deleteBlock(Buffer* this) {
    char* block = StringBuffer_deleteGet(str);
    Undo_deleteBlock(this->undo, this->x, this->y, block, len);
    Script_onChange(this);
-   this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
+   this->savedX = Line_widthUntil(this->line, this->x, this->tabSize);
    this->selecting = false;
    this->modified = true;
    if (lines > 1)
@@ -766,7 +766,7 @@ void Buffer_pasteBlock(Buffer* this, Text block) {
       Panel_setSelected(this->panel, this->y);
    }
    this->line = (Line*) Panel_getSelected(this->panel);
-   this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
+   this->savedX = Line_widthUntil(this->line, this->x, this->tabSize);
    
    Undo_endGroup(this->undo, this->x, this->y);
    Script_onChange(this);
@@ -812,7 +812,7 @@ void Buffer_deleteChar(Buffer* this) {
       }
       this->panel->needsRedraw = true;
    }
-   this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
+   this->savedX = Line_widthUntil(this->line, this->x, this->tabSize);
    this->modified = true;
 }
 
@@ -846,7 +846,7 @@ void Buffer_backwardDeleteChar(Buffer* this) {
          this->panel->needsRedraw = true;
       }
    }
-   this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
+   this->savedX = Line_widthUntil(this->line, this->x, this->tabSize);
    this->modified = true;
 }
 
@@ -879,12 +879,12 @@ void Buffer_slideDownLine(Buffer* this) {
 void Buffer_correctPosition(Buffer* this) {
    this->line = (Line*) Panel_getSelected(this->panel);
    this->x = MIN(this->x, last_x(this));
-   int screenX = Line_widthUntil(this->line, this->x, this->tabWidth);
+   int screenX = Line_widthUntil(this->line, this->x, this->tabSize);
    if (screenX > this->savedX) {
-      while (this->x > 0 && Line_widthUntil(this->line, this->x, this->tabWidth) > this->savedX)
+      while (this->x > 0 && Line_widthUntil(this->line, this->x, this->tabSize) > this->savedX)
          this->x--;
    } else if (screenX < this->savedX) {
-      while (this->x < last_x(this) && Line_widthUntil(this->line, this->x, this->tabWidth) < this->savedX)
+      while (this->x < last_x(this) && Line_widthUntil(this->line, this->x, this->tabSize) < this->savedX)
          this->x++;
    }
    this->y = Panel_getSelectedIndex(this->panel);
@@ -970,7 +970,7 @@ void Buffer_defaultKeyHandler(Buffer* this, int ch, bool code) {
       Line_insertChar(this->line, this->x, ch);
       Script_onChange(this);
       this->x++;
-      this->savedX = Line_widthUntil(this->line, this->x, this->tabWidth);
+      this->savedX = Line_widthUntil(this->line, this->x, this->tabSize);
       this->modified = true;
       this->selecting = false;
    } else if (ch >= 1 && ch <= 31) {
@@ -1066,8 +1066,8 @@ bool Buffer_find(Buffer* this, Text needle, bool findNext, bool caseSensitive, b
          this->selecting = true;
          Buffer_goto(this, pastFound, y);
 
-         int screenX = Line_widthUntil(this->line, this->x, this->tabWidth);
-         int screenXfrom = Line_widthUntil(this->line, this->selectXfrom, this->tabWidth);
+         int screenX = Line_widthUntil(this->line, this->x, this->tabSize);
+         int screenXfrom = Line_widthUntil(this->line, this->selectXfrom, this->tabSize);
          Panel* p = this->panel;
          int margin = p->w / 6;
          if (p->scrollH > (screenXfrom - margin))

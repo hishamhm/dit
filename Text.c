@@ -322,14 +322,14 @@ Text* Text_strcat(Text* dest, Text src) {
    return dest;
 }
 
-int Text_cellsUntil(Text t, int n, int tabWidth) {
+int Text_cellsUntil(Text t, int n, int tabSize) {
    int width = 0;
    n = MIN(n, t.chars);
    int offset = 0;
    for (int i = 0; i < n; i++) {
       char curr = t.data[offset];
       if (curr == '\t') {
-         width += tabWidth - (width % tabWidth);
+         width += tabSize - (width % tabSize);
          offset++;
       } else {
          offset += UTF8_bytes(curr);

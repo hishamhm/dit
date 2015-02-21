@@ -75,15 +75,15 @@ void Line_display(Object* cast, RichString* str) {
    int scrollH = buffer->panel->scrollH;
    int y = buffer->panel->displaying;
    Highlight* hl = buffer->hl;
-   int tabWidth = buffer->tabWidth;
+   int tabSize = buffer->tabSize;
 
    int hlAttrs[this->text.bytes];
-   const int sizeAttrs = ((this->text.chars + 1) * tabWidth) * sizeof(int);
+   const int sizeAttrs = ((this->text.chars + 1) * tabSize) * sizeof(int);
    int* attrs = malloc(sizeAttrs);
    memset(attrs, 0, sizeAttrs);
    
    int outIdx = 0;
-   char out[this->text.bytes * tabWidth + 1];
+   char out[this->text.bytes * tabSize + 1];
 
    HighlightContext* context = this->super.prev
                              ? ((Line*)this->super.prev)->context
@@ -98,7 +98,7 @@ void Line_display(Object* cast, RichString* str) {
    for (const char* curr = start; *curr; ) {
       int inIdx = curr - start;
       if (*curr == '\t') {
-         int tabSize = tabWidth - (outIdx % tabWidth);
+         int tabSize = tabSize - (outIdx % tabSize);
          for (int i = 0; i < tabSize; i++) {
             attrs[attrIdx++] = hlAttrs[inIdx];
             out[outIdx++] = ' ';
@@ -133,16 +133,16 @@ void Line_display(Object* cast, RichString* str) {
             tmp = xFrom; xFrom = xTo; xTo = tmp;
          }
          if (y == yFrom && y == yTo) {
-            from = Text_cellsUntil(this->text, xFrom, tabWidth);
-            to = Text_cellsUntil(this->text, xTo, tabWidth);
+            from = Text_cellsUntil(this->text, xFrom, tabSize);
+            to = Text_cellsUntil(this->text, xTo, tabSize);
          } else if (y == yFrom && y < yTo) {
-            from = Text_cellsUntil(this->text, xFrom, tabWidth);
+            from = Text_cellsUntil(this->text, xFrom, tabSize);
             out[outIdx++] = ' ';
             out[outIdx] = '\0';
             to = outIdx;
          } else if (y > yFrom && y == yTo) {
             from = 0;
-            to = Text_cellsUntil(this->text, xTo, tabWidth);
+            to = Text_cellsUntil(this->text, xTo, tabSize);
          } else { // if (y > yFrom && y < yTo) {
             from = 0;
             out[outIdx++] = ' ';
@@ -164,8 +164,8 @@ void Line_display(Object* cast, RichString* str) {
    free(attrs);
 }
 
-int Line_widthUntil(Line* this, int n, int tabWidth) {
-   return Text_cellsUntil(this->text, n, tabWidth);
+int Line_widthUntil(Line* this, int n, int tabSize) {
+   return Text_cellsUntil(this->text, n, tabSize);
 }
 
 bool Line_equals(const Object* o1, const Object* o2) {
@@ -185,12 +185,12 @@ void Line_deleteChars(Line* this, int at, int n) {
 }
 
 /*
-inline int Line_getIndentWidth(Line* this, int tabWidth) {
+inline int Line_getIndentWidth(Line* this, int tabSize) {
    int indentWidth = 0;
    // UTF-8: indent chars are always ASCII
    for (int i = 0; i < Text_chars(this->text) && isblank(this->text.data[i]); i++) {
       if (this->text.data[i] == '\t')
-         indentWidth += tabWidth - (indentWidth % tabWidth);
+         indentWidth += tabSize - (indentWidth % tabSize);
       else
          indentWidth++;
    }
