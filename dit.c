@@ -905,12 +905,14 @@ int main(int argc, char** argv) {
    int quit = 0;
    
    struct stat st = {0};
-   stat(name, &st);
-   if (S_ISDIR(st.st_mode)) {
-      fprintf(stderr, "dit: %s is a directory.\n", name);
-      exit(0);
+   if (name) {
+      stat(name, &st);
+      if (S_ISDIR(st.st_mode)) {
+         fprintf(stderr, "dit: %s is a directory.\n", name);
+         exit(0);
+      }
+      Dit_checkFileAccess(argv, name, &jump, &column);
    }
-   Dit_checkFileAccess(argv, name, &jump, &column);
    Files_makeHome();
    CRT_init();
    Dit_Action keys[KEY_MAX];
