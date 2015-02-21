@@ -207,7 +207,7 @@ Buffer* TabManager_getBuffer(TabManager* this, int pageNr) {
       }
    } else {
       page->buffer = Buffer_new(this->x, this->y, this->w, this->h-1, page->name, false, this);
-      page->buffer->tabWidth = this->defaultTabSize;
+      page->buffer->tabSize = this->defaultTabSize;
       if (page->name && !TabManager_checkLock(this, page->name)) {
          page->buffer->modified = true;
          this->bufferModified = true;
