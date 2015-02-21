@@ -344,7 +344,7 @@ void Display_attrToEscape(unsigned long attr, char* escape) {
 void Display_attrset(unsigned long attr) {
    char escape[20];
    Display_attrToEscape(attr, escape);
-   fwrite(escape, strlen(escape), 1, stdout);
+   fwrite(escape, 1, strlen(escape), stdout);
 }
 #endif
 
@@ -352,7 +352,7 @@ void Display_attrset(unsigned long attr) {
 #define Display_clear clear
 #else
 void Display_clear() {
-   fwrite("\033[H\033[2J", 6, 1, stdout);
+   fwrite("\033[H\033[2J", 1, 6, stdout);
 }
 #endif
 
@@ -368,7 +368,7 @@ void Display_writeChstrAtn(int y, int x, CharType* chstr, int n) {
       char c = chstr[i] & 0xff;
       str[i] = c;
    }
-   fwrite(str, n, 1, stdout);
+   fwrite(str, 1, n, stdout);
 */
    int lastAttr = -1;
    char buffer[1024];
@@ -385,12 +385,12 @@ void Display_writeChstrAtn(int y, int x, CharType* chstr, int n) {
          len += snprintf(buffer+len, sizeof(buffer)-len, "%c", c);
       }
       if (len > 1000) {
-         fwrite(buffer, len, 1, stdout);
+         fwrite(buffer, 1, len, stdout);
          len = 0;
       }
    }
    len += snprintf(buffer+len, sizeof(buffer)-len, "\033[0m");
-   fwrite(buffer, len, 1, stdout);
+   fwrite(buffer, 1, len, stdout);
 }
 #endif
 
