@@ -78,9 +78,9 @@ void Line_display(Object* cast, RichString* str) {
    int tabWidth = buffer->tabWidth;
 
    int hlAttrs[this->text.bytes];
-   int sizeAttrs = this->text.chars * tabWidth + 1;
-   int* attrs = malloc(sizeAttrs * sizeof(int));
-   memset(attrs, 0, sizeAttrs * sizeof(int));
+   const int sizeAttrs = ((this->text.chars + 1) * tabWidth) * sizeof(int);
+   int* attrs = malloc(sizeAttrs);
+   memset(attrs, 0, sizeAttrs);
    
    int outIdx = 0;
    char out[this->text.bytes * tabWidth + 1];
