@@ -1,0 +1,143 @@
+FILES
+name suffix .rb
+firstline regex ^#!.*ruby.*
+RULES   
+
+include gitconflict.dithlinc
+
+context # `$ dim
+/context
+
+rule [ symbol
+rule ] symbol
+rule { brightdiff
+rule | brightdiff
+rule } brightdiff
+rule ( symbol
+rule ) symbol
+
+rule ** symbol
+rule ! symbol
+rule ~ symbol
+rule + symbol
+rule - symbol
+rule * symbol
+rule / symbol
+rule % symbol
+rule + symbol
+rule - symbol
+rule >> symbol
+rule << symbol
+rule & symbol
+rule ^ symbol
+rule | symbol
+rule <=> symbol
+rule == symbol
+rule === symbol
+rule != symbol
+rule =~ symbol
+rule !~ symbol
+rule <= symbol
+rule < symbol
+rule > symbol
+rule >= symbol
+rule && symbol
+rule || symbol
+rule .. symbol
+rule ... symbol
+rule ? symbol
+rule : symbol
+rule = symbol
+rule %= symbol
+rule { symbol
+rule /= symbol
+rule -= symbol
+rule += symbol
+rule |= symbol
+rule &= symbol
+rule >>= symbol
+rule <<= symbol
+rule *= symbol
+rule &&= symbol
+rule ||= symbol
+rule **= symbol
+
+rule and bright
+rule break bright
+rule in bright
+rule next bright
+rule not bright
+rule or bright
+rule redo bright
+rule rescue bright
+rule retry bright
+rule return bright
+rule defined? bright
+rule super bright
+rule yield bright
+rule true bright
+rule false bright
+rule nil brightalt
+rule self brightalt
+rule __ENCODING__ brightalt
+rule __dir__ brightalt
+rule __FILE__ brightalt
+rule __callee__ brightalt
+rule __method__ brightalt
+rule BEGIN bright
+rule END bright
+rule case bright
+rule begin bright
+rule do bright
+rule for bright
+rule if bright
+rule unless bright
+rule while bright
+rule until bright
+rule else bright
+rule elsif bright
+rule ensure bright
+rule then bright
+rule when bright
+rule end bright
+rule alias bright
+rule undef bright
+
+rule :`[_`|A`-Z`|a`-z`]`[A`-Z`|a`-z`|0`-9`|_`]`* brightalt
+rule @`[_`|A`-Z`|a`-z`]`[A`-Z`|a`-z`|0`-9`|_`]`* diff
+rule $`[_`|A`-Z`|a`-z`]`[A`-Z`|a`-z`|0`-9`|_`]`* brightdiff
+
+context def `$ bright bright brightdiff
+   context ( ) bright bright normal
+       rule = bright
+       rule , bright
+   /context
+/context
+
+context class `$ bright bright brightdiff
+/context
+
+context module `$ bright bright brightdiff
+/context
+
+context / / brightspecial
+/context
+
+context " " alt
+   rule \\ brightalt
+   rule \" brightalt
+   eager_rule \`[abcfnrtv`] brightalt
+   rule " alt
+/context
+
+context ' ' alt
+   rule \\ brightalt
+   rule \' brightalt
+   eager_rule \`[abcfnrtv`] brightalt
+   rule ' alt
+/context
+
+
+context =begin =end dim
+/context
+
