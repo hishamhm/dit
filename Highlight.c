@@ -65,6 +65,7 @@ struct MatchArgs_ {
    int attrsAt;
    int y;
    bool paintUnmatched;
+   bool lineStart;
 };
 
 #ifndef isword
@@ -353,8 +354,8 @@ HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close,
 #define PAINT(_args, _here, _attr) do { _args->attrs[_args->attrsAt++] = _attr; _here = UTF8_forward(_here, 1); } while(0)
 
 static inline void Highlight_tryMatch(Highlight* this, MatchArgs* args, bool paintUnmatched) {
-   GraphNode* rules = args->ctx->rules->start;
-   GraphNode* follows = args->ctx->follows->start;
+   GraphNode* rules   = args->lineStart ? args->ctx->rules->lineStart   : args->ctx->rules->start;
+   GraphNode* follows = args->lineStart ? args->ctx->follows->lineStart : args->ctx->follows->start;
    const char* here = args->buffer;
    intptr_t intColor;
    bool eager, handOver;
@@ -398,6 +399,17 @@ static inline void Highlight_tryMatch(Highlight* this, MatchArgs* args, bool pai
    args->buffer = here;
 }
 
+static void Highlight_lineStart(Highlight* this, MatchArgs* args) {
+   HighlightContext* curCtx = args->ctx;
+   if (curCtx->rules->lineStart) {
+      if (!curCtx->follows->lineStart)
+         curCtx->follows->lineStart = GraphNode_new();
+      args->lineStart = true;
+      Highlight_tryMatch(this, args, false);
+      args->lineStart = false;
+   }
+}
+
 void Highlight_setAttrs(Highlight* this, const char* buffer, int* attrs, int len, int y) {
    MatchArgs args = {
       .buffer = buffer,
@@ -405,17 +417,9 @@ void Highlight_setAttrs(Highlight* this, const char* buffer, int* attrs, int len
       .attrsAt = 0,
       .ctx = this->currentContext,
       .y = y,
+      .match = (this->toLower) ? PatternMatcher_match_toLower : PatternMatcher_match,
    };
-   if (this->toLower)
-      args.match = PatternMatcher_match_toLower;
-   else
-      args.match = PatternMatcher_match;
-   HighlightContext* curCtx = this->currentContext;
-   if (curCtx->rules->lineStart) {
-      if (!curCtx->follows->lineStart)
-         curCtx->follows->lineStart = GraphNode_new();
-      Highlight_tryMatch(this, &args, false);
-   }
+   Highlight_lineStart(this, &args);
    while (args.buffer < buffer + len) {
       Highlight_tryMatch(this, &args, true);
    }
