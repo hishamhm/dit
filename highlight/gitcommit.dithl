@@ -1,0 +1,20 @@
+FILES
+name prefix COMMIT_EDITM
+RULES
+
+eager_rule `^`[`s`-~`] brightalt
+
+eager_rule `^`[`s`-"`|$`-`~`]`[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]`  brightalt
+
+
+context `^# `$ dim
+   context modified: `$ brightalt normal normal
+   /context
+   context new`sfile: `$ brightdiff normal normal
+   /context
+   context " " alt
+   /context
+   context ' ' alt
+   /context
+/context
+

@@ -37,9 +37,9 @@ rule brightspecialdiff brightspecialdiff
 rule veryspecial veryspecial
 rule dim dim
 
-rule ``^ veryspecial
-rule ``$ veryspecial
-rule ```[``[-]+*?|ts`] brightdiff
+eager_rule ``^ veryspecial
+eager_rule ``$ veryspecial
+eager_rule ```[``[-]+*?|ts`] brightdiff
 
 context `^# `$ dim
 /context
