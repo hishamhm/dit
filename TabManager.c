@@ -148,6 +148,7 @@ static inline void TabManager_drawBar(TabManager* this, int width) {
    int tabWidth = 15;
    for (int i = 0; i < items; i++) {
       TabPage* page = (TabPage*) Vector_get(this->items, i);
+      int currentColor = ((page->buffer && page->buffer->readOnly) ? CRT_colors[CurrentTabROColor] : CRT_colors[CurrentTabColor]);
       char modified;
       const char* label = TabManager_Untitled;
       if (page->buffer) {
@@ -163,7 +164,7 @@ static inline void TabManager_drawBar(TabManager* this, int width) {
       Display_printAt(this->y + this->h - 1, x+1, "│");
       char* base = strrchr(label, '/');
       if (i == current) {
-         Display_attrset(CRT_colors[CurrentTabColor]);
+         Display_attrset(currentColor);
          tabWidth = 30;
          int offset = strlen(label) - (tabWidth - 2);
          if (offset > 0) {
@@ -184,7 +185,7 @@ static inline void TabManager_drawBar(TabManager* this, int width) {
             int lenToSlash = base - label + 1;
             Display_attrset(CRT_colors[CurrentTabShadeColor]);
             Display_writeAtn(this->y + this->h - 1, x+3, label, MIN(lenToSlash, cols-x-1));
-            Display_attrset(CRT_colors[CurrentTabColor]);
+            Display_attrset(currentColor);
             Display_writeAtn(this->y + this->h - 1, x+3+lenToSlash, label + lenToSlash, MIN(tabWidth - lenToSlash, cols-x-1));
          } else {
             Display_writeAtn(this->y + this->h - 1, x+3, label, MIN(tabWidth-2, cols-x-1));

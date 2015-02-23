@@ -32,6 +32,7 @@ typedef enum {
    NormalColor = 0,
    TabColor,
    CurrentTabColor,
+   CurrentTabROColor,
    CurrentTabShadeColor,
    SelectionColor,
    UnfocusedSelectionColor,
@@ -181,6 +182,7 @@ void CRT_init() {
    CRT_colors[TabColor] = CRT_color(Black, Cyan);
    CRT_colors[CurrentTabShadeColor] = A_BOLD | CRT_color(Black, Blue);
    CRT_colors[CurrentTabColor] = A_BOLD | CRT_color(Yellow, Blue);
+   CRT_colors[CurrentTabROColor] = A_BOLD | CRT_color(Red, Blue);
    CRT_colors[SelectionColor] = A_REVERSE | CRT_color(Blue, White);
    CRT_colors[UnfocusedSelectionColor] = A_REVERSE | CRT_color(White, Blue);
    CRT_colors[BracketColor] = A_REVERSE | CRT_color(Cyan, Black);
@@ -209,6 +211,7 @@ void CRT_init() {
    CRT_colors[NormalColor] = A_NORMAL;
    CRT_colors[TabColor] = A_BOLD | A_REVERSE | CRT_color(White, Black);
    CRT_colors[CurrentTabColor] = A_BOLD | CRT_color(White, Black);
+   CRT_colors[CurrentTabROColor] = A_BOLD | CRT_color(Red, Black);
    CRT_colors[CurrentTabShadeColor] = A_BOLD | CRT_color(Black, White);
    CRT_colors[SelectionColor] = A_REVERSE | CRT_color(White, Black);
    CRT_colors[UnfocusedSelectionColor] = A_BOLD | CRT_color(White, Black);
@@ -238,6 +241,7 @@ void CRT_init() {
    CRT_colors[NormalColor] = A_NORMAL;
    CRT_colors[TabColor] = CRT_color(Black, White);
    CRT_colors[CurrentTabColor] = A_REVERSE | CRT_color(Black, White);
+   CRT_colors[CurrentTabROColor] = A_BOLD | CRT_color(Red, White);
    CRT_colors[CurrentTabShadeColor] = A_BOLD | CRT_color(Black, White);
    CRT_colors[SelectionColor] = A_REVERSE | CRT_color(White, Black);
    CRT_colors[UnfocusedSelectionColor] = A_BOLD | CRT_color(White, Black);
@@ -267,6 +271,7 @@ void CRT_init() {
    CRT_colors[NormalColor] = (CRT_color(White, Blue));
    CRT_colors[TabColor] = CRT_color(Black, Cyan);
    CRT_colors[CurrentTabColor] = A_REVERSE | CRT_color(Green, Black);
+   CRT_colors[CurrentTabROColor] = A_BOLD | CRT_color(Red, Green);
    CRT_colors[CurrentTabShadeColor] = A_BOLD | CRT_color(Black, Green);
    CRT_colors[SelectionColor] = (A_REVERSE | CRT_color(Cyan, Black));
    CRT_colors[UnfocusedSelectionColor] = A_REVERSE | CRT_color(White, Blue);
@@ -296,6 +301,7 @@ void CRT_init() {
    CRT_colors[NormalColor] = (CRT_color(White, Black));
    CRT_colors[TabColor] = CRT_color(Black, Cyan);
    CRT_colors[CurrentTabColor] = A_REVERSE | CRT_color(Green, Black);
+   CRT_colors[CurrentTabROColor] = A_BOLD | CRT_color(Red, Green);
    CRT_colors[CurrentTabShadeColor] = A_BOLD | CRT_color(Black, Green);
    CRT_colors[SelectionColor] = (A_REVERSE | CRT_color(Cyan, Black));
    CRT_colors[UnfocusedSelectionColor] = A_REVERSE | CRT_color(White, Blue);
