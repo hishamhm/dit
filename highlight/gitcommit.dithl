@@ -8,9 +8,15 @@ eager_rule `^`[`s`-"`|$`-`~`]`[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``
 
 
 context `^# `$ dim
+   context On`sbranch`smaster `$ dim dim brightalt
+   /context
+   context On`sbranch `$ dim dim veryspecial
+   /context
    context modified: `$ brightalt normal normal
    /context
    context new`sfile: `$ brightdiff normal normal
+   /context
+   context deleted: `$ veryspecial normal normal
    /context
    context " " alt
    /context
