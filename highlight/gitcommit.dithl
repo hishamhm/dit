@@ -10,7 +10,7 @@ eager_rule `^`[`s`-"`|$`-`~`]`[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``[`s`-~`]``
 context `^# `$ dim
    context On`sbranch`smaster `$ dim dim brightalt
    /context
-   context On`sbranch `$ dim dim veryspecial
+   context On`sbranch`s `$ dim dim veryspecial
    /context
    context modified: `$ brightalt normal normal
    /context

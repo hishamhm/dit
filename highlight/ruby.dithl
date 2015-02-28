@@ -49,7 +49,6 @@ rule ? symbol
 rule : symbol
 rule = symbol
 rule %= symbol
-rule { symbol
 rule /= symbol
 rule -= symbol
 rule += symbol
