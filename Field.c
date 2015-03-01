@@ -215,6 +215,14 @@ void Field_insertChar(Field* this, wchar_t ch) {
    this->cursor++;
 }
 
+void Field_clear(Field* this) {
+   if (!this->current)
+      Field_start(this);
+   FieldItem* curr = this->current;
+   Text_clear(&(curr->text));
+   this->cursor = 0;
+}
+
 void Field_setValue(Field* this, Text value) {
    if (!this->current)
       Field_start(this);

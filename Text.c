@@ -366,6 +366,11 @@ void Text_deleteChars(Text* t, int at, int n) {
    t->chars -= n;
 }
 
+void Text_clear(Text* t) {
+   t->bytes = 0;
+   t->chars = 0;
+}
+
 static inline void insert(Text* t, int at, const char* data, int bytes, int chars) {
    if (t->bytes + bytes >= t->dataSize) {
       t->dataSize += MAX(bytes, t->dataSize) + 1;

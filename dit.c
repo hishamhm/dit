@@ -284,12 +284,16 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
          if (!code && (ch >= 32 || ch == 9 || ch == KEY_CTRL('T'))) {
             if (ch == 9) {
                int at = buffer->x;
+               if (failing) {
+                  Field_clear(Dit_findField);
+               }
                if (Field_getLength(Dit_findField) == 0) {
                   while (at > 0) {
                      ch = Line_charAt(buffer->line, at - 1);
-                     if (isword(ch))
+                     if (isword(ch)) {
                         at--;
-                     else
+                        buffer->x--;
+                     } else
                         break;
                   }
                }
