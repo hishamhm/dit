@@ -93,6 +93,7 @@ void Field_printfLabel(Field* this, char* picture, ...) {
 void FieldItem_delete(Object* cast) {
    FieldItem* this = (FieldItem*) cast;
    Text_prune(&(this->text));
+   Pool_free(this->super.list->pool, this);
 }
 
 void Field_start(Field* this) {
