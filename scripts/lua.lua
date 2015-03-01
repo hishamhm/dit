@@ -39,7 +39,9 @@ function highlight_line(line, y)
       local key = "*"
       if note.code == "111" then
          key = "D"
-      elseif note.code == "113" then
+      elseif note.secondary
+         or note.code == "421" -- shadowing a local 
+         then
          key = " "
       end
       table.insert(ret, string.rep(key, lchar - fchar + 1))
