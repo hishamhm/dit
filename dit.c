@@ -476,10 +476,15 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                }
                break;
             }
-            default:
+            case 13:
                quit = true;
-               if (ch == 27)
-                  Buffer_goto(buffer, saveX, saveY);
+               break;
+            case 27:
+               quit = true;
+               Buffer_goto(buffer, saveX, saveY);
+               break;
+            default:
+               ;// ignore
             }
          }
       } else {
