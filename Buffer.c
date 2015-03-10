@@ -129,7 +129,7 @@ inline void Buffer_restorePosition(Buffer* this) {
 }
 
 void Buffer_autoConfigureIndent(Buffer* this, int indents[]) {
-   int detectedIndent = 8;
+   int detectedIndent = 3;
    if (indents[3] > indents[2] && indents[3] > indents[4]) {
       detectedIndent = 3;
    } else if (indents[2] > 0 && indents[6] > 0) {

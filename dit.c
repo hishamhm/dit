@@ -889,7 +889,7 @@ int main(int argc, char** argv) {
 
    int jump = 0;
    int column = 1;
-   int tabSize = 3;
+   int tabSize = 8;
    
    if (getenv("KONSOLE_DCOP")) setenv("TERM", "konsole", 1);
    
