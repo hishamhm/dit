@@ -1108,11 +1108,8 @@ bool Buffer_find(Buffer* this, Text needle, bool findNext, bool caseSensitive, b
    return false;
 }
 
-bool Buffer_save(Buffer* this) {
+void Buffer_saveToFd(Buffer* this, FILE* fd) {
    assert(this->fileName);
-   FILE* fd = fopen(this->fileName, "w");
-   if (!fd)
-      return false;
    Line* l = (Line*) this->panel->items->head;
    while (l) {
       fwrite(Line_toString(l), Line_bytes(l), 1, fd);
@@ -1120,11 +1117,19 @@ bool Buffer_save(Buffer* this) {
       if (l)
          fwrite("\n", 1, 1, fd);
    }
-   fclose(fd);
    Undo_store(this->undo, this->fileName);
    Script_onSave(this, this->fileName);
    this->modified = false;
    this->readOnly = false;
+}
+
+bool Buffer_save(Buffer* this) {
+   assert(this->fileName);
+   FILE* fd = fopen(this->fileName, "w");
+   if (!fd)
+      return false;
+   Buffer_saveToFd(this, fd);
+   fclose(fd);
    return true;
 }
 

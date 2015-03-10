@@ -13,6 +13,8 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <stdio.h>
+#include <time.h>
 
 #include "Prototypes.h"
 
@@ -30,21 +32,33 @@ static void printVersionFlag() {
    exit(0);
 }
 
-static char* saveAs(const char* label, char* defaultName) {
+static void Dit_refresh(Buffer* buffer, TabManager* tabs) {
+   Display_attrset(NormalColor);
+   Display_clear();
+   Buffer_refreshHighlight(buffer);
+   TabManager_refreshCurrent(tabs);
+}
+
+static char* saveAs(const char* label, char* defaultName, bool* sudo) {
    Field* field = Field_new(label, 0, lines-1, cols-2);
    if (defaultName) Field_setValue(field, Text_new(defaultName));
    bool quitMask[255] = {0};
+   quitMask[19] = true; /* CTRL+S */
    int ch = Field_quickRun(field, quitMask);
-   char* name = (ch == 13)
+   char* name = (ch == 13 || ch == 19)
                 ? Field_getValue(field)
                 : NULL;
+   if (ch == 19) {
+      *sudo = true;
+   }
    Field_delete(field);
    return name;
 }
 
 static bool Dit_save(Buffer* buffer, TabManager* tabs) {
+   bool sudo = false;
    if (!buffer->fileName) {
-      char* name = saveAs("Save as:", "");
+      char* name = saveAs("Save as:", "", &sudo);
       if (!name) {
          return false;
       }
@@ -52,7 +66,51 @@ static bool Dit_save(Buffer* buffer, TabManager* tabs) {
    }
    bool saved = false;
    while (true) {
-      saved = Buffer_save(buffer);
+      char fifoName[1025];
+      if (sudo) {
+         snprintf(fifoName, 1024, "%s/dit.write.%d.%d", getenv("TMPDIR"), getpid(), time(NULL));
+         unlink(fifoName);
+         int err = mkfifo(fifoName, 0600);
+         if (!err) {
+            int pid = fork();
+            if (pid == 0) {
+               char command[1025];
+               char* shell = getenv("SHELL");
+               if (!shell) {
+                  shell = "sh";
+               }
+               snprintf(command, 1024, "clear; sudo \"%s\" -c 'cat \"%s\" > \"%s\" && touch \"%s.done\"' || touch \"%s.fail\"", shell, fifoName, buffer->fileName, fifoName, fifoName);
+               Display_clear();
+               system(command);
+               exit(0);
+            } else if (pid > 0) {
+               char doneName[1025];
+               char failName[1025];
+               bool done = false;
+               bool fail = false;
+               snprintf(doneName, 1024, "%s.done", fifoName);
+               snprintf(failName, 1024, "%s.fail", fifoName);
+               FILE* fifoFd = fopen(fifoName, "w");
+               Buffer_saveToFd(buffer, fifoFd);
+               fclose(fifoFd);
+               do {
+                  done = (access(doneName, F_OK) == 0);
+                  fail = (access(failName, F_OK) == 0);
+                  usleep(100000);
+               } while (!done && !fail);
+               saved = done;
+               unlink(doneName);
+               unlink(failName);
+               unlink(fifoName);
+               tabs->redrawBar = true;
+               Dit_refresh(buffer, tabs);
+            } else {
+               saved = false;
+            }
+         }
+      } else {
+         saved = Buffer_save(buffer);
+      }
       if (saved) {
          char* rpath = realpath(buffer->fileName, NULL);
          if (rpath) {
@@ -61,7 +119,7 @@ static bool Dit_save(Buffer* buffer, TabManager* tabs) {
          }
          break;
       }
-      char* name = saveAs("Save failed. Save as:", buffer->fileName);
+      char* name = saveAs("Save failed (Ctrl-S to sudo). Save as:", buffer->fileName, &sudo);
       if (!name) {
          break;
       }
@@ -73,12 +131,8 @@ static bool Dit_save(Buffer* buffer, TabManager* tabs) {
 }
 
 void Dit_saveAs(Buffer* buffer, TabManager* tabs) {
-   char* name = saveAs("Save as:", buffer->fileName ? buffer->fileName : "");
-   if (!name) {
-      return;
-   }
    free(buffer->fileName);
-   buffer->fileName = name;
+   buffer->fileName = NULL;
    Dit_save(buffer, tabs);
 }
 
@@ -532,13 +586,6 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
    TabManager_refreshCurrent(tabs);
 }
 
-static void Dit_refresh(Buffer* buffer, TabManager* tabs) {
-   Display_attrset(NormalColor);
-   Display_clear();
-   Buffer_refreshHighlight(buffer);
-   TabManager_refreshCurrent(tabs);
-}
-
 static void Dit_wordWrap(Buffer* buffer) {
    buffer->selecting = false;
    Buffer_wordWrap(buffer, 78);
@@ -837,24 +884,6 @@ void Dit_checkFileAccess(char** argv, char* name, int* jump, int* column) {
        } else {
           name[len - 1] = ':';
        }
-   }
-
-   // Let's disable the sudo hack for now.
-   return;
-   
-   char* rpath = realpath(name, NULL);
-   char* dir = dirname(rpath);
-   bool canWriteDir = (access(dir, W_OK) == 0);
-   bool canWrite = (access(name, W_OK) == 0);
-   free(rpath);
-   if ((exists && !canWrite) || (!exists && !canWriteDir)) {
-      char buffer[4096];
-      if (*jump)
-         snprintf(buffer, 4095, "sudo %s +%d %s", argv[0], *jump, name);
-      else
-         snprintf(buffer, 4095, "sudo %s %s", argv[0], name);
-      int ret = system(buffer);
-      exit(ret);
    }
 }
 
