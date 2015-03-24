@@ -39,6 +39,7 @@ Structures.h: $(my_dit_C_sources)
 	tools/GenHeaders Structures.h
 
 clean-local:
+	rm -f order.txt
 	cd lua-$(DIT_LUA_VERSION)/src && make clean
 
 install-data-local:
