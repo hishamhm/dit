@@ -15,12 +15,15 @@ BUILT_SOURCES = Prototypes.h Structures.h
 # find bindings terminals highlight | grep -v \\.svn
 nobase_dist_pkgdata_DATA = bindings/default \
  terminals/rxvt terminals/konsole terminals/linux terminals/xterm-color \
- highlight/yacc.dithl highlight/python.dithl highlight/lua.dithl highlight/html.dithl \
- highlight/haskell.dithl highlight/java.dithl highlight/css.dithl highlight/c.dithl \
- highlight/latex.dithl highlight/xml.dithl highlight/autoconf.dithl highlight/lex.dithl \
- highlight/perl.dithl highlight/shell.dithl highlight/dithl.dithl highlight/c.dithlinc \
- highlight/shellbacktick.dithlinc highlight/diff.dithl highlight/php.dithl highlight/html.dithlinc \
- highlight/make.dithl
+ highlight/autoconf.dithl highlight/c.dithl highlight/c.dithlinc \
+ highlight/css.dithl highlight/diff.dithl highlight/dithl.dithl \
+ highlight/gitcommit.dithl highlight/gitconflict.dithlinc \
+ highlight/haskell.dithl highlight/html.dithl highlight/html.dithlinc \
+ highlight/java.dithl highlight/latex.dithl highlight/lex.dithl \
+ highlight/lua.dithl highlight/make.dithl highlight/nestedm4.dithlinc \
+ highlight/perl.dithl highlight/php.dithl highlight/python.dithl \
+ highlight/ruby.dithl highlight/shellbacktick.dithlinc highlight/shell.dithl \
+ highlight/shell.dithlinc highlight/xml.dithl highlight/yacc.dithl
 
 EXTRA_DIST = tools/GenHeaders extras/dit.keytab lua-$(DIT_LUA_VERSION)/src/*.[ch] lua-$(DIT_LUA_VERSION)/src/Makefile lua-$(DIT_LUA_VERSION)/COPYRIGHT
 
@@ -39,6 +42,7 @@ Structures.h: $(my_dit_C_sources)
 	tools/GenHeaders Structures.h
 
 clean-local:
+	rm -f order.txt
 	cd lua-$(DIT_LUA_VERSION)/src && make clean
 
 install-data-local:
