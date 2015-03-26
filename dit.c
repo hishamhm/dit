@@ -920,6 +920,11 @@ int main(int argc, char** argv) {
    int column = 1;
    int tabSize = 8;
    
+   if (!isatty(fileno(stdout))) {
+      fprintf(stderr, "Error: trying to run dit through a pipe!\n");
+      exit(1);
+   }
+   
    if (getenv("KONSOLE_DCOP")) setenv("TERM", "konsole", 1);
    
    char* name = argv[1];
