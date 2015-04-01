@@ -510,7 +510,7 @@ bool Display_init(char* term) {
    intrflush(stdscr, false);
    keypad(stdscr, true);
    mousemask(BUTTON1_PRESSED, NULL);
-   ESCDELAY = 100;
+   ESCDELAY = 50;
    if (has_colors()) {
       start_color();
       use_default_colors();
