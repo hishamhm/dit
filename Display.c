@@ -232,7 +232,7 @@ void Display_printAt(int y, int x, const char* fmt, ...) {
 
 void Display_errorScreen(const char* fmt, ...) {
    va_list ap;
-   char buffer[256];
+   char buffer[8192];
    va_start(ap, fmt);
    vsnprintf(buffer, sizeof(buffer)-1, fmt, ap);
    va_end(ap);
@@ -243,7 +243,7 @@ void Display_errorScreen(const char* fmt, ...) {
    printf("\033[%d;%df", 1, 1);
    fwrite(buffer, sizeof(char), strlen(buffer), stdout);
 #endif
-   buffer[255] = '\0';
+   buffer[sizeof(buffer)-1] = '\0';
    int c = 0; char* p = buffer;
    while (p = strchr(p, '\n')) { c++; p++; }
    Display_printAt(2+c, 0, "Press any key.");
