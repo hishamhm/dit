@@ -315,9 +315,8 @@ void Script_initState(ScriptState* state, TabManager* tabs, Buffer* buffer) {
    lua_setfield(L, -2, "__index");              // set it in metatable
    lua_pop(L, 1);                               // pop metatable
 
-   lua_newtable(L);
-   luaL_setfuncs(L, Buffer_functions, 0);
    lua_pushstring(L, "Buffer_functions");
+   luaL_newlib(L, Buffer_functions);
    lua_settable(L, LUA_REGISTRYINDEX);
 
    Script_pushObject(L, tabs, "TabManager", TabManager_functions);
