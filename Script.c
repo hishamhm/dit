@@ -19,7 +19,14 @@ typedef struct Proxy_ {
 #include <lauxlib.h>
 #include "lua-compat-5.3/compat-5.3.h"
 
-static void error(lua_State* L) {
+#ifdef __linux__
+#include <execinfo.h>
+#define STATIC
+#else
+#define STATIC static
+#endif
+
+STATIC void error(lua_State* L) {
    int lines, cols;
    Display_getScreenSize(&cols, &lines);
    Display_errorScreen("%s", lua_tostring(L, -1));
@@ -29,7 +36,7 @@ static void error(lua_State* L) {
    TabManager_draw(tabs, cols);
 }
 
-static void Script_pushObject(lua_State* L, void* ptr, const char* klass, const luaL_Reg* functions) {
+STATIC void Script_pushObject(lua_State* L, void* ptr, const char* klass, const luaL_Reg* functions) {
    Proxy* proxy = lua_newuserdata(L, sizeof(Proxy));
    proxy->ptr = ptr;
    if (luaL_newmetatable(L, klass)) {
@@ -40,7 +47,7 @@ static void Script_pushObject(lua_State* L, void* ptr, const char* klass, const 
    lua_setmetatable(L, -2);
 }
 
-static int Script_Buffer_goto(lua_State* L) {
+STATIC int Script_Buffer_goto(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
    int x = luaL_checkinteger(L, 2);
    int y = luaL_checkinteger(L, 3);
@@ -50,7 +57,7 @@ static int Script_Buffer_goto(lua_State* L) {
    return 0;
 }
 
-static int Script_Buffer_line(lua_State* L) {
+STATIC int Script_Buffer_line(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
    const char* line;
    if (lua_gettop(L) == 1) {
@@ -68,7 +75,7 @@ static int Script_Buffer_line(lua_State* L) {
    }
 }
 
-static int Script_Buffer_select(lua_State* L) {
+STATIC int Script_Buffer_select(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
    int xFrom = luaL_checkinteger(L, 2) - 1;
    int yFrom = luaL_checkinteger(L, 3) - 1;
@@ -88,7 +95,7 @@ static int Script_Buffer_select(lua_State* L) {
    return 0;
 }
 
-static int Script_Buffer_selection(lua_State* L) {
+STATIC int Script_Buffer_selection(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
    if (!buffer->selecting) {
       lua_pushliteral(L, "");
@@ -109,7 +116,7 @@ static int Script_Buffer_selection(lua_State* L) {
    return 5;
 }
 
-static int Script_Buffer_token(lua_State* L) {
+STATIC int Script_Buffer_token(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
    const char* line = Buffer_currentLine(buffer);
    int x = buffer->x;
@@ -124,7 +131,7 @@ static int Script_Buffer_token(lua_State* L) {
    return 4;
 }
 
-static int Script_Buffer_dir(lua_State* L) {
+STATIC int Script_Buffer_dir(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
    char* name = buffer->fileName;
    char* slash = strrchr(name, '/');
@@ -134,13 +141,13 @@ static int Script_Buffer_dir(lua_State* L) {
    return 1;
 }
 
-static int Script_Buffer_filename(lua_State* L) {
+STATIC int Script_Buffer_filename(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
    lua_pushstring(L, buffer->fileName);
    return 1;
 }
 
-static int Script_Buffer_basename(lua_State* L) {
+STATIC int Script_Buffer_basename(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
    const char* baseName = strrchr(buffer->fileName, '/');
    baseName = baseName ? baseName + 1 : buffer->fileName;
@@ -148,26 +155,26 @@ static int Script_Buffer_basename(lua_State* L) {
    return 1;
 }
 
-static int Script_Buffer_xy(lua_State* L) {
+STATIC int Script_Buffer_xy(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
    lua_pushinteger(L, buffer->x + 1);
    lua_pushinteger(L, buffer->y + 1);
    return 2;
 }
 
-static int Script_Buffer_beginUndoGroup(lua_State* L) {
+STATIC int Script_Buffer_beginUndoGroup(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
    Buffer_beginUndoGroup(buffer);
    return 0;
 }
 
-static int Script_Buffer_endUndoGroup(lua_State* L) {
+STATIC int Script_Buffer_endUndoGroup(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
    Buffer_endUndoGroup(buffer);
    return 0;
 }
 
-static int Script_Buffer___index(lua_State* L) {
+STATIC int Script_Buffer___index(lua_State* L) {
    if (lua_isnumber(L, 2)) {
       return Script_Buffer_line(L);
    } else {
@@ -179,7 +186,7 @@ static int Script_Buffer___index(lua_State* L) {
    }
 }
 
-static int Script_Buffer___newindex(lua_State* L) {
+STATIC int Script_Buffer___newindex(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
    if (lua_gettop(L) == 3) {
       int y = luaL_checkinteger(L, 2) - 1;
@@ -191,13 +198,13 @@ static int Script_Buffer___newindex(lua_State* L) {
    return 0;
 }
 
-static int Script_Buffer___len(lua_State* L) {
+STATIC int Script_Buffer___len(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
    lua_pushinteger(L, Panel_size(buffer->panel));
    return 1;
 }
 
-static void Script_Buffer_new(lua_State* L, void* ptr) {
+STATIC void Script_Buffer_new(lua_State* L, void* ptr) {
    Proxy* proxy = lua_newuserdata(L, sizeof(Proxy));
    proxy->ptr = ptr;
    if (luaL_newmetatable(L, "Buffer")) {
@@ -211,7 +218,7 @@ static void Script_Buffer_new(lua_State* L, void* ptr) {
    lua_setmetatable(L, -2);
 }
 
-static int Script_TabManager_open(lua_State* L) {
+STATIC int Script_TabManager_open(lua_State* L) {
    TabManager* tabs = (TabManager*) ((Proxy*)luaL_checkudata(L, 1, "TabManager"))->ptr;
    const char* name = luaL_checkstring(L, 2);
    
@@ -221,7 +228,7 @@ static int Script_TabManager_open(lua_State* L) {
    return 1;
 }
 
-static int Script_TabManager_setPage(lua_State* L) {
+STATIC int Script_TabManager_setPage(lua_State* L) {
    TabManager* tabs = (TabManager*) ((Proxy*)luaL_checkudata(L, 1, "TabManager"))->ptr;
    int page = luaL_checkinteger(L, 2);
    
@@ -230,7 +237,7 @@ static int Script_TabManager_setPage(lua_State* L) {
    return 0;
 }
 
-static int Script_TabManager_markJump(lua_State* L) {
+STATIC int Script_TabManager_markJump(lua_State* L) {
    TabManager* tabs = (TabManager*) ((Proxy*)luaL_checkudata(L, 1, "TabManager"))->ptr;
    
    TabManager_markJump(tabs);
@@ -238,7 +245,7 @@ static int Script_TabManager_markJump(lua_State* L) {
    return 0;
 }
 
-static int Script_TabManager_getBuffer(lua_State* L) {
+STATIC int Script_TabManager_getBuffer(lua_State* L) {
    TabManager* tabs = (TabManager*) ((Proxy*)luaL_checkudata(L, 1, "TabManager"))->ptr;
    int page = luaL_checkinteger(L, 2);
    
@@ -249,7 +256,7 @@ static int Script_TabManager_getBuffer(lua_State* L) {
    return 1;
 }
 
-static luaL_Reg TabManager_functions[] = {
+STATIC luaL_Reg TabManager_functions[] = {
    { "open", Script_TabManager_open },
    { "setPage", Script_TabManager_setPage },
    { "getBuffer", Script_TabManager_getBuffer },
@@ -257,7 +264,7 @@ static luaL_Reg TabManager_functions[] = {
    { NULL, NULL }
 };
 
-static int Script_string___index(lua_State* L) {
+STATIC int Script_string___index(lua_State* L) {
    if (lua_isnumber(L, 2)) {
       int at = lua_tointeger(L, 2);
       size_t len;
@@ -286,7 +293,7 @@ static int Script_string___index(lua_State* L) {
    }
 }
 
-static luaL_Reg Buffer_functions[] = {
+STATIC luaL_Reg Buffer_functions[] = {
    // getters:
    { "line", Script_Buffer_line },
    { "selection", Script_Buffer_selection },
@@ -360,17 +367,33 @@ bool Script_load(ScriptState* this, const char* scriptName) {
    return true;
 }
 
-static int errorHandler(lua_State* L) {
+STATIC int errorHandler(lua_State* L) {
+   #ifdef __linux__
+   int nptrs;
+   void* buffer[100];
+   char** strings;
+   nptrs = backtrace(buffer, sizeof(buffer)/sizeof(void*));
+   strings = backtrace_symbols(buffer, nptrs);
+   #endif
    lua_pushliteral(L, "\n");
    lua_getglobal(L, "debug");
    lua_getfield(L, -1, "traceback");
    lua_call(L, 0, 1);
    lua_remove(L, -2);
+   #ifdef __linux__
+   lua_pushliteral(L, "\nC traceback:");
+   lua_checkstack(L, lua_gettop(L) + nptrs);
+   for (int i = 0; i < nptrs; i++) {
+      lua_pushfstring(L, "\n\t%s", strings[i]);
+   }
+   lua_concat(L, 4 + nptrs);
+   #else
    lua_concat(L, 3);
+   #endif
    return 1;
 }
 
-static inline bool callFunction(lua_State* L, const char* fn, const char* arg) {
+STATIC inline bool callFunction(lua_State* L, const char* fn, const char* arg) {
    lua_pushcfunction(L, errorHandler);
    int errFunc = lua_gettop(L);
    lua_getglobal(L, fn);
