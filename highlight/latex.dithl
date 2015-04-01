@@ -6,6 +6,8 @@ RULES
 
 include gitconflict.dithlinc
 
+script latex.lua
+
 context % `$ dim
 /context
 
