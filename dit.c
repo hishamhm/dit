@@ -91,8 +91,7 @@ static bool Dit_save(Buffer* buffer, TabManager* tabs) {
                snprintf(doneName, 1024, "%s.done", fifoName);
                snprintf(failName, 1024, "%s.fail", fifoName);
                FILE* fifoFd = fopen(fifoName, "w");
-               Buffer_saveToFd(buffer, fifoFd);
-               fclose(fifoFd);
+               Buffer_saveAndCloseFd(buffer, fifoFd);
                do {
                   done = (access(doneName, F_OK) == 0);
                   fail = (access(failName, F_OK) == 0);
