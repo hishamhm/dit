@@ -23,7 +23,7 @@ struct Text_ {
 bool UTF8_isValid(const char* text) {
    while (*text) {
       int extra = 0;
-      char c = *text;
+      unsigned char c = *text;
       text++;
       if (c >> 7 == 0) {
          continue;
@@ -37,7 +37,8 @@ bool UTF8_isValid(const char* text) {
          return false;
       }
       for (; extra; extra--) {
-         if (*text >> 6 != 0x02)
+         unsigned char c = *text;
+         if (c >> 6 != 0x02)
             return false;
          text++;
       }
