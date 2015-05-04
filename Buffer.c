@@ -9,6 +9,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <iconv.h>
 
 #include "Prototypes.h"
 //#needs Line
@@ -81,6 +82,8 @@ struct Buffer_ {
    int saveTabulationY;
    // document uses DOS-style ctrl-M
    bool dosLineBreaks;
+   // document uses UTF-8 (if false, assume ISO-8859-15)
+   bool isUTF8;
    // time tracker to disable auto-indent when pasting;
    double lastTime;
    // size of Tab (\t) in cells
@@ -146,6 +149,27 @@ void Buffer_autoConfigureIndent(Buffer* this, int indents[]) {
    this->saveTabulation = detectedIndent;
 }
 
+void Buffer_convertToUTF8(Buffer* this) {
+   iconv_t cd = iconv_open("UTF-8", "ISO-8859-15");
+   Line* l = (Line*) this->panel->items->head;
+   while (l) {
+      char* intext = Line_toString(l);
+      int insize = Line_bytes(l);
+      int outsize = insize * 4 + 1;
+      char* outtext = calloc(outsize, 1);
+      int outleft = outsize;
+      char* outptr = outtext;
+      int err = iconv(cd, &intext, &insize, &outptr, &outleft);
+      if (err != -1) {
+         int size = outsize - outleft;
+         outtext = realloc(outtext, size + 1);
+         Text_replace(&(l->text), outtext, size);
+      }
+      l = (Line*) l->super.next;
+   }
+   iconv_close(cd);
+}
+
 Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, TabManager* tabs) {
    Buffer* this = (Buffer*) calloc(sizeof(Buffer), 1);
 
@@ -178,6 +202,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
    this->panel = p;
    this->undo = Undo_new(p->items);
    this->fileName = NULL;
+   this->isUTF8 = true;
    bool newFile = true;
    if (fileName) {
       int indents[9] = { 0,0,0,0,0,0,0,0,0 };
@@ -189,6 +214,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
       if (file && !FileReader_eof(file)) {
          newFile = false;
          Text text = Text_new(FileReader_readLine(file));
+         this->isUTF8 = (this->isUTF8 && UTF8_isValid(Text_toString(text)));
          this->hl = Highlight_new(fileName, text, &this->script);
          if (Text_toString(text)[0] == '\t') indents[0] = 1;
          if (Text_hasChar(text, '\015')) this->dosLineBreaks = true;
@@ -200,6 +226,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
             if (!t)
                continue;
             Text text = Text_new(t);
+            this->isUTF8 = (this->isUTF8 && UTF8_isValid(t));
             if (t[0] == '\t') {
                indents[0]++;
             } else {
@@ -216,6 +243,9 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
          Buffer_restorePosition(this);
          Undo_restore(this->undo, fileName);
          Buffer_autoConfigureIndent(this, indents);
+         if (!this->isUTF8) {
+            Buffer_convertToUTF8(this);
+         }
       } else {
          this->modified = true;
       }
@@ -1108,16 +1138,44 @@ bool Buffer_find(Buffer* this, Text needle, bool findNext, bool caseSensitive, b
    return false;
 }
 
+static void writeLineInFormat(FILE* fd, Line* l, bool utf8, iconv_t cd) {
+   char* intext = Line_toString(l);
+   int insize = Line_bytes(l);
+   if (utf8) {
+      fwrite(intext, insize, 1, fd);
+   } else {
+      int outsize = insize + 1;
+      char* outtext = calloc(outsize, 1);
+      int outleft = outsize;
+      char* outptr = outtext;
+      int err = iconv(cd, &intext, &insize, &outptr, &outleft);
+      if (err == -1) {
+         fwrite(intext, insize, 1, fd);
+         return;
+      }
+      int size = outsize - outleft;
+      fwrite(outtext, size, 1, fd);
+      free(outtext);
+   }
+}
+
 void Buffer_saveAndCloseFd(Buffer* this, FILE* fd) {
    assert(this->fileName);
    Line* l = (Line*) this->panel->items->head;
+   iconv_t cd;
+   if (!this->isUTF8) {
+      cd = iconv_open("ISO-8859-15", "UTF-8");
+   }
    while (l) {
-      fwrite(Line_toString(l), Line_bytes(l), 1, fd);
+      writeLineInFormat(fd, l, this->isUTF8, cd);
       l = (Line*) l->super.next;
       if (l)
          fwrite("\n", 1, 1, fd);
    }
    fclose(fd);
+   if (!this->isUTF8) {
+      iconv_close(cd);
+   }
    Undo_store(this->undo, this->fileName);
    Script_onSave(this, this->fileName);
    this->modified = false;

@@ -991,11 +991,16 @@ int main(int argc, char** argv) {
       Display_attrset(CRT_colors[TabColor]);
       Display_printAt(lines - 1, 0, "L:%d C:%d", buffer->y + 1, buffer->x + 1);
 
-      const char* lineBreaks = (buffer->dosLineBreaks ? "DOS" : "");
+      if (!buffer->isUTF8) {
+         Display_printAt(lines - 1, 11, "ISO");
+      }
       if (buffer->tabulation == 0) {
-         Display_printAt(lines - 1, 14, "TAB%s", lineBreaks);
+         Display_printAt(lines - 1, 14, "TAB");
       } else {
-         Display_printAt(lines - 1, 14, "%dsp%s", buffer->tabulation, lineBreaks);
+         Display_printAt(lines - 1, 14, "%dsp", buffer->tabulation);
+      }
+      if (buffer->dosLineBreaks) {
+         Display_printAt(lines - 1, 17, "DOS");
       }
 
       Display_attrset(A_NORMAL);

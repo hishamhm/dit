@@ -393,7 +393,7 @@ STATIC int errorHandler(lua_State* L) {
    return 1;
 }
 
-STATIC inline bool callFunction(lua_State* L, const char* fn, const char* arg) {
+inline bool callFunction(lua_State* L, const char* fn, const char* arg) {
    lua_pushcfunction(L, errorHandler);
    int errFunc = lua_gettop(L);
    lua_getglobal(L, fn);

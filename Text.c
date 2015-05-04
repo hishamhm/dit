@@ -20,6 +20,31 @@ struct Text_ {
 
 }*/
 
+bool UTF8_isValid(const char* text) {
+   while (*text) {
+      int extra = 0;
+      char c = *text;
+      text++;
+      if (c >> 7 == 0) {
+         continue;
+      } else if (c >> 5 == 0x06) {
+         extra = 1;
+      } else if (c >> 4 == 0x0e) {
+         extra = 2;
+      } else if (c >> 3 == 0x1e) {
+         extra = 3;
+      } else {
+         return false;
+      }
+      for (; extra; extra--) {
+         if (*text >> 6 != 0x02)
+            return false;
+         text++;
+      }
+   }
+   return true;
+}
+
 int UTF8_bytes(const char sc) {
    const unsigned char c = (const unsigned char) sc;
    if (c >> 7 == 0)         return 1;
@@ -142,6 +167,15 @@ Text Text_new(char* data) {
    t.bytes = strlen(data);
    t.dataSize = t.bytes + 1;
    t.chars = UTF8_chars(data);
+   return t;
+}
+
+Text* Text_replace(Text* t, char* data, int bytes) {
+   free(t->data);
+   t->data = data;
+   t->dataSize = bytes + 1;
+   t->bytes = bytes;
+   t->chars = UTF8_chars(data);
    return t;
 }
 
