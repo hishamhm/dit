@@ -89,6 +89,12 @@ context --[==[ ]==] dim
 context --[===[ ]===] dim
 /context
 
+context --[====[ ]====] dim
+/context
+
+context --[=====[ ]=====] dim
+/context
+
 context -- `$ dim
 /context
 
@@ -128,5 +134,17 @@ context [===[ ]===] alt
    rule \\ brightalt
    eager_rule \`[abcfnrtv`] brightalt
    rule ]===] alt
+/context
+
+context [====[ ]====] alt
+   rule \\ brightalt
+   eager_rule \`[abcfnrtv`] brightalt
+   rule ]====] alt
+/context
+
+context [=====[ ]=====] alt
+   rule \\ brightalt
+   eager_rule \`[abcfnrtv`] brightalt
+   rule ]=====] alt
 /context
 
