@@ -81,7 +81,9 @@ static bool Dit_save(Buffer* buffer, TabManager* tabs) {
                }
                snprintf(command, 1024, "clear; sudo \"%s\" -c 'cat \"%s\" > \"%s\" && touch \"%s.done\"' || touch \"%s.fail\"", shell, fifoName, buffer->fileName, fifoName, fifoName);
                Display_clear();
+               CRT_done();
                system(command);
+               CRT_init();
                exit(0);
             } else if (pid > 0) {
                char doneName[1025];
