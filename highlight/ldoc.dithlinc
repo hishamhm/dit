@@ -1,0 +1,10 @@
+context @param `[`^`s`]`+ alt brightalt dim
+/context
+context @type `[`^`s`]`+ alt brightalt dim
+/context
+context @module `[`^`s`]`+ alt brightalt dim
+/context
+rule @return alt
+rule @see alt
+rule TODO veryspecial
+rule FIXME veryspecial

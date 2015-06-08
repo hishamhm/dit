@@ -78,24 +78,31 @@ context function ) bright bright brightdiff
 /context
 
 context --[[ ]] dim
+   include ldoc.dithlinc
 /context
 
 context --[=[ ]=] dim
+   include ldoc.dithlinc
 /context
 
 context --[==[ ]==] dim
+   include ldoc.dithlinc
 /context
 
 context --[===[ ]===] dim
+   include ldoc.dithlinc
 /context
 
 context --[====[ ]====] dim
+   include ldoc.dithlinc
 /context
 
 context --[=====[ ]=====] dim
+   include ldoc.dithlinc
 /context
 
 context -- `$ dim
+   include ldoc.dithlinc
 /context
 
 context " " alt
