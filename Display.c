@@ -245,7 +245,7 @@ void Display_errorScreen(const char* fmt, ...) {
 #endif
    buffer[sizeof(buffer)-1] = '\0';
    int c = 0; char* p = buffer;
-   while (p = strchr(p, '\n')) { c++; p++; }
+   while ( (p = strchr(p, '\n')) ) { c++; p++; }
    Display_printAt(2+c, 0, "Press any key.");
    int key = Display_waitKey();
    if (key == KEY_CTRL('C')) {
