@@ -160,7 +160,7 @@ void ScreenManager_run(ScreenManager* this, Panel** lastFocus, int* lastKey) {
       if (loop) continue;
       
       if (lbFocus->eventHandler) {
-         HandlerResult result = lbFocus->eventHandler(lbFocus, ch, code);
+         HandlerResult result = lbFocus->eventHandler(lbFocus, ch);
          if (result == HANDLED) {
             continue;
          } else if (result == BREAK_LOOP) {
