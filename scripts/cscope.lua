@@ -1,5 +1,5 @@
 
-module("cscope", package.seeall)
+local cscope = {}
 
 local cmd = require("cmd")
 
@@ -43,7 +43,7 @@ local function go_to_result(decl, word)
    end
 end
 
-function go_to_definition()
+function cscope.go_to_definition()
    local token, dir, cscope_db = get_context()
    if not token then return end
    local decl = cmd.run("cscope -s '%s' -f '%s' -L -1 '%s'", dir, cscope_db, token)
@@ -63,7 +63,7 @@ function go_to_definition()
    end
 end
 
-function go_to_definition_in_files(pattern)
+function cscope.go_to_definition_in_files(pattern)
    local token, dir, cscope_db = get_context()
    if not token then return end
    local cscope_files = get_cscope_files(dir, pattern)
@@ -72,3 +72,4 @@ function go_to_definition_in_files(pattern)
    go_to_result(decl)
 end
 
+return cscope

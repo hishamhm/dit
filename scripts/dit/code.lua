@@ -1,7 +1,7 @@
 
-module("dit.code", package.seeall)
+local code = {}
 
-function comment_block(comment, comment_pattern, lines, commented_lines)
+function code.comment_block(comment, comment_pattern, lines, commented_lines)
    if not comment_pattern then
       comment_pattern = comment
    end
@@ -57,7 +57,7 @@ local bracket = {
    ["{"] = "}",
 }
 
-function expand_selection() 
+function code.expand_selection() 
    local selection, startx, starty, stopx, stopy = buffer:selection()
    local expanded = false
    local line, x, y = buffer:line()
@@ -125,3 +125,5 @@ function expand_selection()
    end
    buffer:select(startx, starty, stopx, stopy)
 end
+
+return code
