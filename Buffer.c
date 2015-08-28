@@ -688,7 +688,8 @@ void Buffer_nextPage(Buffer* this) {
 
 void Buffer_wordWrap(Buffer* this, int wrap) {
    Undo_beginGroup(this->undo, this->x, this->y);
-   while (this->line->super.next && Line_chars((Line*)this->line->super.next) > 0) {
+   int minLen = this->dosLineBreaks ? 1 : 0;
+   while (this->line->super.next && Line_chars((Line*)this->line->super.next) > minLen) {
       this->x = last_x(this);
       if (this->dosLineBreaks) {
          Undo_deleteCharAt(this->undo, this->x, this->y, Line_charAt(this->line, this->x));
@@ -833,12 +834,20 @@ void Buffer_deleteChar(Buffer* this) {
       Line_deleteChars(this->line, this->x, 1);
       Script_onChange(this);
    } else {
+      if (this->dosLineBreaks) {
+         Undo_beginGroup(this->undo, this->x, this->y);
+         Undo_deleteCharAt(this->undo, this->x, this->y, Line_charAt(this->line, this->x));
+         Line_deleteChars(this->line, this->x, 1);
+      }
       if (this->line->super.next) {
          Undo_joinNext(this->undo, this->x, this->y, false);
          Line_joinNext(this->line);
          Script_onChange(this);
          this->line = (Line*) Panel_getSelected(this->panel);
          this->y--;
+      }
+      if (this->dosLineBreaks) {
+         Undo_endGroup(this->undo, this->x, this->y);
       }
       this->panel->needsRedraw = true;
    }
