@@ -15,3 +15,10 @@ rule \`[A`-Z`|a`-z`|_`]`[a`-z`|A`-Z`|0`-9`|_@*`]`* brightalt
 
 rule { brightdiff
 rule } brightdiff
+
+context \begin{comment} \end{comment} dim
+/context
+
+context \begin{lstlisting} \end{lstlisting} brightalt brightalt alt
+/context
+
