@@ -257,7 +257,7 @@ int Field_quickRun(Field* this, bool* quitMask) {
       if (!handled) {
          if (!code && ch >= 32)
             Field_insertChar(this, ch);
-         else if (ch == 27 || ch == 13 || (ch >= 0 && ch <= 255 && quitMask[ch])) {
+         else if (ch == 27 || ch == 13 || ch == KEY_RESIZE || (ch >= 0 && ch <= 255 && quitMask[ch])) {
             quit = true;
             result = ch;
          }

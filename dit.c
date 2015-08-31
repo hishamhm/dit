@@ -228,7 +228,7 @@ static void pasteInField(Field* field) {
 static void Dit_goto(Buffer* buffer, TabManager* tabs) {
    TabManager_markJump(tabs);
    if (!Dit_gotoField)
-      Dit_gotoField = Field_new("Go to:", 0, lines - 1, MIN(20, cols - 20));
+      Dit_gotoField = Field_new("Go to:", 0, lines - 1, MAX(20, cols - 20));
 
    Field_start(Dit_gotoField);
    int saveX = buffer->x;
@@ -286,10 +286,23 @@ static void Dit_goto(Buffer* buffer, TabManager* tabs) {
 static Field* Dit_findField = NULL;
 static Field* Dit_replaceField = NULL;
 
+static void resizeScreen(TabManager* tabs) {
+   Display_getScreenSize(&cols, &lines);
+   TabManager_resize(tabs, cols, lines);
+   if (Dit_findField) {
+      Dit_findField->y = lines - 1;
+      Dit_findField->w = cols;
+   }
+   if (Dit_replaceField) {
+      Dit_replaceField->y = lines - 1;
+      Dit_replaceField->w = cols;
+   }
+}
+
 static void Dit_find(Buffer* buffer, TabManager* tabs) {
    TabManager_markJump(tabs);
    if (!Dit_findField)
-      Dit_findField = Field_new("Find:", 0, lines - 1, cols - 3);
+      Dit_findField = Field_new("Find:", 0, lines - 1, cols);
    Field_start(Dit_findField);
    bool quit = false;
    int saveX = buffer->x;
@@ -442,7 +455,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                if (failing)
                   continue;
                if (!Dit_replaceField)
-                  Dit_replaceField = Field_new("", 0, lines - 1, cols - 3);
+                  Dit_replaceField = Field_new("", 0, lines - 1, cols);
                Dit_replaceField->fieldColor = CRT_colors[FieldColor];
                Field_printfLabel(Dit_replaceField, "L:%d C:%d [%c%c] %sReplace with:", buffer->y + 1, buffer->x + 1, caseSensitive ? 'C' : ' ', wholeWord ? 'W' : ' ', wrapped ? "Wrapped " : "");
                Field_start(Dit_replaceField);
@@ -520,6 +533,9 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                      break;
                   } else if (rch == KEY_CTRL('V')) {
                      pasteInField(Dit_replaceField);
+                  } else if (rch == KEY_RESIZE) {
+                     resizeScreen(tabs);
+                     Buffer_draw(buffer);
                   } else {
                      if (rch == KEY_CTRL('T')) {
                         Field_insertChar(Dit_replaceField, 9);
@@ -537,6 +553,10 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             case 27:
                quit = true;
                Buffer_goto(buffer, saveX, saveY);
+               break;
+            case KEY_RESIZE:
+               resizeScreen(tabs);
+               Buffer_draw(buffer);
                break;
             default:
                ;// ignore
@@ -1046,10 +1066,7 @@ int main(int argc, char** argv) {
          case ERR:
             continue;
          case KEY_RESIZE:
-            Display_getScreenSize(&cols, &lines);
-            TabManager_resize(tabs, cols, lines);
-            if (Dit_findField)
-               Dit_findField->y = lines - 1;
+            resizeScreen(tabs);
             break;
          }
          
