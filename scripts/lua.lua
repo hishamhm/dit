@@ -7,9 +7,21 @@ local commented_lines = {}
 local controlled_change = false
 
 function highlight_file(filename)
-   local report = luacheck({filename})
-   if not report then return end
    lines = {}
+   local report, err = luacheck({filename})
+   if not report then 
+      return
+   end
+   if #report == 1 and report[1].error == "syntax" then
+      local ok, err = loadfile(filename)
+      if err then
+         local nr = err:match("^[^:]*:([%d]+):.*")
+         if nr then 
+            lines[tonumber(nr)] = {{ column = 1, name = (" "):rep(255), }}
+         end
+      end
+      return
+   end
    for _, note in ipairs(report[1]) do
       local t = lines[note.line] or {}
       t[#t+1] = note
