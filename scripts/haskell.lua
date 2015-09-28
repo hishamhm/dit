@@ -11,13 +11,40 @@ local colors = {
    'D',
    'P',
    'S',
-   '*',
 }
+
+local color_unknown = " "
 
 colors[0] = ' '
 
+local current_file = nil
+local errors = nil
+
 function highlight_file(filename)
-   return true
+   current_file = filename
+end
+
+local brackets = { ["("] = ")", ["["] = "]" }
+
+local default_term = { [")"] = true, ["]"] = true, [" "] = true }
+
+local function highlight_token(line, out, x, term)
+   while x <= #line do
+      local ch = line[x]
+      if ch == term then
+         out[x] = "*"
+         return x
+      elseif not term and default_term[ch] then
+         return x
+      elseif brackets[ch] then
+         out[x] = "*"
+         x = highlight_token(line, out, x + 1, brackets[ch])
+      else
+         out[x] = "*"
+         x = x + 1
+      end
+   end
+   return x
 end
 
 function highlight_line(line, y)
@@ -33,7 +60,7 @@ function highlight_line(line, y)
          key = colors[level]
       elseif ch == ')' then
          if #stack == 0 or stack[#stack][1] ~= '(' then
-            key = "*"
+            key = color_unknown
             level = 1
          else
             table.remove(stack)
@@ -41,13 +68,13 @@ function highlight_line(line, y)
          end
          level = level - 1
          if level < 0 then
-            key = "*"
+            key = color_unknown
          end
       elseif ch == '[' then
          table.insert(stack, {'[', at=i})
       elseif ch == ']' then
          if #stack == 0 or stack[#stack][1] ~= '[' then
-            key = "*"
+            key = color_unknown
          else
             table.remove(stack)
          end
@@ -58,8 +85,17 @@ function highlight_line(line, y)
    end
    while #stack > 0 do
       local err = table.remove(stack)
-      out[err.at] = "*"
+      out[err.at] = color_unknown
    end
+
+   if errors and errors[y] then
+      for x, _ in pairs(errors[y]) do
+         if x <= #line then
+            highlight_token(line, out, x)
+         end
+      end
+   end
+
    return table.concat(out)
 end
 
@@ -67,4 +103,18 @@ function on_ctrl(key)
    if key == "_" then
       code.comment_block("--", "%-%-")
    end
+end
+
+function on_save()
+   local cmd = io.popen("LANG=C ghc -i. -c "..current_file.." 2>&1")
+   local cmdout = cmd:read("*a")
+   cmd:close()
+   errors = {}
+   for ey, ex in cmdout:gmatch("[^\n]*:([0-9]+):([0-9]+):") do
+      ey = tonumber(ey)
+      ex = tonumber(ex)
+      if not errors[ey] then errors[ey] = {} end
+      errors[ey][ex] = true
+   end
+   return true
 end
