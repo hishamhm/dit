@@ -21,6 +21,12 @@
 #include "config.h"
 #include "debug.h"
 
+#if __linux__
+#define BUSY_WAIT_SLEEP "0.1"
+#else
+#define BUSY_WAIT_SLEEP "1"
+#endif
+
 //#link m
 
 static int lines, cols;
@@ -79,7 +85,18 @@ static bool Dit_save(Buffer* buffer, TabManager* tabs) {
                if (!shell) {
                   shell = "sh";
                }
-               snprintf(command, 1024, "clear; sudo \"%s\" -c 'cat \"%s\" > \"%s\" && touch \"%s.done\"' || touch \"%s.fail\"", shell, fifoName, buffer->fileName, fifoName, fifoName);
+               int printed = snprintf(command, 1024, "ff=\"\%s\"; "
+                                       "clear; "
+                                       "sudo \"%s\" -c '"
+                                          "touch \"'$ff'.work\"; "
+                                          "cat \"'$ff'\" > \"%s\"; "
+                                          "touch \"'$ff'.done\"; "
+                                          "chown \"'$USER'\" \"'$ff'.done\"; "
+                                          "while [ -e \"'$ff'.done\" ]; "
+                                             "do sleep %s; "
+                                          "done; "
+                                          "rm \"'$ff'.work\""
+                                       "' || touch \"$ff.fail\"", fifoName, shell, buffer->fileName, BUSY_WAIT_SLEEP);
                Display_clear();
                CRT_done();
                system(command);
@@ -88,21 +105,34 @@ static bool Dit_save(Buffer* buffer, TabManager* tabs) {
             } else if (pid > 0) {
                char doneName[1025];
                char failName[1025];
+               char workName[1025];
                bool done = false;
                bool fail = false;
+               bool work = false;
                snprintf(doneName, 1024, "%s.done", fifoName);
                snprintf(failName, 1024, "%s.fail", fifoName);
-               FILE* fifoFd = fopen(fifoName, "w");
-               Buffer_saveAndCloseFd(buffer, fifoFd);
+               snprintf(workName, 1024, "%s.work", fifoName);
                do {
+                  if (!work) {
+                     work = (access(workName, F_OK) == 0);
+                     if (work) {
+                        FILE* fifoFd = fopen(fifoName, "w");
+                        Buffer_saveAndCloseFd(buffer, fifoFd);
+                     }
+                  }
                   done = (access(doneName, F_OK) == 0);
                   fail = (access(failName, F_OK) == 0);
                   usleep(100000);
-               } while (!done && !fail);
-               saved = done;
+               } while (!((work && done) || fail));
+               if (done) {
+                  saved = true;
+               }
                unlink(doneName);
                unlink(failName);
                unlink(fifoName);
+               while (work && access(workName, F_OK) == 0) {
+                  usleep(100000);
+               }
                tabs->redrawBar = true;
                Dit_refresh(buffer, tabs);
             } else {
