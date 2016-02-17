@@ -35,8 +35,6 @@ static Hashtable* Display_terminalSequences;
 #ifdef HAVE_NCURSESW_CURSES_H
    #include <ncursesw/curses.h>
    #define HAVE_CURSES 1
-   #undef mvaddchnstr
-   #define mvaddchnstr mvadd_wchnstr
 #elif HAVE_NCURSES_NCURSES_H
    #include <ncurses/ncurses.h>
    #define HAVE_CURSES 1
@@ -199,6 +197,14 @@ typedef struct mevent {
 
 #endif
 
+#ifdef HAVE_LIBNCURSESW
+   #define Display_writeChstrAtn mvadd_wchnstr
+#elif HAVE_CURSES
+   #define Display_writeChstrAtn mvaddchnstr
+#else
+   #define Display_writeChstrAtn Display_manualWriteChstrAtn
+#endif
+
 }*/
 
 void Display_getScreenSize(int* w, int* h) {
@@ -358,9 +364,8 @@ void Display_clear() {
 #endif
 
 #if HAVE_CURSES
-#define Display_writeChstrAtn mvaddchnstr
 #else
-void Display_writeChstrAtn(int y, int x, CharType* chstr, int n) {
+void Display_manualWriteChstrAtn(int y, int x, CharType* chstr, int n) {
    printf("\033[%d;%df", y+1, x+1, y, x, n);
 /*
    char str[n];

@@ -154,10 +154,10 @@ void Buffer_convertToUTF8(Buffer* this) {
    Line* l = (Line*) this->panel->items->head;
    while (l) {
       char* intext = Line_toString(l);
-      int insize = Line_bytes(l);
-      int outsize = insize * 4 + 1;
+      size_t insize = Line_bytes(l);
+      size_t outsize = insize * 4 + 1;
       char* outtext = calloc(outsize, 1);
-      int outleft = outsize;
+      size_t outleft = outsize;
       char* outptr = outtext;
       int err = iconv(cd, &intext, &insize, &outptr, &outleft);
       if (err != -1) {
@@ -1149,13 +1149,13 @@ bool Buffer_find(Buffer* this, Text needle, bool findNext, bool caseSensitive, b
 
 static void writeLineInFormat(FILE* fd, Line* l, bool utf8, iconv_t cd) {
    char* intext = Line_toString(l);
-   int insize = Line_bytes(l);
+   size_t insize = Line_bytes(l);
    if (utf8) {
       fwrite(intext, insize, 1, fd);
    } else {
-      int outsize = insize + 1;
+      size_t outsize = insize + 1;
       char* outtext = calloc(outsize, 1);
-      int outleft = outsize;
+      size_t outleft = outsize;
       char* outptr = outtext;
       int err = iconv(cd, &intext, &insize, &outptr, &outleft);
       if (err == -1) {

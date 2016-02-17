@@ -27,14 +27,22 @@ if test "x$enable_unicode" = xyes; then
       LIBS="-lncursesw6 $LIBS "
    ], [
       AC_CHECK_LIB([ncursesw], [refresh], [], [
+        AC_CHECK_LIB([ncurses], [addnwstr], [
+          AC_DEFINE(HAVE_LIBNCURSESW, 1, [])
+          LIBS="-lncurses $LIBS "
+      ], [ 
          missing_libraries="$missing_libraries libncursesw"
          AC_MSG_ERROR([You may want to use --disable-unicode or install libncursesw.])
-      ])
+      ])])
    ])
    AC_CHECK_HEADERS([ncursesw/curses.h],[:],
       [AC_CHECK_HEADERS([ncurses/ncurses.h],[:],
          [AC_CHECK_HEADERS([ncurses/curses.h],[:],
             [AC_CHECK_HEADERS([ncurses.h],[:],[missing_headers="$missing_headers $ac_header"])])])])
+   AC_CHECK_LIB([iconv], [iconv], [], [
+      missing_libraries="$missing_libraries libiconv"
+      AC_MSG_ERROR([You may want to use --disable-unicode or install libiconv.])
+   ])
 else
    AC_CHECK_LIB([ncurses], [refresh], [], [missing_libraries="$missing_libraries libncurses"])
    AC_CHECK_HEADERS([curses.h],[:],
