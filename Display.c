@@ -419,6 +419,8 @@ void Display_getyx(int* y, int* x) {
 }
 #endif
 
+static struct timespec Display_lastEsc;
+
 int Display_getch(bool* code) {
    #if HAVE_CURSES
       #if HAVE_NCURSESW_CURSES_H
@@ -430,6 +432,21 @@ int Display_getch(bool* code) {
          int ch = getch();
          *code = (ch > 0xff || ch == ERR);
       #endif
+      if (*code == 0 && ch == 27) {
+         clock_gettime(CLOCK_REALTIME, &Display_lastEsc);
+      } else {
+         struct timespec now;
+         clock_gettime(CLOCK_REALTIME, &now);
+         double diffTime = ((double)now.tv_sec + 1.0e-9*now.tv_nsec) - ((double)Display_lastEsc.tv_sec + 1.0e-9*Display_lastEsc.tv_nsec);
+         if ( diffTime < 0.1 ) {
+            switch (ch) {
+               case KEY_UP:    ch = KEY_ALT('A'); break;
+               case KEY_DOWN:  ch = KEY_ALT('B'); break;
+               case KEY_RIGHT: ch = KEY_ALT('C'); break;
+               case KEY_LEFT:  ch = KEY_ALT('D'); break;
+            }
+         }
+      }
       return (int)ch;
    #else
       char sequence[11] = { 0 };

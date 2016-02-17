@@ -66,3 +66,7 @@ BACK_TAB Buffer_unindent
 F8 Dit_deleteLine
 ALT_J Dit_moveTabPageLeft
 ALT_K Dit_moveTabPageRight
+ALT_A Dit_selectUpLine
+ALT_B Dit_selectDownLine
+ALT_C Dit_selectForwardChar
+ALT_D Dit_selectBackwardChar
