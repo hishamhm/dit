@@ -40,8 +40,10 @@ if test "x$enable_unicode" = xyes; then
          [AC_CHECK_HEADERS([ncurses/curses.h],[:],
             [AC_CHECK_HEADERS([ncurses.h],[:],[missing_headers="$missing_headers $ac_header"])])])])
    AC_CHECK_LIB([iconv], [iconv], [], [
-      missing_libraries="$missing_libraries libiconv"
-      AC_MSG_ERROR([You may want to use --disable-unicode or install libiconv.])
+     AC_CHECK_LIB([c], [iconv], [], [
+       missing_libraries="$missing_libraries libiconv"
+       AC_MSG_ERROR([You may want to use --disable-unicode or install libiconv.])
+     ])
    ])
 else
    AC_CHECK_LIB([ncurses], [refresh], [], [missing_libraries="$missing_libraries libncurses"])
