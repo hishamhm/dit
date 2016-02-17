@@ -29,6 +29,7 @@ local brackets = { ["("] = ")", ["["] = "]" }
 local default_term = { [")"] = true, ["]"] = true, [" "] = true }
 
 local function highlight_token(line, out, x, term)
+   out[x] = "*"
    while x <= #line do
       local ch = line[x]
       if ch == term then
