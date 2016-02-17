@@ -40,7 +40,9 @@ rule ] symbol
 rule ( symbol
 rule ) symbol
 rule , symbol
-rule = symbol
+rule | special
+rule = special
+rule == symbol
 rule /= symbol
 rule > symbol
 rule < symbol
