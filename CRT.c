@@ -159,7 +159,7 @@ void CRT_init() {
    
    char* term = getenv("TERM");
 
-   if (strcmp(term, "xterm") == 0) {
+   if (strcmp(term, "xterm") == 0 || strcmp(term, "xterm-256color") == 0) {
       putenv("TERM=xterm-color");
       term = "xterm-color";
    } else if (strcmp(term, "linux") == 0) {
