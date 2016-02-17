@@ -37,7 +37,11 @@ scripts/luacheck/filter.lua scripts/luacheck/stds.lua scripts/cmd.lua \
 scripts/dit/code.lua scripts/cscope.lua scripts/c.lua \
 scripts/java.lua
 
-EXTRA_DIST = tools/GenHeaders extras/dit.keytab lua-$(DIT_LUA_VERSION)/src/*.[ch] lua-$(DIT_LUA_VERSION)/src/Makefile lua-$(DIT_LUA_VERSION)/README
+EXTRA_DIST = tools/GenHeaders extras/dit.keytab \
+   lua-$(DIT_LUA_VERSION)/src/*.[ch] \
+   lua-$(DIT_LUA_VERSION)/src/Makefile \
+   lua-$(DIT_LUA_VERSION)/README \
+   lua-compat-5.3/compat-5.3.[ch]
 
 dit_SOURCES = Prototypes.h Structures.h $(my_dit_C_sources) config.h debug.h md5.c md5.h
 dit_CFLAGS = -std=c99  -DPKGDATADIR=\"$(pkgdatadir)\" -DSYSCONFDIR=\"$(sysconfdir)\" $(LUA_INCLUDE) -rdynamic
