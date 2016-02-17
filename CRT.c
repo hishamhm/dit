@@ -128,12 +128,12 @@ int CRT_colors[Colors];
 
 Hashtable* CRT_keys;
 
-void CRT_parseTerminalFile(char* term) {
+bool CRT_parseTerminalFile(char* term) {
 
    FILE* fd = Files_open("r", "terminals/%s", term);
    if (!fd) {
-      Display_errorScreen("Warning: could not parse terminal rules file terminals/%s", term);
-      return;
+      Display_errorScreen("Warning: could not open terminal rules file terminals/%s", term);
+      return false;
    }
    while (!feof(fd)) {
       char buffer[256];
@@ -152,6 +152,7 @@ void CRT_parseTerminalFile(char* term) {
       String_freeArray(tokens);
    }
    fclose(fd);
+   return true;
 }
 
 void CRT_init() {
@@ -463,7 +464,10 @@ void CRT_init() {
    Hashtable_putString(CRT_keys, "UNDO", (void*) KEY_UNDO);
    Hashtable_putString(CRT_keys, "UP", (void*) KEY_UP);
 
-   CRT_parseTerminalFile(term);
+   bool loadedTerm = CRT_parseTerminalFile(term);
+   if (!loadedTerm) {
+      (void) CRT_parseTerminalFile("xterm-color");
+   }
 
 #ifndef DEBUG
 //   signal(11, CRT_handleSIGSEGV);
