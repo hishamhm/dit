@@ -38,26 +38,27 @@ function highlight_line(line, y)
    for _, note in ipairs(curr) do
       local fchar = note.column
       local lchar = fchar
-      if note.name then
-         lchar = lchar + #note.name - 1
-      else
-         while line[lchar+1]:match("[A-Za-z0-9_]") do
-            lchar = lchar + 1
+      if fchar >= start then -- I miss the 'continue' statement.
+         if note.name then
+            lchar = fchar + #note.name - 1
+         else
+            while line[lchar+1]:match("[A-Za-z0-9_]") do
+               lchar = lchar + 1
+            end
          end
+         if fchar > start then
+            table.insert(ret, string.rep(" ", fchar - start))
+         end
+         local key = "*"
+         if note.code == "111" then
+            key = "D"
+         -- For error numbers, see http://luacheck.readthedocs.org/en/0.11.0/warnings.html
+         elseif note.secondary or note.code == "421" or (note.code == "411" and note.name == "err") then
+            key = " "
+         end
+         table.insert(ret, string.rep(key, lchar - fchar + 1))
+         start = lchar + 1
       end
-      if fchar > start then
-         table.insert(ret, string.rep(" ", fchar - start))
-      end
-      local key = "*"
-      if note.code == "111" then
-         key = "D"
-      elseif note.secondary
-         or note.code == "421" -- shadowing a local 
-         then
-         key = " "
-      end
-      table.insert(ret, string.rep(key, lchar - fchar + 1))
-      start = lchar + 1
   end
   return table.concat(ret)
 end
