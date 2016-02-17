@@ -34,11 +34,7 @@ rule private bright
 rule protected bright
 rule public bright
 rule native bright
-rule try bright
-rule catch bright
 rule finally bright
-rule throw bright
-rule throws bright
 rule interface bright
 rule import bright
 rule instanceof bright
@@ -64,6 +60,36 @@ rule ) symbol
 rule : symbol
 rule , symbol
 rule ; brightdiff
+
+rule try brightdiff
+rule catch brightdiff
+rule throw brightdiff
+rule throws brightdiff
+context throw ; brightdiff diff diff
+/context
+context catch } brightdiff diff diff
+   context { } diff
+   handover_rule } diff
+   context { } diff
+   context { } diff
+   context { } diff
+   context { } diff
+   context { } diff
+   context { } diff
+   context { } diff
+   context { } diff
+   context { } diff
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+/context
 
 rule /** dim
 rule /* dim
@@ -99,6 +125,8 @@ context // `$ dim
    rule XXX veryspecial
    rule FIXME veryspecial
 /context
+
+rule @`[A`-Z`|a`-z`]`* brightdiff
 
 rule " alt
 context " " alt
