@@ -709,6 +709,16 @@ static void Dit_nextTabPage(Buffer* buffer, TabManager* tabs, int* ch) {
    *ch = 0;
 }
 
+static void Dit_moveTabPageLeft(Buffer* buffer, TabManager* tabs, int* ch) {
+   TabManager_moveTabLeft(tabs);
+   *ch = 0;
+}
+
+static void Dit_moveTabPageRight(Buffer* buffer, TabManager* tabs, int* ch) {
+   TabManager_moveTabRight(tabs);
+   *ch = 0;
+}
+
 static bool Dit_dirExists(const char* name) {
    char* rpath = realpath(name, NULL);
    bool dirExists = true;
@@ -804,6 +814,8 @@ static void Dit_registerActions() {
    Hashtable_putString(Dit_actions, "Dit_find", (void*)(long) Dit_find);
    Hashtable_putString(Dit_actions, "Dit_goto", (void*)(long) Dit_goto);
    Hashtable_putString(Dit_actions, "Dit_jumpBack", (void*)(long) Dit_jumpBack);
+   Hashtable_putString(Dit_actions, "Dit_moveTabPageLeft", (void*)(long) Dit_moveTabPageLeft);
+   Hashtable_putString(Dit_actions, "Dit_moveTabPageRight", (void*)(long) Dit_moveTabPageRight);
    Hashtable_putString(Dit_actions, "Dit_nextTabPage", (void*)(long) Dit_nextTabPage);
    Hashtable_putString(Dit_actions, "Dit_paste", (void*)(long) Dit_paste);
    Hashtable_putString(Dit_actions, "Dit_previousTabPage", (void*)(long) Dit_previousTabPage);
@@ -897,6 +909,9 @@ static void Dit_loadHardcodedBindings(Dit_Action* keys) {
    keys[KEY_BACKSPACE] = (Dit_Action) Buffer_backwardDeleteChar;
    keys[KEY_SF]        = (Dit_Action) Dit_selectDownLine;
    keys[KEY_SR]        = (Dit_Action) Dit_selectUpLine;
+
+   keys[KEY_ALT('J')] = (Dit_Action) Dit_moveTabPageLeft;
+   keys[KEY_ALT('K')] = (Dit_Action) Dit_moveTabPageRight;
 }
 
 void Dit_checkFileAccess(char** argv, char* name, int* jump, int* column) {

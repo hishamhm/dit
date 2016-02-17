@@ -103,6 +103,26 @@ void TabManager_delete(TabManager* this) {
    free(this);
 }
 
+void TabManager_moveTabLeft(TabManager* this) {
+   int curr = this->currentPage;
+   if (curr > 0) {
+      TabPage* page = (TabPage*) Vector_take(this->items, curr);
+      Vector_insert(this->items, curr - 1, page);
+      this->currentPage--;
+      this->redrawBar = true;
+   }
+}
+
+void TabManager_moveTabRight(TabManager* this) {
+   int curr = this->currentPage;
+   if (curr < Vector_size(this->items) - 1) {
+      TabPage* page = (TabPage*) Vector_take(this->items, curr);
+      Vector_insert(this->items, curr + 1, page);
+      this->currentPage++;
+      this->redrawBar = true;
+   }
+}
+
 static inline int TabManager_nameLength(const char* name) {
    int len;
    if (name) {

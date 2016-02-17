@@ -91,6 +91,7 @@ typedef enum {
 #define KEY_CS_NPAGE  KEY_F(57)
 #define KEY_C_PPAGE   KEY_F(58)
 #define KEY_C_NPAGE   KEY_F(59)
+#define KEY_ALT(x)    KEY_F(60) + (x - 'A')
 
 #define KEY_CTRL(x)  (x - 'A' + 1)
 
@@ -330,9 +331,11 @@ void CRT_init() {
 
    CRT_keys = Hashtable_new(200, Hashtable_STR, Hashtable_BORROW_REFS);
    for (int k = 'A'; k <= 'Z'; k++) {
-      char ctrlkey[8];
-      snprintf(ctrlkey, 7, "CTRL_%c", k);
-      Hashtable_putString(CRT_keys, ctrlkey, (void*) (long int) KEY_CTRL(k));
+      char key[8];
+      snprintf(key, 7, "CTRL_%c", k);
+      Hashtable_putString(CRT_keys, key, (void*) (long int) KEY_CTRL(k));
+      snprintf(key, 7, "ALT_%c", k);
+      Hashtable_putString(CRT_keys, key, (void*) (long int) KEY_ALT(k));
    }
    Hashtable_putString(CRT_keys, "ESC", (void*) 27);
    Hashtable_putString(CRT_keys, "A1", (void*) KEY_A1);
