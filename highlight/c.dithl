@@ -2,6 +2,7 @@ FILES
 name suffix .c
 name suffix .cc
 name suffix .cpp
+name suffix .cxx
 name suffix .h
 name suffix .hh
 name suffix .hpp
