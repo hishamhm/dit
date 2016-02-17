@@ -1,6 +1,6 @@
 
 #include "Prototypes.h"
-//#needs Object RichString
+//#needs Object RichString Display
 
 #include <math.h>
 #include <sys/param.h>

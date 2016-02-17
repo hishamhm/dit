@@ -74,7 +74,7 @@ static bool Dit_save(Buffer* buffer, TabManager* tabs) {
    while (true) {
       char fifoName[1025];
       if (sudo) {
-         snprintf(fifoName, 1024, "%s/dit.write.%d.%d", getenv("TMPDIR"), getpid(), time(NULL));
+         snprintf(fifoName, 1024, "%s/dit.write.%d.%ld", getenv("TMPDIR"), getpid(), time(NULL));
          unlink(fifoName);
          int err = mkfifo(fifoName, 0600);
          if (!err) {
