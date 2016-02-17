@@ -258,7 +258,7 @@ static void pasteInField(Field* field) {
 static void Dit_goto(Buffer* buffer, TabManager* tabs) {
    TabManager_markJump(tabs);
    if (!Dit_gotoField)
-      Dit_gotoField = Field_new("Go to:", 0, lines - 1, MAX(20, cols - 20));
+      Dit_gotoField = Field_new("Go to:", 0, lines - 1, MIN(20, cols - 20));
 
    Field_start(Dit_gotoField);
    int saveX = buffer->x;
