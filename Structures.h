@@ -10,6 +10,7 @@ typedef struct Field_ Field;
 typedef struct FieldItemClass_ FieldItemClass;
 typedef struct FieldItem_ FieldItem;
 typedef struct FileReader_ FileReader;
+typedef struct ForEachData_ ForEachData;
 typedef struct FunctionBar_ FunctionBar;
 typedef struct HashtableItem_ HashtableItem;
 typedef struct Hashtable_ Hashtable;
@@ -578,7 +579,12 @@ struct FileReader_ {
 
 
 typedef bool(*Method_Files_fileHandler)(void*, char*);
-  
+
+struct ForEachData_ {
+   Method_Files_fileHandler fn;
+   void* data;
+};
+
 
 struct FunctionBar_ {
    int size;

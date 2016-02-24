@@ -257,7 +257,7 @@ FILE* Files_openHome(const char* mode, const char* picture, const char* value);
 int Files_deleteHome(const char* picture, const char* value);
 char* Files_encodePathAsFileName(char* fileName);
 void Files_makeHome();
-void Files_forEachInDir(char* dirName, Method_Files_fileHandler fileHandler, void* data);
+void Files_forEachInDir(char* dirName, Method_Files_fileHandler fn, void* data);
 FunctionBar* FunctionBar_new(int size, char** functions, char** keys, int* events);
 void FunctionBar_delete(FunctionBar* this);
 void FunctionBar_draw(FunctionBar* this, char* buffer);
