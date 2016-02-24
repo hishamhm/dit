@@ -131,6 +131,13 @@ extern LineClass LineType;
 #define Line_bytes(this) (Text_bytes((this)->text))
 
 
+#ifdef __linux__
+#include <execinfo.h>
+#define STATIC
+#else
+#define STATIC static
+#endif
+
 #include <lua.h>
 
 struct ScriptState_ {

@@ -3,6 +3,13 @@
 
 /*{
 
+#ifdef __linux__
+#include <execinfo.h>
+#define STATIC
+#else
+#define STATIC static
+#endif
+
 #include <lua.h>
 
 struct ScriptState_ {
@@ -18,13 +25,6 @@ typedef struct Proxy_ {
 #include <lualib.h>
 #include <lauxlib.h>
 #include "lua-compat-5.3/compat-5.3.h"
-
-#ifdef __linux__
-#include <execinfo.h>
-#define STATIC
-#else
-#define STATIC static
-#endif
 
 STATIC void error(lua_State* L) {
    int lines, cols;

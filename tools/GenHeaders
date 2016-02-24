@@ -60,7 +60,7 @@ then
    
    proto() {
       cat "$1" | grep -v "#include" | cpp 2> /dev/null |\
-      grep --text -v "^static" | grep '^[^ ].*) {$' |\
+      grep -i --text -v "^static" | grep '^[^ ].*) {$' |\
       sed 's,) {$,);,;s,inline,,' >> "$new"
    }
    
