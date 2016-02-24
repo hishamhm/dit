@@ -35,7 +35,6 @@
 #include <libgen.h>
 #include <lauxlib.h>
 #include <iconv.h>
-#include <execinfo.h>
 #include <errno.h>
 #include <dirent.h>
 #include <ctype.h>
