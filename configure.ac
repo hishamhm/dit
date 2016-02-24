@@ -20,6 +20,12 @@ AC_ARG_ENABLE(ncurses, [AC_HELP_STRING([--enable-ncurses], [use ncurses (switch 
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 
+if test "`uname`" = "OpenBSD"
+then
+   CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+   LDFLAGS="$LDFLAGS -L/usr/local/lib"
+fi
+
 AC_ARG_ENABLE(unicode, [AC_HELP_STRING([--enable-unicode], [enable Unicode support])], ,enable_unicode="yes")
 if test "x$enable_unicode" = xyes; then
    AC_CHECK_LIB([ncursesw6], [refresh], [
@@ -40,9 +46,11 @@ if test "x$enable_unicode" = xyes; then
          [AC_CHECK_HEADERS([ncurses/curses.h],[:],
             [AC_CHECK_HEADERS([ncurses.h],[:],[missing_headers="$missing_headers $ac_header"])])])])
    AC_CHECK_LIB([iconv], [iconv], [], [
-     AC_CHECK_LIB([c], [iconv], [], [
-       missing_libraries="$missing_libraries libiconv"
-       AC_MSG_ERROR([You may want to use --disable-unicode or install libiconv.])
+     AC_CHECK_LIB([iconv], [libiconv], [], [
+        AC_CHECK_LIB([c], [iconv], [], [
+          missing_libraries="$missing_libraries libiconv"
+          AC_MSG_ERROR([You may want to use --disable-unicode or install libiconv.])
+        ])
      ])
    ])
 else
