@@ -12,54 +12,47 @@ typedef bool(*Method_Files_fileHandler)(void*, char*);
   
 }*/
 
-FILE* Files_open(const char* mode, const char* picture, const char* value) {
-   char fileName[4097];
-   char* dataDir = PKGDATADIR;
-   char* sysconfDir = SYSCONFDIR;
-   FILE* fd = Files_openHome(mode, picture, value);
-   if (fd) return fd;
+typedef void*(*Method_Files_tryEachHandler)(const char*, const char*);
 
-   snprintf(fileName, 4096, "%s/dit/", sysconfDir);
-   int len = strlen(fileName);
-   snprintf(fileName + len, 4096 - len, picture, value);
-   fd = fopen(fileName, mode);
-   if (fd) return fd;
-
-   snprintf(fileName, 4096, "%s/", dataDir);
-   len = strlen(fileName);
-   snprintf(fileName + len, 4096 - len, picture, value);
-   fd = fopen(fileName, mode);
-
-   return fd;
-}
-
-static void Files_nameHome(char* fileName, const char* picture, const char* value) {
-   char* homeDir = getenv("HOME");
-   snprintf(fileName, 4096, "%s/.dit/", homeDir);
-   int len = strlen(fileName);
-   snprintf(fileName + len, 4096 - len, picture, value);
-}
-
-static char* tryToFind(const char* dir, const char* pattern, const char* picture, const char* value, int* dirEndsAt) {
-   char fileName[4097];
-   snprintf(fileName, 4096, pattern, dir);
+static char* makeFileName(char* fileName, const char* dir, const char* subdir, const char* picture, const char* value, int* dirEndsAt) {
+   snprintf(fileName, 4096, "%s/%s", dir, subdir);
    int len = strlen(fileName);
    if (dirEndsAt) *dirEndsAt = len;
    snprintf(fileName + len, 4096 - len, picture, value);
-   if (access(fileName, R_OK) == 0) return strdup(fileName);
-   return NULL;
+   return fileName;
+}
+
+static void* tryEach(const char* picture, const char* value, int* dirEndsAt, const char* arg, Method_Files_tryEachHandler fn) {
+   char fileName[4097];
+   void* ret = fn(makeFileName(fileName, getenv("HOME"), "/.dit/", picture, value, dirEndsAt), arg);
+   if (ret) return ret;
+   ret = fn(makeFileName(fileName, SYSCONFDIR, "/dit/", picture, value, dirEndsAt), arg);
+   if (ret) return ret;
+   ret = fn(makeFileName(fileName, PKGDATADIR, "/", picture, value, dirEndsAt), arg);
+   if (ret) return ret;
+   return fn(makeFileName(fileName, ".", "/", picture, value, dirEndsAt), arg);
+}
+ 
+static void* handleOpen(const char* name, const char* mode) {
+   return fopen(name, mode);
+}
+ 
+FILE* Files_open(const char* mode, const char* picture, const char* value) {
+   return (FILE*) tryEach(picture, value, NULL, mode, handleOpen);
+}
+
+static void* handleFindFile(const char* name, const char* _) {
+   return access(name, R_OK) == 0 ? strdup(name) : NULL;
 }
 
 char* Files_findFile(const char* picture, const char* value, int* dirEndsAt) {
-   char* found = tryToFind(getenv("HOME"), "%s/.dit/", picture, value, dirEndsAt);
-   if (found) return found;
-   found = tryToFind(SYSCONFDIR, "%s/dit/", picture, value, dirEndsAt);
-   if (found) return found;
-   found = tryToFind(PKGDATADIR, "%s/", picture, value, dirEndsAt);
-   if (found) return found;
-   found = tryToFind(".", "%s/", picture, value, dirEndsAt);
-   if (found) return found;
-   return NULL;
+   return (char*) tryEach(picture, value, dirEndsAt, NULL, handleFindFile);
+}
+    
+
+static void Files_nameHome(char* fileName, const char* picture, const char* value) {
+   int _;
+   makeFileName(fileName, getenv("HOME"), "/.dit/", picture, value, &_);
 }
 
 bool Files_existsHome(const char* picture, const char* value) {
