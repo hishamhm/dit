@@ -57,6 +57,8 @@ char* Files_findFile(const char* picture, const char* value, int* dirEndsAt) {
    if (found) return found;
    found = tryToFind(PKGDATADIR, "%s/", picture, value, dirEndsAt);
    if (found) return found;
+   found = tryToFind(".", "%s/", picture, value, dirEndsAt);
+   if (found) return found;
    return NULL;
 }
 
