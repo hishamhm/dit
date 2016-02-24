@@ -72,7 +72,7 @@ struct md5_ctx
   {
     char buffer[128];
     md5_uint32 buffer32[32];
-  };
+  } u;
 };
 
 /*

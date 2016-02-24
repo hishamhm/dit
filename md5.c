@@ -116,15 +116,15 @@ md5_finish_ctx (struct md5_ctx *ctx, void *resbuf)
     ++ctx->total[1];
 
   pad = bytes >= 56 ? 64 + 56 - bytes : 56 - bytes;
-  memcpy (&ctx->buffer[bytes], fillbuf, pad);
+  memcpy (&ctx->u.buffer[bytes], fillbuf, pad);
 
   /* Put the 64-bit file length in *bits* at the end of the buffer.  */
-  ctx->buffer32[(bytes + pad) / 4] = SWAP (ctx->total[0] << 3);
-  ctx->buffer32[(bytes + pad + 4) / 4] = SWAP ((ctx->total[1] << 3) |
+  ctx->u.buffer32[(bytes + pad) / 4] = SWAP (ctx->total[0] << 3);
+  ctx->u.buffer32[(bytes + pad + 4) / 4] = SWAP ((ctx->total[1] << 3) |
                                               (ctx->total[0] >> 29));
 
   /* Process last bytes.  */
-  md5_process_block (ctx->buffer, bytes + pad + 8, ctx);
+  md5_process_block (ctx->u.buffer, bytes + pad + 8, ctx);
 
   return md5_read_ctx (ctx, resbuf);
 }
@@ -225,16 +225,16 @@ md5_process_bytes (const void *buffer, size_t len, struct md5_ctx *ctx)
       size_t left_over = ctx->buflen;
       size_t add = 128 - left_over > len ? len : 128 - left_over;
 
-      memcpy (&ctx->buffer[left_over], buffer, add);
+      memcpy (&ctx->u.buffer[left_over], buffer, add);
       ctx->buflen += add;
 
       if (ctx->buflen > 64)
 	{
-	  md5_process_block (ctx->buffer, ctx->buflen & ~63, ctx);
+	  md5_process_block (ctx->u.buffer, ctx->buflen & ~63, ctx);
 
 	  ctx->buflen &= 63;
 	  /* The regions in the following copy operation cannot overlap.  */
-	  memcpy (ctx->buffer, &ctx->buffer[(left_over + add) & ~63],
+	  memcpy (ctx->u.buffer, &ctx->u.buffer[(left_over + add) & ~63],
 		  ctx->buflen);
 	}
 
@@ -256,7 +256,7 @@ md5_process_bytes (const void *buffer, size_t len, struct md5_ctx *ctx)
       if (UNALIGNED_P (buffer))
 	while (len > 64)
 	  {
-	    md5_process_block (memcpy (ctx->buffer, buffer, 64), 64, ctx);
+	    md5_process_block (memcpy (ctx->u.buffer, buffer, 64), 64, ctx);
 	    buffer = (const char *) buffer + 64;
 	    len -= 64;
 	  }
@@ -274,13 +274,13 @@ md5_process_bytes (const void *buffer, size_t len, struct md5_ctx *ctx)
     {
       size_t left_over = ctx->buflen;
 
-      memcpy (&ctx->buffer[left_over], buffer, len);
+      memcpy (&ctx->u.buffer[left_over], buffer, len);
       left_over += len;
       if (left_over >= 64)
 	{
-	  md5_process_block (ctx->buffer, 64, ctx);
+	  md5_process_block (ctx->u.buffer, 64, ctx);
 	  left_over -= 64;
-	  memcpy (ctx->buffer, &ctx->buffer[64], left_over);
+	  memcpy (ctx->u.buffer, &ctx->u.buffer[64], left_over);
 	}
       ctx->buflen = left_over;
     }
