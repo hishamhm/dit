@@ -278,7 +278,7 @@ static void Dit_goto(Buffer* buffer, TabManager* tabs) {
             if (switchedTab) {
                TabManager_jumpBack(tabs);
             }
-            Buffer_goto(buffer, saveX, saveY);
+            Buffer_goto(buffer, saveX, saveY, true);
             break;
          }
       }
@@ -290,7 +290,7 @@ static void Dit_goto(Buffer* buffer, TabManager* tabs) {
          if (y > 0)
             y--;
          if (y != lastY) {
-            Buffer_goto(buffer, 0, y);
+            Buffer_goto(buffer, 0, y, true);
             Buffer_draw(buffer);
             lastY = y;
          }
@@ -467,7 +467,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                if (y > 0)
                   y--;
                if (y != lastY) {
-                  Buffer_goto(buffer, 0, y);
+                  Buffer_goto(buffer, 0, y, true);
                   Buffer_draw(buffer);
                   lastY = y;
                }
@@ -582,7 +582,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                break;
             case 27:
                quit = true;
-               Buffer_goto(buffer, saveX, saveY);
+               Buffer_goto(buffer, saveX, saveY, true);
                break;
             case KEY_RESIZE:
                resizeScreen(tabs);
@@ -594,7 +594,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
          }
       } else {
          if (code && (ch == KEY_UP || ch == KEY_DOWN)) {
-            Buffer_goto(buffer, saveX, saveY);
+            Buffer_goto(buffer, saveX, saveY, true);
             wrapped = false;
             firstX = -1;
             firstY = -1;
@@ -1042,7 +1042,7 @@ int main(int argc, char** argv) {
    
    Buffer* buffer = TabManager_draw(tabs, cols);
    if (jump > 0)
-      Buffer_goto(buffer, column - 1, jump - 1);
+      Buffer_goto(buffer, column - 1, jump - 1, true);
 
    bool code;
    int ch = 0;
@@ -1075,16 +1075,10 @@ int main(int argc, char** argv) {
       Display_move(y, x);
       
       ch = CRT_getCharacter(&code);
-      
-      //TODO: mouse
-      
-      if (!code) {
-         if (ch < 32 && keys[ch])
-            (keys[ch])(buffer, tabs, &ch, &quit);
-         else
-            Buffer_defaultKeyHandler(buffer, ch, code);
-      } else {
 
+      int limit = 32;
+      if (code) {
+         limit = KEY_MAX;
          if (buffer->marking) {
             switch (ch) {
             case KEY_C_RIGHT: ch = KEY_CS_RIGHT; break;
@@ -1114,11 +1108,15 @@ int main(int argc, char** argv) {
             resizeScreen(tabs);
             break;
          }
-         
-         if (ch < KEY_MAX && keys[ch])
+      }
+      
+      bool done = Script_onKey(buffer, ch);
+      if (!done) {
+         if (ch < limit && keys[ch]) {
             (keys[ch])(buffer, tabs, &ch, &quit);
-         else
+         } else {
             Buffer_defaultKeyHandler(buffer, ch, code);
+         }
       }
    }
 

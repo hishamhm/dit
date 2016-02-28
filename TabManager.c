@@ -356,7 +356,7 @@ void TabManager_jumpBack(TabManager* this) {
       return;
    }
    TabManager_setPage(this, idx);
-   Buffer_goto(TabManager_current(this)->buffer, jump->x, jump->y);
+   Buffer_goto(TabManager_current(this)->buffer, jump->x, jump->y, true);
    free(jump);
 }
 

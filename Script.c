@@ -51,8 +51,13 @@ STATIC int Script_Buffer_goto(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
    int x = luaL_checkinteger(L, 2);
    int y = luaL_checkinteger(L, 3);
+   bool adjustScroll = true;
+   if (lua_gettop(L) == 4) {
+      adjustScroll = lua_toboolean(L, 4);
+   }
+   x--; y--;
    Buffer_validateCoordinate(buffer, &x, &y);
-   Buffer_goto(buffer, x-1, y-1);
+   Buffer_goto(buffer, x, y, adjustScroll);
    buffer->savedX = buffer->x;
    return 0;
 }
@@ -120,8 +125,8 @@ STATIC int Script_Buffer_token(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
    const char* line = Buffer_currentLine(buffer);
    int x = buffer->x;
-   if (!isword(line[x])) return 0;
    while (x > 0 && isword(line[x-1])) x--;
+   if (!isword(line[x])) return 0;
    int len = 0;
    while (isword(line[x+len])) len++;
    lua_pushlstring(L, line+x, len);
@@ -444,21 +449,29 @@ void Script_highlightLine(Highlight* this, const char* buffer, int* attrs, int l
    lua_pop(L, lua_gettop(L));
 }
 
-void Script_onKey(Buffer* this, int key) {
+bool Script_onKey(Buffer* this, int key) {
    lua_State* L = this->script.L;
-   if (this->skipOnKey) return;
+   if (this->skipOnKey) return false;
    
    lua_pushcfunction(L, errorHandler);
    int errFunc = lua_gettop(L);
    lua_getglobal(L, "on_key");
    if (!lua_isfunction(L, -1)) {
       this->skipOnKey = true;
-      return;
+      return false;
    }
    lua_pushinteger(L, key);
-   int err = lua_pcall(L, 1, 0, errFunc);
-   if (err) error(L);
+   int err = lua_pcall(L, 1, 1, errFunc);
+   bool ok = true;
+   if (err) {
+      this->skipOnKey = true;
+      error(L);
+      ok = false;
+   } else {
+      ok = lua_toboolean(L, -1);
+   }
    lua_pop(L, lua_gettop(L));
+   return ok;
 }
 
 void Script_onCtrl(Buffer* this, int key) {

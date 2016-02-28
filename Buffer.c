@@ -122,7 +122,7 @@ inline void Buffer_restorePosition(Buffer* this) {
                Line_display((Object*)line, NULL);
                line = (Line*) line->super.next;
             }
-            Buffer_goto(this, x, y);
+            Buffer_goto(this, x, y, true);
             break;
          }
       }
@@ -321,14 +321,16 @@ inline void Buffer_storePosition(Buffer* this) {
       return;
 }
 
-void Buffer_goto(Buffer* this, chars x, int y) {
+void Buffer_goto(Buffer* this, chars x, int y, bool adjustScroll) {
    if (y < 0)
       y += Panel_size(this->panel);
    Panel_setSelected(this->panel, y);
    this->line = (Line*) Panel_getSelected(this->panel);
    this->y = Panel_getSelectedIndex(this->panel);
    this->x = MIN(MAX(0, x), last_x(this));
-   this->panel->scrollV = MAX(0, this->y - (this->panel->h / 2));
+   if (adjustScroll) {
+      this->panel->scrollV = MAX(0, this->y - (this->panel->h / 2));
+   }
    this->panel->needsRedraw = true;
 }
 
@@ -662,12 +664,12 @@ void Buffer_endOfLine(Buffer* this) {
 }
 
 void Buffer_beginningOfFile(Buffer* this) {
-   Buffer_goto(this, 0, 0);
+   Buffer_goto(this, 0, 0, true);
    this->selecting = false;
 }
 
 void Buffer_endOfFile(Buffer* this) {
-   Buffer_goto(this, 0, Panel_size(this->panel) - 1);
+   Buffer_goto(this, 0, Panel_size(this->panel) - 1, true);
    Buffer_endOfLine(this);
    this->selecting = false;
 }
@@ -677,12 +679,12 @@ int Buffer_size(Buffer* this) {
 }
 
 void Buffer_previousPage(Buffer* this) {
-   Buffer_goto(this, this->x, MAX(this->y - this->panel->h, 0));
+   Buffer_goto(this, this->x, MAX(this->y - this->panel->h, 0), true);
    this->selecting = false;
 }
 
 void Buffer_nextPage(Buffer* this) {
-   Buffer_goto(this, this->x, MAX(this->y + this->panel->h, 0));
+   Buffer_goto(this, this->x, MAX(this->y + this->panel->h, 0), true);
    this->selecting = false;
 }
 
@@ -934,7 +936,7 @@ void Buffer_validateCoordinate(Buffer* this, int *x, int* y) {
    int ty = *y;
    ty = MIN(MAX(ty, 0), Panel_size(this->panel)-1);
    Line* line = (Line*) Panel_get(this->panel, ty);
-   tx = MIN(MAX(tx, 0), last_x_line(this, line));
+   tx = MIN(MAX(tx, 0), last_x_line(this, line) + 1);
    *x = tx;
    *y = ty;
 }
@@ -1103,7 +1105,7 @@ bool Buffer_find(Buffer* this, Text needle, bool findNext, bool caseSensitive, b
          this->selectXto = pastFound;
          this->selectYto = y;
          this->selecting = true;
-         Buffer_goto(this, pastFound, y);
+         Buffer_goto(this, pastFound, y, true);
 
          int screenX = Line_widthUntil(this->line, this->x, this->tabSize);
          int screenXfrom = Line_widthUntil(this->line, this->selectXfrom, this->tabSize);

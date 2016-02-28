@@ -1,5 +1,6 @@
 
 local cscope = require("cscope")
+local tab_complete = require("tab_complete")
 
 function on_ctrl(key)
    if key == "D" then
@@ -7,3 +8,6 @@ function on_ctrl(key)
    end
 end
 
+function on_key(code)
+   return tab_complete.on_key(code)
+end
