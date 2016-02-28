@@ -125,6 +125,9 @@ function tab_complete.on_key(code)
          if not token then
             return false
          end
+         if tx + #token > x then
+            return false
+         end
          build_words(token)
          local matches = match_words(token)
          local before = buffer[y]:sub(1, tx - 1)
