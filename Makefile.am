@@ -14,7 +14,7 @@ BUILT_SOURCES = Prototypes.h Structures.h
 
 # find bindings terminals highlight scripts -type f | tr '\n' ' ' | fold -s -w 70 | sed 's,$,\\,'
 nobase_dist_pkgdata_DATA = \
-bindings/default terminals/rxvt terminals/xterm-color \
+bindings/default terminals/rxvt terminals/xterm-color terminals/wsvt25 \
 terminals/konsole terminals/linux highlight/gitcommit.dithl \
 highlight/python.dithl highlight/css.dithl highlight/c.dithlinc \
 highlight/gitconflict.dithlinc highlight/nestedm4.dithlinc \
