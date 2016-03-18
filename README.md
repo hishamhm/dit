@@ -7,12 +7,12 @@ http://hisham.hm/dit
 Quick reference
 ---------------
 
+* Ctrl+Q or F10 - quit
 * Ctrl+S - save
 * Ctrl+X - cut
 * Ctrl+C - copy
 * Ctrl+V - paste
 * Ctrl+Z or Ctrl+U - undo
-* Ctrl+Q or F10 - quit
 * Ctrl+F or F3 - find. Inside Find:
   * Ctrl+C - toggle case sensitive
   * Ctrl+W - toggle whole word
