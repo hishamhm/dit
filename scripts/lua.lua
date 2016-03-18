@@ -1,5 +1,6 @@
 
 local code = require("dit.code")
+local tab_complete = require("dit.tab_complete")
 local luacheck = require("luacheck.init")
 
 local lines
@@ -86,4 +87,8 @@ function on_fkey(key)
    if key == "F7" then
       code.expand_selection()
    end
+end
+
+function on_key(code)
+   return tab_complete.on_key(code)
 end

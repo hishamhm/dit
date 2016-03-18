@@ -1,6 +1,6 @@
 
 local cscope = require("cscope")
-local tab_complete = require("tab_complete")
+local tab_complete = require("dit.tab_complete")
 
 function on_ctrl(key)
    if key == "D" then
