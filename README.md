@@ -1,6 +1,6 @@
 <p align="center"><a href="http://hisham.hm/dit"><img border="0" src="http://hisham.hm/dit/dit-white.jpg" alt="Dit"></a></p>
 
-A console text editor for Unix systems that you don't have to learn.
+A console text editor for Unix systems that you already know how to use.
 
 http://hisham.hm/dit
 
