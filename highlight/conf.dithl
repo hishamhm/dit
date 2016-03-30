@@ -1,0 +1,18 @@
+FILES
+name regex [^f][^o][^n][^t][^s]\.conf$
+name regex ^....\.conf$
+name regex ^...\.conf$
+name regex ^..\.conf$
+name regex ^.\.conf$
+RULES
+
+include gitconflict.dithlinc
+
+context # `$ dim
+/context
+
+context `^; `$ dim
+/context
+
+context " " brightalt
+/context

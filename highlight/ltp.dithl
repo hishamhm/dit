@@ -1,0 +1,13 @@
+FILES
+name suffix .ltp
+RULES
+
+include html.dithlinc
+
+context # `$ veryspecial veryspecial normal
+   include lua.dithlinc
+/context
+
+context $( ) brightspecial brightspecial special
+/context
+
