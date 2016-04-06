@@ -331,6 +331,11 @@ void CRT_init() {
    #endif
 
    CRT_keys = Hashtable_new(200, Hashtable_STR, Hashtable_BORROW_REFS);
+   for (int c = ' '; c <= '~'; c++) {
+      char key[10];
+      snprintf(key, 9, "KEY('%c')", c);
+      Hashtable_putString(CRT_keys, key, (void*) (long int) c);
+   }
    for (int k = 'A'; k <= 'Z'; k++) {
       char key[8];
       snprintf(key, 7, "CTRL_%c", k);
