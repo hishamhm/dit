@@ -141,6 +141,7 @@ bool CRT_parseTerminalFile(char* term) {
       if (!ok) break;
       char** tokens = String_split(buffer, 0);
       char* sequence = tokens[0]; if (!sequence) goto nextLine;
+      if (sequence[0] == '#') goto nextLine;
       char* key = tokens[1]; if (!key) goto nextLine;
       String_convertEscape(sequence, "\\033", 033);
       String_convertEscape(sequence, "\\177", 0177);
