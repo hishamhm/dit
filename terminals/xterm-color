@@ -1,3 +1,42 @@
+# NumLock off behaves as NumLock on
+\033Oo KEY('/')
+\033Oj KEY('*')
+\033Om KEY('-')
+\033Ow KEY('7')
+\033Ox KEY('8')
+\033Oy KEY('9')
+\033Ok KEY('+')
+\033Ot KEY('4')
+\033Ou KEY('5')
+\033Ov KEY('6')
+\033Oq KEY('1')
+\033Or KEY('2')
+\033Os KEY('3')
+\033OM ENTER
+\033Op KEY('0')
+\033On KEY('.')
+
+# Original NumLock behavior if you like it
+#\033Oo KEY('/')
+#\033Oj KEY('*')
+#\033Om KEY('-')
+#\033Ow HOME
+#\033Ox UP
+#\033Oy PPAGE
+#\033Ok KEY('+')
+#\033Ot LEFT
+#\033Ou KEY('5')
+#\033Ov RIGHT
+#\033Oq END
+#\033Or DOWN
+#\033Os NPAGE
+#\033OM ENTER
+#\033Op INSERT
+#\033On DELETE
+
+# set '5 with NumLock off' in xterm to a harmless key
+\033OE SELECT
+
 \033OH HOME
 \033OF END
 \033OP F1
