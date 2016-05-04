@@ -36,6 +36,7 @@
 #include <lauxlib.h>
 #include <iconv.h>
 #include <errno.h>
+#include <editorconfig/editorconfig.h>
 #include <dirent.h>
 #include <ctype.h>
 #include <assert.h>
@@ -124,7 +125,6 @@ void Script_onSave(Buffer* this, const char* fileName);
 void Script_onChange(Buffer* this);
  void Buffer_restorePosition(Buffer* this);
 void Buffer_autoConfigureIndent(Buffer* this, int indents[]);
-void Buffer_convertToUTF8(Buffer* this);
 Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, TabManager* tabs);
  void Buffer_storePosition(Buffer* this);
 void Buffer_goto(Buffer* this, chars x, int y, bool adjustScroll);

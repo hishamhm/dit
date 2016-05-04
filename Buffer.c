@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <iconv.h>
+#include <editorconfig/editorconfig.h>
 
 #include "Prototypes.h"
 //#needs Line
@@ -149,7 +150,7 @@ void Buffer_autoConfigureIndent(Buffer* this, int indents[]) {
    this->saveTabulation = detectedIndent;
 }
 
-void Buffer_convertToUTF8(Buffer* this) {
+static void Buffer_convertToUTF8(Buffer* this) {
    iconv_t cd = iconv_open("UTF-8", "ISO-8859-15");
    Line* l = (Line*) this->panel->items->head;
    while (l) {
@@ -168,6 +169,49 @@ void Buffer_convertToUTF8(Buffer* this) {
       l = (Line*) l->super.next;
    }
    iconv_close(cd);
+}
+
+static void Buffer_checkEditorConfig(Buffer* this, const char* fileName) {
+   editorconfig_handle eh;
+   eh = editorconfig_handle_init();
+   int ehErr = editorconfig_parse(fileName, eh);
+   if (ehErr == 0) {
+      int n = editorconfig_handle_get_name_value_count(eh);
+      for (int i = 0; i < n; i++) {
+         const char *name, *value;
+         editorconfig_handle_get_name_value(eh, i, &name, &value);
+         int v = 0;
+         if (value) v = atoi(value);
+         if (strcmp(name, "indent_style") == 0) {
+            if (strcmp(value, "tab") == 0) {
+               this->tabulation = 0;
+            }
+         } else if (strcmp(name, "indent_size") == 0) {
+            if (strcmp(value, "tab") == 0) {
+               this->tabulation = 0;
+            } else if (v >= 1 && v <= 8) {
+               this->tabulation = v;
+            }
+         } else if (strcmp(name, "tab_width") == 0) {
+            if (v >= 1 && v <= 8) {
+               this->tabSize = v;
+            }
+         } else if (strcmp(name, "end_of_line") == 0) {
+            if (strcmp(value, "crlf") == 0) {
+               this->dosLineBreaks = true;
+            } else {
+               this->dosLineBreaks = false;
+            }
+         } else if (strcmp(name, "charset") == 0) {
+            if (strcmp(value, "latin1") == 0) {
+               this->isUTF8 = false;
+            } else {
+               this->isUTF8 = true;
+            }
+         }
+      }
+   }
+   editorconfig_handle_destroy(eh);
 }
 
 Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, TabManager* tabs) {
@@ -243,11 +287,12 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
          Buffer_restorePosition(this);
          Undo_restore(this->undo, fileName);
          Buffer_autoConfigureIndent(this, indents);
-         if (!this->isUTF8) {
-            Buffer_convertToUTF8(this);
-         }
       } else {
          this->modified = true;
+      }
+      Buffer_checkEditorConfig(this, fileName);
+      if (!this->isUTF8) {
+         Buffer_convertToUTF8(this);
       }
    } else {
       this->readOnly = false;
