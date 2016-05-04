@@ -103,6 +103,8 @@ end
 function on_ctrl(key)
    if key == "_" then
       code.comment_block("--", "%-%-")
+   elseif key == "[" or key == "]" then
+      code.expand_selection()
    end
 end
 
