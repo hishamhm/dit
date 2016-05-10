@@ -41,6 +41,7 @@ EXTRA_DIST = tools/GenHeaders extras/dit.keytab \
    lua-$(DIT_LUA_VERSION)/src/*.[ch] \
    lua-$(DIT_LUA_VERSION)/src/Makefile \
    lua-$(DIT_LUA_VERSION)/README \
+   editorconfig/LICENSE \
    lua-compat-5.3/compat-5.3.[ch]
 
 dit_SOURCES = Prototypes.h Structures.h $(my_dit_C_sources) config.h debug.h md5.c md5.h
@@ -55,6 +56,7 @@ noinst_LIBRARIES = libeditorconfig.a
 
 libeditorconfig_a_CFLAGS = -Ieditorconfig/include
 libeditorconfig_a_SOURCES = editorconfig/src/config.h editorconfig/src/ec_fnmatch.c editorconfig/src/ec_fnmatch.h \
+editorconfig/include/editorconfig/editorconfig.h editorconfig/include/editorconfig/editorconfig_handle.h \
 editorconfig/src/editorconfig.c editorconfig/src/editorconfig.h editorconfig/src/editorconfig_handle.c \
 editorconfig/src/editorconfig_handle.h editorconfig/src/global.h editorconfig/src/ini.c editorconfig/src/ini.h \
 editorconfig/src/misc.c editorconfig/src/misc.h
@@ -75,5 +77,6 @@ install-data-local:
 
 debug:
 	$(MAKE) CFLAGS="-g -O0 $(LUA_FLAGS)"
+
 
 
