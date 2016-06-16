@@ -425,7 +425,7 @@ int TabManager_question(TabManager* this, char* question, char* options) {
    Display_beep();
    do {
       opt = Display_getch(&code);
-   } while (code || !(which = strchr(options, opt)));
+   } while (code || !(which = strchr(options, tolower(opt))));
    TabManager_refreshCurrent(this);
    return which - options;
 }
