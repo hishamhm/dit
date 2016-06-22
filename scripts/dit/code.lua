@@ -19,10 +19,22 @@ function code.comment_block(comment, comment_pattern, lines, commented_lines)
    end
    buffer:begin_undo()
    local comment_match = "^(%s*)"..comment_pattern.."(.*)$"
+   
+   -- check if commenting or uncommenting:
+   -- uncomment only if all lines are comments.
+   local uncommenting = true
    for y = y1, y2 do
       local line = buffer[y]
       local indent, rest = line:match(comment_match)
-      if indent then
+      if not indent then
+         uncommenting = false
+      end
+   end
+   
+   for y = y1, y2 do
+      local line = buffer[y]
+      local indent, rest = line:match(comment_match)
+      if uncommenting then
          buffer[y] = indent .. rest
          if lines then lines[y] = commented_lines[y] end
       else
