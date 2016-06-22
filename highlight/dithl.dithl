@@ -21,6 +21,7 @@ rule eager_rule bright
 rule context bright
 rule insensitive bright
 rule include bright
+rule script bright
 
 rule normal normal
 rule bright bright
