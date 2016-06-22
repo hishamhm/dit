@@ -1,0 +1,14 @@
+FILES
+name suffix .etlua
+RULES
+
+context <% %> veryspecial veryspecial normal
+   include lua.dithlinc
+/context
+
+context <%= %> veryspecial veryspecial normal
+   include lua.dithlinc
+/context
+
+include html.dithlinc
+
