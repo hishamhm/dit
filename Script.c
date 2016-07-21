@@ -140,6 +140,7 @@ STATIC int Script_Buffer_selection(lua_State* L) {
    lua_pushinteger(L, buffer->selectYfrom + 1);
    lua_pushinteger(L, buffer->selectXto + 1);
    lua_pushinteger(L, buffer->selectYto + 1);
+   buffer->selecting = true;
    free(block);
    return 5;
 }
