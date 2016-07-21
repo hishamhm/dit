@@ -62,6 +62,29 @@ STATIC int Script_Buffer_goto(lua_State* L) {
    return 0;
 }
 
+STATIC int Script_Buffer_emit(lua_State* L) {
+   Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
+   const char* s = luaL_checkstring(L, 2);
+   Buffer_beginUndoGroup(buffer);
+   for (; *s; s++) {
+      if (*s == '\n') {
+         usleep(20000);
+         Buffer_breakLine(buffer);
+         buffer->selecting = false;
+      } else if (*s == '\t') {
+         Buffer_indent(buffer);
+      } else if (*s == '\v') {
+         Buffer_unindent(buffer);
+      } else if (*s == '\b') {
+         Buffer_backwardDeleteChar(buffer);
+      } else {
+         Buffer_defaultKeyHandler(buffer, *s, false);
+      }
+   }
+   Buffer_endUndoGroup(buffer);
+   return 0;
+}
+
 STATIC int Script_Buffer_line(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
    const char* line;
@@ -308,6 +331,7 @@ STATIC luaL_Reg Buffer_functions[] = {
    { "basename", Script_Buffer_basename },
    { "filename", Script_Buffer_filename },
    // actions:
+   { "emit", Script_Buffer_emit },
    { "go_to", Script_Buffer_goto },
    { "select", Script_Buffer_select },
    { "begin_undo", Script_Buffer_beginUndoGroup },
