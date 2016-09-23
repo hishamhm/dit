@@ -368,12 +368,12 @@ context ` ` brightspecial brightspecial special
 context __END__ guacamole_pudding dim
 /context
 
-context =head1 =cut veryspecial veryspecial dim
-   rule =`[a`-z`|0`-9`]`* veryspecial
+context `^=`[a`-z`|0`-9`]`* `^=cut veryspecial veryspecial dim
+   rule `^=`[a`-z`|0`-9`]`* veryspecial
    context B< > brightspecial
    /context
-   context I< > alt
+   context I< > specialdiff
    /context
-   context C< > alt
+   context C< > specialdiff
    /context
 /context
