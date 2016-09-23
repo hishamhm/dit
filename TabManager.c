@@ -164,7 +164,6 @@ static inline void TabManager_drawBar(TabManager* this, int width) {
    int x = this->x + this->tabOffset;
    Display_attrset(CRT_colors[TabColor]);
    Display_mvhline(lines - 1, x, ' ', cols - x);
-   char buffer[256];
    int tabWidth = 15;
    for (int i = 0; i < items; i++) {
       TabPage* page = (TabPage*) Vector_get(this->items, i);
@@ -197,11 +196,6 @@ static inline void TabManager_drawBar(TabManager* this, int width) {
       }
       if (x+1 < cols-1) {
          Display_printAt(this->y + this->h - 1, x+2, "%c", modified);
-         if ((!CRT_hasColors) && i == current) {
-            snprintf(buffer, 255, ">%c<%s", modified, label);
-         } else {
-            snprintf(buffer, 255, "[%c]%s ", modified, label);
-         }
          if (i == current && base > label) {
             int lenToSlash = base - label + 1;
             Display_attrset(CRT_colors[CurrentTabShadeColor]);
