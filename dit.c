@@ -327,6 +327,7 @@ static void resizeScreen(TabManager* tabs) {
       Dit_replaceField->y = lines - 1;
       Dit_replaceField->w = cols;
    }
+   Dit_refresh(TabManager_getBuffer(tabs, tabs->currentPage), tabs);
 }
 
 static void Dit_find(Buffer* buffer, TabManager* tabs) {
