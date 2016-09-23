@@ -224,6 +224,10 @@ void Display_getScreenSize(int* w, int* h) {
 #endif
 }
 
+void Display_setWindowTitle(const char* title) {
+   fprintf(stderr, "\033]2;%s\033\\", title);
+}
+
 #if HAVE_CURSES
 #define Display_printAt mvprintw
 #else

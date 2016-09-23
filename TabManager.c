@@ -185,6 +185,7 @@ static inline void TabManager_drawBar(TabManager* this, int width) {
       char* base = strrchr(label, '/');
       if (i == current) {
          Display_attrset(currentColor);
+         Display_setWindowTitle(label);
          tabWidth = 30;
          int offset = strlen(label) - (tabWidth - 2);
          if (offset > 0) {

@@ -205,6 +205,7 @@ void DebugMemory_registerAllocation(void* data, char* file, int line);
 void DebugMemory_registerDeallocation(void* data, char* file, int line);
 void DebugMemory_report();
 void Display_getScreenSize(int* w, int* h);
+void Display_setWindowTitle(const char* title);
 void Display_printAt(int y, int x, const char* fmt, ...);
 void Display_errorScreen(const char* fmt, ...);
 void Display_writeAt(int y, int x, const char* str);
