@@ -220,12 +220,12 @@ static void copy(Buffer* buffer, bool x11copy) {
 
 static void Dit_cut(Buffer* buffer) {
    copy(buffer, false);
+   Buffer_deleteBlock(buffer);
    buffer->selecting = false;
 }
 
 static void Dit_copy(Buffer* buffer) {
    copy(buffer, false);
-   Buffer_deleteBlock(buffer);
    buffer->selecting = false;
 }
 

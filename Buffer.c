@@ -840,7 +840,6 @@ char* Buffer_copyBlock(Buffer* this, int *len) {
    }
 
    StringBuffer* str = Line_copyBlock((Line*) Panel_get(this->panel, yFrom), yTo - yFrom + 1, xFrom, xTo);
-   //this->selecting = false;
    this->panel->needsRedraw = true;
    *len = StringBuffer_len(str);
    return StringBuffer_deleteGet(str);
