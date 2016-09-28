@@ -1,0 +1,25 @@
+
+context `^diff `$ veryspecial
+/context
+
+context `^@@ @@ special
+/context
+
+context `^--- `$ specialdiff
+/context
+
+context `^+++ `$ brightdiff
+/context
+
+context `^- `$ specialdiff
+/context
+
+context `^+ `$ diff
+/context
+
+context `^< `$ specialdiff
+/context
+
+context `^> `$ diff
+/context
+

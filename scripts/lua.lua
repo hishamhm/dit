@@ -90,5 +90,38 @@ function on_fkey(key)
 end
 
 function on_key(code)
-   return tab_complete.on_key(code)
+   local handled = false
+   if code == 13 then
+      local x, y = buffer:xy()
+      local line = buffer[y]
+      if line:sub(1, x - 1):match("^%s*$") and line:sub(x):match("^[^%s]") then
+         buffer:begin_undo()
+         buffer:emit("\n")
+         buffer:go_to(x, y, false)
+         buffer:end_undo()
+         handled = true
+      elseif (line:match("then$") or line:match("do$") or line:match("else$") or line:match(".*function.*")) and x == #line + 1 then
+         buffer:begin_undo()
+         buffer:emit("\n\t")
+         buffer:end_undo()
+         handled = true
+      end
+   elseif code == 330 then
+      local x, y = buffer:xy()
+      local line = buffer[y]
+      local nextline = buffer[y+1]
+      io.stderr:write("oi "..tostring( not not( x == #line + 1 and line:match("^%s*$") and nextline:match("^"..line)) ) )
+      if x == #line + 1 and line:match("^%s*$") and nextline:match("^"..line) then
+         buffer:begin_undo()
+         buffer:select(x, y, x, y + 1)
+         buffer:emit("\8")
+         buffer:end_undo()
+         handled = true
+      end
+   end
+   local tab_handled = false
+   if not handled then
+      tab_handled = tab_complete.on_key(code)
+   end
+   return tab_handled or handled
 end

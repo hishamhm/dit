@@ -109,17 +109,7 @@ STATIC int Script_Buffer_select(lua_State* L) {
    int yFrom = luaL_checkinteger(L, 3) - 1;
    int xTo = luaL_checkinteger(L, 4) - 1;
    int yTo = luaL_checkinteger(L, 5) - 1;
-   Buffer_validateCoordinate(buffer, &xFrom, &yFrom);
-   Buffer_validateCoordinate(buffer, &xTo, &yTo);
-   buffer->selecting = true;
-   buffer->selectXfrom = xFrom;
-   buffer->selectYfrom = yFrom;
-   buffer->selectXto = xTo;
-   buffer->selectYto = yTo;
-   buffer->x = xTo;
-   buffer->y = yTo;
-   buffer->panel->needsRedraw = true;
-   buffer->savedX = buffer->x;
+   Buffer_setSelection(buffer, xFrom, yFrom, xTo, yTo);
    return 0;
 }
 

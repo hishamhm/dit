@@ -27,6 +27,8 @@
 #define BUSY_WAIT_SLEEP "1"
 #endif
 
+#define NOT_A_COORD -1
+
 //#link m
 
 static int lines, cols;
@@ -190,15 +192,15 @@ static bool confirmClose(Buffer* buffer, TabManager* tabs, char* question) {
 
 static Clipboard* Dit_clipboard = NULL;
 
-static int xclipOk = 0;
+static int xclipOk = 1;
 
-static void copyOrCut(Buffer* buffer, bool cut) {
+static void copy(Buffer* buffer, bool x11copy) {
    if (!Dit_clipboard)
       Dit_clipboard = Clipboard_new();
    int blockLen;
    char* block = Buffer_copyBlock(buffer, &blockLen);
    if (block) {
-      if (xclipOk) {
+      if (x11copy && xclipOk) {
          if (getenv("DISPLAY")) {
             FILE* xclip = popen("xclip -i 2> /dev/null", "w");
             if (xclip) {
@@ -213,18 +215,23 @@ static void copyOrCut(Buffer* buffer, bool cut) {
          }
       }
       Clipboard_set(Dit_clipboard, block, blockLen);
-      if (cut)
-         Buffer_deleteBlock(buffer);
    }
-   buffer->selecting = false;
 }
 
 static void Dit_cut(Buffer* buffer) {
-   copyOrCut(buffer, true);
+   copy(buffer, false);
+   buffer->selecting = false;
 }
 
 static void Dit_copy(Buffer* buffer) {
-   copyOrCut(buffer, false);
+   copy(buffer, false);
+   Buffer_deleteBlock(buffer);
+   buffer->selecting = false;
+}
+
+static void Dit_x11copy(Buffer* buffer) {
+   copy(buffer, true);
+   buffer->selecting = false;
 }
 
 static void Dit_paste(Buffer* buffer) {
@@ -235,6 +242,25 @@ static void Dit_paste(Buffer* buffer) {
       Buffer_pasteBlock(buffer, block);
       Text_prune(&block);
    }
+   buffer->selecting = false;
+}
+
+static void x11paste(Buffer* buffer) {
+   if (!xclipOk) {
+      return;
+   }
+   if (!getenv("DISPLAY")) {
+      return;
+   }
+   FileReader* xclip = FileReader_new("xclip -o 2> /dev/null", true);
+   if (!xclip) {
+      xclipOk = 0;
+      return;
+   }
+   char* data = FileReader_readAllAndDelete(xclip);
+   Text block = Text_new(data);
+   Buffer_pasteBlock(buffer, block);
+   Text_prune(&block);
    buffer->selecting = false;
 }
 
@@ -327,6 +353,60 @@ static void resizeScreen(TabManager* tabs) {
       Dit_replaceField->y = lines - 1;
       Dit_replaceField->w = cols;
    }
+   Dit_refresh(TabManager_getBuffer(tabs, tabs->currentPage), tabs);
+}
+
+typedef struct MouseState_ {
+   int fromX;
+   int fromY;
+} MouseState;
+
+static int handleMouse(MouseState* mstate, TabManager* tabs) {
+   MEVENT mevent;
+   int ok = getmouse(&mevent);
+   if (ok != OK) {
+      return ERR;
+   }
+   Buffer* buf = TabManager_getBuffer(tabs, tabs->currentPage);
+   int bx = Buffer_scrollH(buf) + mevent.x;
+   int by = Buffer_scrollV(buf) + mevent.y;
+   if (mevent.bstate & REPORT_MOUSE_POSITION) {
+      if (mstate->fromX != NOT_A_COORD && (mstate->fromX != bx || mstate->fromY != by)) {
+         Buffer_setSelection(buf, mstate->fromX, mstate->fromY, bx, by);
+      }
+      Buffer_goto(buf, bx, by, false);
+   } else if (mevent.bstate & BUTTON1_PRESSED) {
+      mstate->fromX = bx;
+      mstate->fromY = by;
+      Buffer_goto(buf, bx, by, false);
+      buf->selecting = false;
+   } else if (mevent.bstate & BUTTON1_RELEASED) {
+      if (mevent.y == LINES - 1) {
+         // TODO tab bar
+         return ERR;
+      }
+      if (mevent.x == COLS - 1) {
+         // TODO scroll bar
+         return ERR;
+      }
+      if (mstate->fromX != NOT_A_COORD && (mstate->fromX != bx || mstate->fromY != by)) {
+         Buffer_setSelection(buf, mstate->fromX, mstate->fromY, bx, by);
+         copy(buf, true);
+      }
+      Buffer_goto(buf, bx, by, false);
+      mstate->fromX = NOT_A_COORD;
+      return ERR;
+   } else if (mevent.bstate & BUTTON2_RELEASED) {
+      Buffer_goto(buf, bx, by, false);
+      x11paste(buf);
+   #if NCURSES_MOUSE_VERSION > 1
+   } else if (mevent.bstate & BUTTON4_PRESSED) {
+      return KEY_WHEELUP;
+   } else if (mevent.bstate & BUTTON5_PRESSED) {
+      return KEY_WHEELDOWN;
+   #endif
+   }
+   return ERR;
 }
 
 static void Dit_find(Buffer* buffer, TabManager* tabs) {
@@ -338,8 +418,8 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
    int saveX = buffer->x;
    int saveY = buffer->y;
    bool wrapped = false;
-   int firstX = -1;
-   int firstY = -1;
+   int firstX = NOT_A_COORD;
+   int firstY = NOT_A_COORD;
    bool caseSensitive = false;
    bool wholeWord = false;
    bool failing = true;
@@ -411,8 +491,8 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                Field_insertChar(Dit_findField, ch);
             }
             wrapped = false;
-            firstX = -1;
-            firstY = -1;
+            firstX = NOT_A_COORD;
+            firstY = NOT_A_COORD;
             found = Buffer_find(buffer, Field_text(Dit_findField), false, caseSensitive, wholeWord, true);
             searched = true;
          } else {
@@ -492,7 +572,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                while (true) {
                   if (searched) {
                      if (found) {
-                        if (firstX == -1) {
+                        if (firstX == NOT_A_COORD) {
                            firstX = buffer->x;
                            firstY = buffer->y;
                         } else {
@@ -596,21 +676,21 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
          if (code && (ch == KEY_UP || ch == KEY_DOWN)) {
             Buffer_goto(buffer, saveX, saveY, true);
             wrapped = false;
-            firstX = -1;
-            firstY = -1;
+            firstX = NOT_A_COORD;
+            firstY = NOT_A_COORD;
             found = Buffer_find(buffer, Field_text(Dit_findField), true, caseSensitive, wholeWord, true);
             searched = true;
          } else if (code && (ch == KEY_BACKSPACE || ch == KEY_DC)) {
             wrapped = false;
-            firstX = -1;
-            firstY = -1;
+            firstX = NOT_A_COORD;
+            firstY = NOT_A_COORD;
             found = Buffer_find(buffer, Field_text(Dit_findField), false, caseSensitive, wholeWord, true);
             searched = true;
          }
       }
       if (searched) {
          if (found) {
-            if (firstX == -1) {
+            if (firstX == NOT_A_COORD) {
                firstX = buffer->x;
                firstY = buffer->y;
             } else {
@@ -910,6 +990,7 @@ static void Dit_loadHardcodedBindings(Dit_Action* keys) {
    keys[KEY_SF]        = (Dit_Action) Dit_selectDownLine;
    keys[KEY_SR]        = (Dit_Action) Dit_selectUpLine;
 
+   keys[KEY_ALT('C')] = (Dit_Action) Dit_x11copy;
    keys[KEY_ALT('J')] = (Dit_Action) Dit_moveTabPageLeft;
    keys[KEY_ALT('K')] = (Dit_Action) Dit_moveTabPageRight;
 }
@@ -1023,7 +1104,9 @@ int main(int argc, char** argv) {
       Dit_checkFileAccess(argv, name, &jump, &column);
    }
    Files_makeHome();
+
    CRT_init();
+   
    Dit_Action keys[KEY_MAX];
    Dit_registerActions();
    Dit_parseBindings(keys);
@@ -1046,6 +1129,10 @@ int main(int argc, char** argv) {
 
    bool code;
    int ch = 0;
+   MouseState mstate = {
+      .fromX = NOT_A_COORD,
+      .fromY = NOT_A_COORD,
+   };
    while (!quit) {
       int y, x;
 
@@ -1075,7 +1162,6 @@ int main(int argc, char** argv) {
       Display_move(y, x);
       
       ch = CRT_getCharacter(&code);
-
       int limit = 32;
       if (code) {
          limit = KEY_MAX;
@@ -1099,6 +1185,10 @@ int main(int argc, char** argv) {
             case KEY_NPAGE:   ch = KEY_S_NPAGE;  break;
             default:          if (keys[ch] != (Dit_Action) Buffer_toggleMarking) buffer->marking = false;
             }
+         }
+
+         if (ch == KEY_MOUSE) {
+            ch = handleMouse(&mstate, tabs);
          }
    
          switch (ch) {

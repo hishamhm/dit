@@ -197,6 +197,9 @@ typedef struct mevent {
 
 #endif
 
+#define KEY_WHEELUP KEY_F(20)
+#define KEY_WHEELDOWN KEY_F(21)
+
 #ifdef HAVE_LIBNCURSESW
    #define Display_writeChstrAtn mvadd_wchnstr
 #elif HAVE_CURSES
@@ -222,6 +225,10 @@ void Display_getScreenSize(int* w, int* h) {
       *h = 25;
    }
 #endif
+}
+
+void Display_setWindowTitle(const char* title) {
+   fprintf(stderr, "\033]2;%s\033\\", title);
 }
 
 #if HAVE_CURSES
@@ -531,8 +538,13 @@ bool Display_init(char* term) {
    nonl();
    intrflush(stdscr, false);
    keypad(stdscr, true);
-   mousemask(BUTTON1_PRESSED, NULL);
-   ESCDELAY = 50;
+   #if NCURSES_MOUSE_VERSION > 1
+   mousemask(REPORT_MOUSE_POSITION | BUTTON1_PRESSED | BUTTON1_RELEASED | BUTTON2_RELEASED | BUTTON4_PRESSED | BUTTON5_PRESSED, NULL);
+   #else
+   mousemask(BUTTON1_PRESSED | BUTTON1_RELEASED | BUTTON2_RELEASED, NULL);
+   #endif
+   mouseinterval(0);
+   set_escdelay(25);
    if (has_colors()) {
       start_color();
       use_default_colors();

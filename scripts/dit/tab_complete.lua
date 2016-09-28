@@ -3,7 +3,8 @@ local tab_complete = {}
 
 local words = {}
 
-local function build_words()
+-- Build a tree of words in the buffer and store it in `words`.
+local function populate_word_tree()
    for i = 1, #buffer do
       local line = buffer[i]
       for token in line:gmatch("[%a_\129-\255]+") do
@@ -90,14 +91,45 @@ local function display_match()
    buffer:go_to(matching.lx, matching.y, false)
 end
 
+local TAB = ("\t"):byte()
 local SHIFT_TAB = 353
+
+local function get_token()
+   local x, y = buffer:xy()
+   local token, tx, ty, len = buffer:token()
+   if not token then
+      return false
+   end
+   if tx + #token > x then
+      return false
+   end
+   return token, tx, x, y
+end
+
+local function set_matching(matches, tx, x, y, suggestion)
+   local before = buffer[y]:sub(1, tx - 1)
+   local after = buffer[y]:sub(x)
+   if #matches > 0 then
+      matching = { matches = matches, i = 1, x = x, y = y, tx = tx, before = before, after = after, suggestion = suggestion }
+      display_match()
+      return true
+   end
+end
+
+function tab_complete.suggest(word)
+   local token, tx, x, y = get_token()
+   if not token then
+      return false
+   end
+   set_matching({ word }, tx, x, y, true)
+end
 
 function tab_complete.on_key(code)
    if matching then
       local x, y = buffer:xy()
       if x ~= matching.lx then
          matching = nil
-      elseif code == ("\t"):byte() then
+      elseif code == TAB then
          matching.i = matching.i + 1
          if matching.i > #matching.matches then
             matching.i = 1
@@ -112,6 +144,12 @@ function tab_complete.on_key(code)
          display_match()
          return true
       elseif code >= 32 and code <= 255 and code ~= 128 then
+         if matching.suggestion then
+            if (code >= 65 and code <= 90) or (code >= 97 and code <= 122) then
+               matching = nil
+               return false
+            end
+         end
          local curr = matching.matches[matching.i]
          buffer:select(matching.tx + #curr, matching.y, matching.tx + #curr, matching.y)
          matching = nil
@@ -120,21 +158,13 @@ function tab_complete.on_key(code)
       end
    else
       if code == ("\t"):byte() then
-         local x, y = buffer:xy()
-         local token, tx, ty, len = buffer:token()
+         local token, tx, x, y = get_token()
          if not token then
             return false
          end
-         if tx + #token > x then
-            return false
-         end
-         build_words(token)
+         populate_word_tree()
          local matches = match_words(token)
-         local before = buffer[y]:sub(1, tx - 1)
-         local after = buffer[y]:sub(x)
-         if #matches > 0 then
-            matching = { matches = matches, i = 1, x = x, y = y, tx = tx, before = before, after = after }
-            display_match()
+         if set_matching(matches, tx, x, y, false) then
             return true
          end
       end

@@ -506,6 +506,14 @@ int Buffer_y(Buffer* this) {
    return this->y;
 }
 
+int Buffer_scrollV(Buffer* this) {
+   return this->panel->scrollV;
+}
+
+int Buffer_scrollH(Buffer* this) {
+   return this->panel->scrollH;
+}
+
 const char* Buffer_currentLine(Buffer* this) {
    return Line_toString(this->line);
 }
@@ -571,6 +579,20 @@ void Buffer_select(Buffer* this, void(*motion)(Buffer*)) {
    this->selecting = true;
    if (this->selectYfrom != oldSelectYfrom || this->selectYto != oldSelectYto)
       this->panel->needsRedraw = true;
+}
+
+void Buffer_setSelection(Buffer* this, int xFrom, int yFrom, int xTo, int yTo) {
+   Buffer_validateCoordinate(this, &xFrom, &yFrom);
+   Buffer_validateCoordinate(this, &xTo, &yTo);
+   this->selecting = true;
+   this->selectXfrom = xFrom;
+   this->selectYfrom = yFrom;
+   this->selectXto = xTo;
+   this->selectYto = yTo;
+   this->x = xTo;
+   this->y = yTo;
+   this->panel->needsRedraw = true;
+   this->savedX = this->x;
 }
 
 bool Buffer_checkDiskState(Buffer* this) {
@@ -776,7 +798,7 @@ void Buffer_deleteBlock(Buffer* this) {
    int yTo = this->selectYto;
    int xFrom = this->selectXfrom;
    int xTo = this->selectXto;
-   if (xFrom == xTo && yFrom == yTo)
+   if (! this->selecting || (xFrom == xTo && yFrom == yTo))
       return;
    if (yFrom > yTo || (yFrom == yTo && xFrom > xTo)) {
       int swap = yFrom; yFrom = yTo; yTo = swap;
@@ -818,7 +840,7 @@ char* Buffer_copyBlock(Buffer* this, int *len) {
    }
 
    StringBuffer* str = Line_copyBlock((Line*) Panel_get(this->panel, yFrom), yTo - yFrom + 1, xFrom, xTo);
-   this->selecting = false;
+   //this->selecting = false;
    this->panel->needsRedraw = true;
    *len = StringBuffer_len(str);
    return StringBuffer_deleteGet(str);
