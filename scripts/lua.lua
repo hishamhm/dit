@@ -110,7 +110,6 @@ function on_key(code)
       local x, y = buffer:xy()
       local line = buffer[y]
       local nextline = buffer[y+1]
-      io.stderr:write("oi "..tostring( not not( x == #line + 1 and line:match("^%s*$") and nextline:match("^"..line)) ) )
       if x == #line + 1 and line:match("^%s*$") and nextline:match("^"..line) then
          buffer:begin_undo()
          buffer:select(x, y, x, y + 1)
