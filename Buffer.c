@@ -506,6 +506,14 @@ int Buffer_y(Buffer* this) {
    return this->y;
 }
 
+int Buffer_scrollV(Buffer* this) {
+   return this->panel->scrollV;
+}
+
+int Buffer_scrollH(Buffer* this) {
+   return this->panel->scrollH;
+}
+
 const char* Buffer_currentLine(Buffer* this) {
    return Line_toString(this->line);
 }

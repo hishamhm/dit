@@ -133,6 +133,8 @@ void Buffer_move(Buffer* this, int x);
 void Buffer_draw(Buffer* this);
 int Buffer_x(Buffer* this);
 int Buffer_y(Buffer* this);
+int Buffer_scrollV(Buffer* this);
+int Buffer_scrollH(Buffer* this);
 const char* Buffer_currentLine(Buffer* this);
  const char* Buffer_getLine(Buffer* this, int i);
 const char* Buffer_previousLine(Buffer* this);
