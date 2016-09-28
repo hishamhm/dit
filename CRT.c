@@ -91,7 +91,7 @@ typedef enum {
 #define KEY_CS_NPAGE  KEY_F(57)
 #define KEY_C_PPAGE   KEY_F(58)
 #define KEY_C_NPAGE   KEY_F(59)
-#define KEY_ALT(x)    KEY_F(60) + (x - 'A')
+#define KEY_ALT(x)    KEY_F((x=='C'?60:(x=='J'?61:(x=='K'?62:63))))
 
 #define KEY_CTRL(x)  (x - 'A' + 1)
 

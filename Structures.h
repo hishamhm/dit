@@ -33,7 +33,6 @@ typedef struct GraphNode_ GraphNode;
 typedef struct PatternMatcher_ PatternMatcher;
 typedef struct Pool_ Pool;
 typedef struct RichString_ RichString;
-typedef struct ScreenManager_ ScreenManager;
 typedef struct ScriptState_ ScriptState;
 typedef struct StackItem_ StackItem;
 typedef struct Stack_ Stack;
@@ -321,7 +320,7 @@ typedef enum {
 #define KEY_CS_NPAGE  KEY_F(57)
 #define KEY_C_PPAGE   KEY_F(58)
 #define KEY_C_NPAGE   KEY_F(59)
-#define KEY_ALT(x)    KEY_F(60) + (x - 'A')
+#define KEY_ALT(x)    KEY_F((x=='C'?60:(x=='J'?61:(x=='K'?62:63))))
 
 #define KEY_CTRL(x)  (x - 'A' + 1)
 
@@ -531,6 +530,9 @@ typedef struct mevent {
 
 #endif
 
+#define KEY_WHEELUP KEY_F(20)
+#define KEY_WHEELDOWN KEY_F(21)
+
 #ifdef HAVE_LIBNCURSESW
    #define Display_writeChstrAtn mvadd_wchnstr
 #elif HAVE_CURSES
@@ -571,10 +573,11 @@ struct FileReader_ {
    FILE* fd;
    char* buffer;
    int size;
-   int available;
+   int used;
    char* start;
    bool eof;
    bool finalEnter;
+   bool command;
 };
 
 
@@ -825,24 +828,6 @@ struct Pool_ {
    bool destroying;
 };
    
-
-typedef enum Orientation_ {
-   VERTICAL,
-   HORIZONTAL
-} Orientation;
-
-struct ScreenManager_ {
-   int x1;
-   int y1;
-   int x2;
-   int y2;
-   Orientation orientation;
-   Vector* items;
-   int itemCount;
-   FunctionBar* fuBar;
-   bool owner;
-};
-
 
 struct StackItem_ {
    void* data;
