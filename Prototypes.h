@@ -139,6 +139,7 @@ const char* Buffer_previousLine(Buffer* this);
 void Buffer_delete(Buffer* this);
 void Buffer_refreshHighlight(Buffer* this);
 void Buffer_select(Buffer* this, void(*motion)(Buffer*));
+void Buffer_setSelection(Buffer* this, int xFrom, int yFrom, int xTo, int yTo);
 bool Buffer_checkDiskState(Buffer* this);
 void Buffer_undo(Buffer* this);
 char Buffer_getLastKey(Buffer* this);

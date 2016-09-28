@@ -1,6 +1,7 @@
 
 local cscope = require("cscope")
 local code = require("dit.code")
+local tab_complete = require("dit.tab_complete")
 
 local function open_header()
    local name = buffer:filename()
@@ -77,4 +78,8 @@ function on_save()
       errors[ey][ex] = true
    end
    return true
+end
+
+function on_key(code)
+   return tab_complete.on_key(code)
 end
