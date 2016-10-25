@@ -100,11 +100,6 @@ function on_key(code)
          buffer:go_to(x, y, false)
          buffer:end_undo()
          handled = true
-      elseif (line:match("then$") or line:match("do$") or line:match("else$") or line:match(".*function.*")) and x == #line + 1 then
-         buffer:begin_undo()
-         buffer:emit("\n\t")
-         buffer:end_undo()
-         handled = true
       end
    elseif code == 330 then
       local x, y = buffer:xy()
