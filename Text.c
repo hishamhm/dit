@@ -237,6 +237,7 @@ const Text Text_textAt(Text t, int n) {
 }
 
 int Text_forwardWord(Text this, int cursor) {
+   if (this.chars == 0 || cursor >= this.chars) return this.chars;
    const char* s = UTF8_forward(this.data, cursor);
    wchar_t curr = UTF8_stringToCodePoint(s);
    if (iswalnum(curr)) {
@@ -262,7 +263,7 @@ int Text_forwardWord(Text this, int cursor) {
 }
 
 int Text_backwardWord(Text this, int cursor) {
-   if (cursor == 0) return 0;
+   if (this.chars == 0 || cursor == 0) return 0;
    cursor--;
    const char* s = UTF8_forward(this.data, cursor);
    wchar_t curr = UTF8_stringToCodePoint(s);
