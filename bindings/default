@@ -19,6 +19,7 @@ CTRL_Y Buffer_unindent
 CTRL_Z Dit_undo
 CTRL_INSERT Dit_copy
 F3 Dit_find
+F4 Buffer_selectAll
 SHIFT_IC Dit_paste
 SHIFT_INSERT Dit_paste
 CTRL_SHIFT_INSERT Dit_paste
@@ -37,9 +38,9 @@ CTRL_SHIFT_DOWN Dit_selectSlideDownLine
 SHIFT_DOWN Dit_selectDownLine
 CTRL_SHIFT_UP Dit_selectSlideUpLine
 SHIFT_UP Dit_selectUpLine
-CTRL_SHIFT_HOME Dit_selectBeginningOfLine
+CTRL_SHIFT_HOME Dit_selectBeginningOfFile
 SHIFT_HOME Dit_selectBeginningOfLine
-CTRL_SHIFT_END Dit_selectEndOfLine
+CTRL_SHIFT_END Dit_selectEndOfFile
 SHIFT_END Dit_selectEndOfLine
 CTRL_SHIFT_PPAGE Dit_selectPreviousPage
 SHIFT_PPAGE Dit_selectPreviousPage
@@ -55,8 +56,8 @@ CTRL_UP Buffer_slideUpLine
 UP Buffer_upLine
 HOME Buffer_beginningOfLine
 END Buffer_endOfLine
-CTRL_HOME Buffer_beginningOfFile
-CTRL_END Buffer_endOfFile
+CTRL_HOME Dit_beginningOfFile
+CTRL_END Dit_endOfFile
 DELETE Buffer_deleteChar
 BS Buffer_backwardDeleteChar
 BACKSPACE Buffer_backwardDeleteChar
@@ -70,3 +71,5 @@ ALT_A Dit_selectUpLine
 ALT_B Dit_selectDownLine
 ALT_C Dit_selectForwardChar
 ALT_D Dit_selectBackwardChar
+WHEELUP Dit_scrollUp
+WHEELDOWN Dit_scrollDown

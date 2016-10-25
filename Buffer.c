@@ -98,6 +98,11 @@ struct Buffer_ {
    bool skipOnSave;
 };
 
+struct Coords_ {
+   int x;
+   int y;
+};
+
 struct FilePosition_ {
    chars x;
    int y;
@@ -595,6 +600,11 @@ void Buffer_setSelection(Buffer* this, int xFrom, int yFrom, int xTo, int yTo) {
    this->savedX = this->x;
 }
 
+void Buffer_selectAll(Buffer* this) {
+   Buffer_goto(this, 1, 1, true);
+   Buffer_select(this, Buffer_endOfFile);
+}
+
 bool Buffer_checkDiskState(Buffer* this) {
    return Undo_checkDiskState(this->undo);
 }
@@ -971,16 +981,18 @@ void Buffer_downLine(Buffer* this) {
    this->selecting = false;
 }
 
-void Buffer_slideUpLine(Buffer* this) {
-   Panel_onKey(this->panel, KEY_C_UP);
+void Buffer_slideLines(Buffer* this, int n) {
+   Panel_slide(this->panel, n);
    Buffer_correctPosition(this);
    this->selecting = false;
 }
 
+void Buffer_slideUpLine(Buffer* this) {
+   Buffer_slideLines(this, -1);
+}
+
 void Buffer_slideDownLine(Buffer* this) {
-   Panel_onKey(this->panel, KEY_C_DOWN);
-   Buffer_correctPosition(this);
-   this->selecting = false;
+   Buffer_slideLines(this, 1);
 }
 
 void Buffer_correctPosition(Buffer* this) {
@@ -1110,10 +1122,11 @@ Text Buffer_currentWord(Buffer* this) {
    return Text_wordAt(this->line->text, offset);
 }
 
-bool Buffer_find(Buffer* this, Text needle, bool findNext, bool caseSensitive, bool wholeWord, bool forward) {
+Coords Buffer_find(Buffer* this, Text needle, bool findNext, bool caseSensitive, bool wholeWord, bool forward) {
    assert(this->line);
+   Coords notFound = { .x = -1, .y = -1 };
    if (!Text_chars(needle))
-      return false;
+      return notFound;
    if (this->selecting && (!findNext || !forward) )
       this->x = this->selectXfrom;
    Line* line = this->line;
@@ -1165,23 +1178,7 @@ bool Buffer_find(Buffer* this, Text needle, bool findNext, bool caseSensitive, b
       }
 
       if (found != -1) {
-         int x = found;
-         this->selectXfrom = x;
-         this->selectYfrom = y;
-         this->selectXto = pastFound;
-         this->selectYto = y;
-         this->selecting = true;
-         Buffer_goto(this, pastFound, y, true);
-
-         int screenX = Line_widthUntil(this->line, this->x, this->tabSize);
-         int screenXfrom = Line_widthUntil(this->line, this->selectXfrom, this->tabSize);
-         Panel* p = this->panel;
-         int margin = p->w / 6;
-         if (p->scrollH > (screenXfrom - margin))
-            p->scrollH = MAX(screenXfrom - margin, 0);
-         if (screenX - p->scrollH >= p->w - margin)
-            p->scrollH = screenX - p->w + margin;
-         return true;
+         return (Coords){ .x = found, .y = y };
       }
       if (forward) {
          if (line->super.next) {
@@ -1212,7 +1209,7 @@ bool Buffer_find(Buffer* this, Text needle, bool findNext, bool caseSensitive, b
             last = true;
       }
    }
-   return false;
+   return notFound;
 }
 
 static void writeLineInFormat(FILE* fd, Line* l, bool utf8, iconv_t cd) {

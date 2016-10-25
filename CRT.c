@@ -160,9 +160,9 @@ void CRT_init() {
    
    char* term = getenv("TERM");
 
-   if (strcmp(term, "xterm") == 0 || strcmp(term, "xterm-256color") == 0) {
-      putenv("TERM=xterm-color");
-      term = "xterm-color";
+   if (strcmp(term, "xterm") == 0 || strcmp(term, "xterm-color") == 0 || strcmp(term, "xterm-256color") == 0) {
+      putenv("TERM=xterm-1002");
+      term = "xterm-1002";
    } else if (strcmp(term, "linux") == 0) {
       CRT_linuxConsole = true;
    }
@@ -469,6 +469,8 @@ void CRT_init() {
    Hashtable_putString(CRT_keys, "TAB", (void*) '\t');
    Hashtable_putString(CRT_keys, "UNDO", (void*) KEY_UNDO);
    Hashtable_putString(CRT_keys, "UP", (void*) KEY_UP);
+   Hashtable_putString(CRT_keys, "WHEELUP", (void*) KEY_WHEELUP);
+   Hashtable_putString(CRT_keys, "WHEELDOWN", (void*) KEY_WHEELDOWN);
 
    bool loadedTerm = CRT_parseTerminalFile(term);
    if (!loadedTerm) {

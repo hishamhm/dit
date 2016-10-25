@@ -336,6 +336,30 @@ void Panel_draw(Panel* this) {
    Display_move(cursorY, this->cursorX);
 }
 
+void Panel_slide(Panel* this, int n) {
+   while (n != 0) {
+      if (n > 0) {
+         if (this->selected + 1 < List_size(this->items)) {
+            this->selected++;
+            if (this->scrollV < List_size(this->items) - this->h) {
+               this->scrollV++;
+               this->needsRedraw = true;
+            }
+         }
+         n--;
+      } else {
+         if (this->selected > 0) {
+            this->selected--;
+            if (this->scrollV > 0) {
+               this->scrollV--;
+               this->needsRedraw = true;
+            }
+         }
+         n++;
+      }
+   }
+}
+
 bool Panel_onKey(Panel* this, int key) {
    assert (this != NULL);
    switch (key) {
@@ -348,22 +372,10 @@ bool Panel_onKey(Panel* this, int key) {
          this->selected--;
       return true;
    case KEY_C_DOWN:
-      if (this->selected + 1 < List_size(this->items)) {
-         this->selected++;
-         if (this->scrollV < List_size(this->items) - this->h) {
-            this->scrollV++;
-            this->needsRedraw = true;
-         }
-      }
+      Panel_slide(this, 1);
       return true;
    case KEY_C_UP:
-      if (this->selected > 0) {
-         this->selected--;
-         if (this->scrollV > 0) {
-            this->scrollV--;
-            this->needsRedraw = true;
-         }
-      }
+      Panel_slide(this, -1);
       return true;
    case KEY_LEFT:
       if (this->scrollH > 0) {

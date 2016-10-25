@@ -3,6 +3,7 @@
 #include "config.h"
 
 typedef struct Buffer_ Buffer;
+typedef struct Coords_ Coords;
 typedef struct FilePosition_ FilePosition;
 typedef struct Clipboard_ Clipboard;
 typedef struct DebugMemoryItem_ DebugMemoryItem;
@@ -227,6 +228,11 @@ struct Buffer_ {
    bool skipOnCtrl;
    bool skipOnFKey;
    bool skipOnSave;
+};
+
+struct Coords_ {
+   int x;
+   int y;
 };
 
 struct FilePosition_ {

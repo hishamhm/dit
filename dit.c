@@ -281,6 +281,28 @@ static void pasteInField(Field* field) {
    }
 }
 
+static void Dit_scrollTo(Buffer* buffer, int x, int y, bool dummy) {
+   // animate scrolling only when not via SSH
+   if (!getenv("SSH_TTY")) {
+      int diff = y - Buffer_y(buffer);
+      int absDiff = abs(diff);
+      if (diff == 0)
+         return;
+      int n = floor(absDiff / 500) + 1;
+      for (int i = absDiff; i > 0;) {
+         int delta = MIN(i, n);
+         Buffer_slideLines(buffer, diff < 0 ? -delta : delta);
+         i -= delta;
+         Buffer_draw(buffer);
+         Display_refresh();
+         if (i > 1) {
+            usleep(50000 / abs(diff));
+         }
+      }
+   }
+   Buffer_goto(buffer, x, y, false);
+}
+
 static void Dit_goto(Buffer* buffer, TabManager* tabs) {
    TabManager_markJump(tabs);
    if (!Dit_gotoField)
@@ -304,7 +326,7 @@ static void Dit_goto(Buffer* buffer, TabManager* tabs) {
             if (switchedTab) {
                TabManager_jumpBack(tabs);
             }
-            Buffer_goto(buffer, saveX, saveY, true);
+            Dit_scrollTo(buffer, saveX, saveY, true);
             break;
          }
       }
@@ -316,7 +338,7 @@ static void Dit_goto(Buffer* buffer, TabManager* tabs) {
          if (y > 0)
             y--;
          if (y != lastY) {
-            Buffer_goto(buffer, 0, y, true);
+            Dit_scrollTo(buffer, 0, y, true);
             Buffer_draw(buffer);
             lastY = y;
          }
@@ -409,20 +431,59 @@ static int handleMouse(MouseState* mstate, TabManager* tabs) {
    return ERR;
 }
 
+static void moveIfFound(Buffer* buffer, TabManager* tabs, int len, Coords found, Coords* first, bool* stopWrap, bool* failing, bool* searched, bool* wrapped) {
+   *stopWrap = false;
+   if (!*searched) {
+      return;
+   }
+   if (found.x == NOT_A_COORD) {
+      Dit_findField->fieldColor = CRT_colors[FieldFailColor];
+      Dit_replaceField->fieldColor = CRT_colors[FieldFailColor];
+      return;
+   }
+   if (first->x == NOT_A_COORD) {
+      first->x = found.x;
+      first->y = found.y;
+      *failing = true;
+   } else {
+      if (found.y == first->y && found.x == first->x) {
+         if (!*wrapped) {
+            *wrapped = true;
+            Dit_scrollTo(buffer, found.x, found.y, true);
+            Buffer_setSelection(buffer, found.x, found.y, found.x + len, found.y);
+            Buffer_draw(buffer);
+            int answer = TabManager_question(tabs, "Search is back at the beginning. Continue?", "yn");
+            if (answer == 1) {
+               *stopWrap = true;
+               return;
+            }
+         }
+      }
+   }
+   Dit_findField->fieldColor = CRT_colors[FieldColor];
+   Dit_replaceField->fieldColor = CRT_colors[FieldColor];
+   Dit_scrollTo(buffer, found.x, found.y, true);
+   Buffer_setSelection(buffer, found.x, found.y, found.x + len, found.y);
+   Buffer_draw(buffer);
+   *failing = false;
+}
+
 static void Dit_find(Buffer* buffer, TabManager* tabs) {
    TabManager_markJump(tabs);
    if (!Dit_findField)
       Dit_findField = Field_new("Find:", 0, lines - 1, cols);
+   if (!Dit_replaceField)
+      Dit_replaceField = Field_new("", 0, lines - 1, cols);
    Field_start(Dit_findField);
    bool quit = false;
    int saveX = buffer->x;
    int saveY = buffer->y;
    bool wrapped = false;
-   int firstX = NOT_A_COORD;
-   int firstY = NOT_A_COORD;
+   Coords first = { .x = NOT_A_COORD, .y = NOT_A_COORD };
    bool caseSensitive = false;
    bool wholeWord = false;
    bool failing = true;
+   bool stopWrap = false;
    
    bool selectionAutoMatch = false;
    if (buffer->selecting && buffer->selectYfrom == buffer->selectYto) {
@@ -435,21 +496,23 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
       free(block);
       failing = false;
       selectionAutoMatch = true;
-      firstX = buffer->selectXfrom;
-      firstY = buffer->selectYfrom;
+      first.x = buffer->selectXfrom;
+      first.y = buffer->selectYfrom;
       buffer->x = buffer->selectXto;
       buffer->y = buffer->selectYto;
       buffer->selecting = true; // Buffer_copyBlock auto-deselects
    }
    
+   Coords notFound = { .x = -1, .y = -1 };
    while (!quit) {
       Field_printfLabel(Dit_findField, "L:%d C:%d [%c%c] %sFind:", buffer->y + 1, buffer->x + 1, caseSensitive ? 'C' : ' ', wholeWord ? 'W' : ' ', wrapped ? "Wrapped " : "");
       bool searched = false;
-      bool found = false;
+      Coords found = notFound;
       
       if (selectionAutoMatch) {
          searched = true;
-         found = true;
+         found.x = buffer->x;
+         found.y = buffer->y;
          selectionAutoMatch = false;
       }
       
@@ -491,18 +554,18 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                Field_insertChar(Dit_findField, ch);
             }
             wrapped = false;
-            firstX = NOT_A_COORD;
-            firstY = NOT_A_COORD;
+            first.x = NOT_A_COORD;
+            first.y = NOT_A_COORD;
             found = Buffer_find(buffer, Field_text(Dit_findField), false, caseSensitive, wholeWord, true);
             searched = true;
          } else {
             switch (ch) {
             case KEY_C_UP:
-               Buffer_slideUpLine(buffer);
+               Buffer_slideLines(buffer, 1);
                Buffer_draw(buffer);
                break;
             case KEY_C_DOWN:
-               Buffer_slideDownLine(buffer);
+               Buffer_slideLines(buffer, -1);
                Buffer_draw(buffer);
                break;
             case KEY_CTRL('V'):
@@ -547,7 +610,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                if (y > 0)
                   y--;
                if (y != lastY) {
-                  Buffer_goto(buffer, 0, y, true);
+                  Dit_scrollTo(buffer, 0, y, true);
                   Buffer_draw(buffer);
                   lastY = y;
                }
@@ -564,37 +627,14 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                int rch = 0;
                if (failing)
                   continue;
-               if (!Dit_replaceField)
-                  Dit_replaceField = Field_new("", 0, lines - 1, cols);
                Dit_replaceField->fieldColor = CRT_colors[FieldColor];
                Field_printfLabel(Dit_replaceField, "L:%d C:%d [%c%c] %sReplace with:", buffer->y + 1, buffer->x + 1, caseSensitive ? 'C' : ' ', wholeWord ? 'W' : ' ', wrapped ? "Wrapped " : "");
                Field_start(Dit_replaceField);
                while (true) {
-                  if (searched) {
-                     if (found) {
-                        if (firstX == NOT_A_COORD) {
-                           firstX = buffer->x;
-                           firstY = buffer->y;
-                        } else {
-                           if (buffer->y == firstY && buffer->x == firstX) {
-                              if (!wrapped) {
-                                 wrapped = true;
-                                 Buffer_draw(buffer);
-                                 int answer = TabManager_question(tabs, "Search is back at the beginning. Continue replacing?", "yn");
-                                 if (answer == 1) {
-                                    quit = 1;
-                                    break;
-                                 }
-                              }
-                           }
-                        }
-                        Dit_findField->fieldColor = CRT_colors[FieldColor];
-                        Dit_replaceField->fieldColor = CRT_colors[FieldColor];
-                        Buffer_draw(buffer);
-                     } else {
-                        Dit_findField->fieldColor = CRT_colors[FieldFailColor];
-                        Dit_replaceField->fieldColor = CRT_colors[FieldFailColor];
-                     }
+                  moveIfFound(buffer, tabs, Text_chars(Field_text(Dit_findField)), found, &first, &stopWrap, &failing, &searched, &wrapped);
+                  if (stopWrap) {
+                     quit = 1;
+                     break;
                   }
                   bool quitMask[255] = {0};
                   quitMask[KEY_CTRL('R')] = true;
@@ -662,7 +702,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                break;
             case 27:
                quit = true;
-               Buffer_goto(buffer, saveX, saveY, true);
+               Dit_scrollTo(buffer, saveX, saveY, true);
                break;
             case KEY_RESIZE:
                resizeScreen(tabs);
@@ -674,44 +714,23 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
          }
       } else {
          if (code && (ch == KEY_UP || ch == KEY_DOWN)) {
-            Buffer_goto(buffer, saveX, saveY, true);
+            Dit_scrollTo(buffer, saveX, saveY, true);
             wrapped = false;
-            firstX = NOT_A_COORD;
-            firstY = NOT_A_COORD;
+            first.x = NOT_A_COORD;
+            first.y = NOT_A_COORD;
             found = Buffer_find(buffer, Field_text(Dit_findField), true, caseSensitive, wholeWord, true);
             searched = true;
          } else if (code && (ch == KEY_BACKSPACE || ch == KEY_DC)) {
             wrapped = false;
-            firstX = NOT_A_COORD;
-            firstY = NOT_A_COORD;
+            first.x = NOT_A_COORD;
+            first.y = NOT_A_COORD;
             found = Buffer_find(buffer, Field_text(Dit_findField), false, caseSensitive, wholeWord, true);
             searched = true;
          }
       }
-      if (searched) {
-         if (found) {
-            if (firstX == NOT_A_COORD) {
-               firstX = buffer->x;
-               firstY = buffer->y;
-            } else {
-               if (buffer->y == firstY && buffer->x == firstX) {
-                  if (!quit && !wrapped) {
-                     wrapped = true;
-                     Buffer_draw(buffer);
-                     int answer = TabManager_question(tabs, "Search is back at the beginning. Continue?", "yn");
-                     if (answer == 1)
-                        break;
-                  }
-               }
-            }
-            Dit_findField->fieldColor = CRT_colors[FieldColor];
-            Buffer_draw(buffer);
-            failing = false;
-         } else {
-            Dit_findField->fieldColor = CRT_colors[FieldFailColor];
-            failing = true;
-         }
-      }
+      moveIfFound(buffer, tabs, Text_chars(Field_text(Dit_findField)), found, &first, &stopWrap, &failing, &searched, &wrapped);
+      if (stopWrap)
+         break;
    }
    buffer->selecting = false;
    TabManager_refreshCurrent(tabs);
@@ -845,6 +864,14 @@ int Dit_open(TabManager* tabs, const char* name) {
    return page;
 }
 
+static void Dit_scrollUp(Buffer* buffer) {
+   Dit_scrollTo(buffer, Buffer_x(buffer), Buffer_y(buffer) - 5, false);
+}
+
+static void Dit_scrollDown(Buffer* buffer) {
+   Dit_scrollTo(buffer, Buffer_x(buffer), Buffer_y(buffer) + 5, false);
+}
+
 static void Dit_selectForwardWord(Buffer* buffer)     { Buffer_select(buffer, Buffer_forwardWord);     }
 static void Dit_selectForwardChar(Buffer* buffer)     { Buffer_select(buffer, Buffer_forwardChar);     }
 static void Dit_selectBackwardWord(Buffer* buffer)    { Buffer_select(buffer, Buffer_backwardWord);    }
@@ -858,6 +885,12 @@ static void Dit_selectEndOfLine(Buffer* buffer)       { Buffer_select(buffer, Bu
 static void Dit_selectPreviousPage(Buffer* buffer)    { Buffer_select(buffer, Buffer_previousPage);    }
 static void Dit_selectNextPage(Buffer* buffer)        { Buffer_select(buffer, Buffer_nextPage);        }
 
+static void Dit_selectBeginningOfFile(Buffer* buffer, TabManager* tabs) { TabManager_markJump(tabs); Buffer_select(buffer, Buffer_beginningOfFile); }
+static void Dit_selectEndOfFile(Buffer* buffer, TabManager* tabs)       { TabManager_markJump(tabs); Buffer_select(buffer, Buffer_endOfFile);       }
+
+static void Dit_beginningOfFile(Buffer* buffer, TabManager* tabs) { TabManager_markJump(tabs); Buffer_beginningOfFile(buffer); }
+static void Dit_endOfFile(Buffer* buffer, TabManager* tabs)       { TabManager_markJump(tabs); Buffer_endOfFile(buffer);       }
+
 typedef bool (*Dit_Action)(Buffer*, TabManager*, int*, int*);
 
 static Hashtable* Dit_actions = NULL;
@@ -867,17 +900,16 @@ static void Dit_registerActions() {
    Hashtable_putString(Dit_actions, "Buffer_backwardChar", (void*)(long) Buffer_backwardChar);
    Hashtable_putString(Dit_actions, "Buffer_backwardDeleteChar", (void*)(long) Buffer_backwardDeleteChar);
    Hashtable_putString(Dit_actions, "Buffer_backwardWord", (void*)(long) Buffer_backwardWord);
-   Hashtable_putString(Dit_actions, "Buffer_beginningOfFile", (void*)(long) Buffer_beginningOfFile);
    Hashtable_putString(Dit_actions, "Buffer_beginningOfLine", (void*)(long) Buffer_beginningOfLine);
    Hashtable_putString(Dit_actions, "Buffer_deleteChar", (void*)(long) Buffer_deleteChar);
    Hashtable_putString(Dit_actions, "Buffer_downLine", (void*)(long) Buffer_downLine);
-   Hashtable_putString(Dit_actions, "Buffer_endOfFile", (void*)(long) Buffer_endOfFile);
    Hashtable_putString(Dit_actions, "Buffer_endOfLine", (void*)(long) Buffer_endOfLine);
    Hashtable_putString(Dit_actions, "Buffer_forwardChar", (void*)(long) Buffer_forwardChar);
    Hashtable_putString(Dit_actions, "Buffer_forwardWord", (void*)(long) Buffer_forwardWord);
    Hashtable_putString(Dit_actions, "Buffer_indent", (void*)(long) Buffer_indent);
    Hashtable_putString(Dit_actions, "Buffer_nextPage", (void*)(long) Buffer_nextPage);
    Hashtable_putString(Dit_actions, "Buffer_previousPage", (void*)(long) Buffer_previousPage);
+   Hashtable_putString(Dit_actions, "Buffer_selectAll", (void*)(long) Buffer_selectAll);
    Hashtable_putString(Dit_actions, "Buffer_slideDownLine", (void*)(long) Buffer_slideDownLine);
    Hashtable_putString(Dit_actions, "Buffer_slideUpLine", (void*)(long) Buffer_slideUpLine);
    Hashtable_putString(Dit_actions, "Buffer_toggleMarking", (void*)(long) Buffer_toggleMarking);
@@ -886,11 +918,13 @@ static void Dit_registerActions() {
    Hashtable_putString(Dit_actions, "Buffer_undo", (void*)(long) Buffer_undo);
    Hashtable_putString(Dit_actions, "Buffer_unindent", (void*)(long) Buffer_unindent);
    Hashtable_putString(Dit_actions, "Buffer_upLine", (void*)(long) Buffer_upLine);
+   Hashtable_putString(Dit_actions, "Dit_beginningOfFile", (void*)(long) Dit_beginningOfFile);
    Hashtable_putString(Dit_actions, "Dit_breakLine", (void*)(long) Dit_breakLine);
    Hashtable_putString(Dit_actions, "Dit_closeCurrent", (void*)(long) Dit_closeCurrent);
    Hashtable_putString(Dit_actions, "Dit_copy", (void*)(long) Dit_copy);
    Hashtable_putString(Dit_actions, "Dit_cut", (void*)(long) Dit_cut);
    Hashtable_putString(Dit_actions, "Dit_deleteLine", (void*)(long) Dit_deleteLine);
+   Hashtable_putString(Dit_actions, "Dit_endOfFile", (void*)(long) Dit_endOfFile);
    Hashtable_putString(Dit_actions, "Dit_find", (void*)(long) Dit_find);
    Hashtable_putString(Dit_actions, "Dit_goto", (void*)(long) Dit_goto);
    Hashtable_putString(Dit_actions, "Dit_jumpBack", (void*)(long) Dit_jumpBack);
@@ -902,11 +936,15 @@ static void Dit_registerActions() {
    Hashtable_putString(Dit_actions, "Dit_quit", (void*)(long) Dit_quit);
    Hashtable_putString(Dit_actions, "Dit_refresh", (void*)(long) Dit_refresh);
    Hashtable_putString(Dit_actions, "Dit_save", (void*)(long) Dit_save);
+   Hashtable_putString(Dit_actions, "Dit_scrollUp", (void*)(long) Dit_scrollUp);
+   Hashtable_putString(Dit_actions, "Dit_scrollDown", (void*)(long) Dit_scrollDown);
    Hashtable_putString(Dit_actions, "Dit_selectBackwardChar", (void*)(long) Dit_selectBackwardChar);
    Hashtable_putString(Dit_actions, "Dit_selectBackwardWord", (void*)(long) Dit_selectBackwardWord);
    Hashtable_putString(Dit_actions, "Dit_selectBeginningOfLine", (void*)(long) Dit_selectBeginningOfLine);
+   Hashtable_putString(Dit_actions, "Dit_selectBeginningOfFile", (void*)(long) Dit_selectBeginningOfFile);
    Hashtable_putString(Dit_actions, "Dit_selectDownLine", (void*)(long) Dit_selectDownLine);
    Hashtable_putString(Dit_actions, "Dit_selectEndOfLine", (void*)(long) Dit_selectEndOfLine);
+   Hashtable_putString(Dit_actions, "Dit_selectEndOfFile", (void*)(long) Dit_selectEndOfFile);
    Hashtable_putString(Dit_actions, "Dit_selectForwardChar", (void*)(long) Dit_selectForwardChar);
    Hashtable_putString(Dit_actions, "Dit_selectForwardWord", (void*)(long) Dit_selectForwardWord);
    Hashtable_putString(Dit_actions, "Dit_selectNextPage", (void*)(long) Dit_selectNextPage);
@@ -964,9 +1002,9 @@ static void Dit_loadHardcodedBindings(Dit_Action* keys) {
    keys[KEY_S_DOWN]    = (Dit_Action) Dit_selectDownLine;
    keys[KEY_CS_UP]     = (Dit_Action) Dit_selectSlideUpLine;
    keys[KEY_S_UP]      = (Dit_Action) Dit_selectUpLine;
-   keys[KEY_CS_HOME]   = (Dit_Action) Dit_selectBeginningOfLine;
+   keys[KEY_CS_HOME]   = (Dit_Action) Dit_selectBeginningOfFile;
    keys[KEY_SHOME]     = (Dit_Action) Dit_selectBeginningOfLine;
-   keys[KEY_CS_END]    = (Dit_Action) Dit_selectEndOfLine;
+   keys[KEY_CS_END]    = (Dit_Action) Dit_selectEndOfFile;
    keys[KEY_SEND]      = (Dit_Action) Dit_selectEndOfLine;
    keys[KEY_CS_PPAGE]  = (Dit_Action) Dit_selectPreviousPage;
    keys[KEY_S_PPAGE]   = (Dit_Action) Dit_selectPreviousPage;
@@ -993,6 +1031,9 @@ static void Dit_loadHardcodedBindings(Dit_Action* keys) {
    keys[KEY_ALT('C')] = (Dit_Action) Dit_x11copy;
    keys[KEY_ALT('J')] = (Dit_Action) Dit_moveTabPageLeft;
    keys[KEY_ALT('K')] = (Dit_Action) Dit_moveTabPageRight;
+
+   keys[KEY_WHEELUP]   = (Dit_Action) Dit_scrollUp;
+   keys[KEY_WHEELDOWN] = (Dit_Action) Dit_scrollDown;
 }
 
 void Dit_checkFileAccess(char** argv, char* name, int* jump, int* column) {
