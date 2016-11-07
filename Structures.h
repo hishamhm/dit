@@ -190,6 +190,8 @@ struct Buffer_ {
    // to detect highlight changes that demand
    // a redraw
    HighlightContext* savedContext;
+   // transient popup
+   char** popup;
    // coordinates of selection
    chars selectXfrom;
    int selectYfrom;
@@ -293,6 +295,7 @@ typedef enum {
    FieldColor,
    FieldFailColor,
    AlertColor,
+   PopupColor,
    Colors
 } Color;
 

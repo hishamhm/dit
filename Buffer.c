@@ -58,6 +58,8 @@ struct Buffer_ {
    // to detect highlight changes that demand
    // a redraw
    HighlightContext* savedContext;
+   // transient popup
+   char** popup;
    // coordinates of selection
    chars selectXfrom;
    int selectYfrom;
@@ -499,6 +501,45 @@ void Buffer_draw(Buffer* this) {
    
    p->cursorX = screenX - p->scrollH;
    Panel_draw(p);
+   
+   if (this->popup) {
+      int cursorY, cursorX;
+      Display_getyx(&cursorY, &cursorX);
+      int maxlen = 0;
+      int height = 0;
+      for (int i = 0; this->popup[i]; i++) {
+         int len = strlen(this->popup[i]);
+         maxlen = MAX(maxlen, len);
+         height++;
+      }
+      char buf[maxlen + 1];
+      memset(buf, ' ', maxlen);
+      buf[maxlen] = '\0';
+      int firstY = this->y - p->scrollV + 1;
+      if (firstY + height > p->h && (firstY - 1 > height)) {
+         firstY = firstY - 1 - height;
+      }
+      for (int i = 0; this->popup[i]; i++) {
+         RichString_begin(line);
+         RichString_write(&line, 0, this->popup[i]);
+         RichString_appendn(&line, 0, buf, maxlen);
+         RichString_setAttrn(&line, CRT_colors[PopupColor], 0, maxlen);
+         int y = firstY + i;
+         if (y < p->h) {
+            int x = screenX - p->scrollH;
+            if (p->w - x < maxlen && p->w > maxlen) {
+               x = p->w - maxlen;
+            }
+            Display_writeChstrAtn(y, x, RichString_at(line, 0), MIN(maxlen, p->w - x));
+         }
+         RichString_end(line);
+         free(this->popup[i]);
+      }
+      free(this->popup);
+      p->needsRedraw = true;
+      Display_move(cursorY, cursorX);
+   }
+   this->popup = NULL;
    
    this->wasSelecting = this->selecting;
 }

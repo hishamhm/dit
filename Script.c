@@ -312,6 +312,22 @@ STATIC int Script_string___index(lua_State* L) {
    }
 }
 
+STATIC int Script_Buffer_drawPopup(lua_State* L) {
+   Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
+   luaL_checktype(L, 2, LUA_TTABLE);
+   int len = lua_rawlen(L, 2);
+   buffer->popup = calloc(sizeof(char*), len+1);
+   for(int i = 1; ; i++) {
+      int typ = lua_geti(L, 2, i);
+      if (typ != LUA_TSTRING)
+         break;
+      buffer->popup[i-1] = strdup(lua_tostring(L, -1));
+      lua_pop(L, 1);
+   }
+   buffer->panel->needsRedraw = true;
+   return 0;
+}
+
 STATIC luaL_Reg Buffer_functions[] = {
    // getters:
    { "line", Script_Buffer_line },
@@ -327,6 +343,7 @@ STATIC luaL_Reg Buffer_functions[] = {
    { "select", Script_Buffer_select },
    { "begin_undo", Script_Buffer_beginUndoGroup },
    { "end_undo", Script_Buffer_endUndoGroup },
+   { "draw_popup", Script_Buffer_drawPopup },
    { NULL, NULL }
 };
 
