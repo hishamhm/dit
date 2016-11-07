@@ -13,6 +13,7 @@ my_dit_C_sources = dit.c Buffer.c CRT.c Clipboard.c DebugMemory.c Field.c \
 BUILT_SOURCES = Prototypes.h Structures.h
 
 # find bindings terminals highlight scripts -type f | tr '\n' ' ' | fold -s -w 70 | sed 's,$,\\,'
+# find bindings terminals highlight scripts -type l | tr '\n' ' ' | fold -s -w 70 | sed 's,$,\\,'
 nobase_dist_pkgdata_DATA = \
 bindings/default terminals/rxvt terminals/xterm-color \
 terminals/konsole terminals/wsvt25 terminals/linux \
@@ -39,7 +40,8 @@ scripts/luacheck/parser.lua scripts/luacheck/core_utils.lua \
 scripts/luacheck/filter.lua scripts/luacheck/stds.lua scripts/cmd.lua \
 scripts/dit/code.lua scripts/dit/tab_complete.lua \
 scripts/dit/line_commit.lua scripts/cscope.lua scripts/c.lua \
-scripts/java.lua
+scripts/java.lua \
+terminals/xterm-1002
 
 EXTRA_DIST = tools/GenHeaders extras/dit.keytab \
    lua-$(DIT_LUA_VERSION)/src/*.[ch] \
