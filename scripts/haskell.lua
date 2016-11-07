@@ -100,24 +100,95 @@ function highlight_line(line, y)
    return table.concat(out)
 end
 
+local function find_definition()
+   local token = buffer:token()
+   if not token then
+      return
+   end
+   local i = 1
+   local found = false
+   local line
+   
+   while true do
+      line = buffer[i]
+      if not line then break end
+      if line:match("^%s*data "..token.."[^%w]") or line:match("^%s*type "..token.."[^%w]") then
+         found = true
+         break
+      end
+      i = i + 1
+   end
+   return found, line, i
+end
+
 function on_ctrl(key)
    if key == "_" then
       code.comment_block("--", "%-%-")
-   elseif key == "[" or key == "]" then
+   elseif key == "]" then
       code.expand_selection()
+   elseif key == "R" then
+      local found, line, i = find_definition()
+      if found then
+         tabs:markJump()
+         buffer:go_to(1, i)
+      end
+   elseif key == "D" then
+      local x, y = buffer:xy()
+      if errors and errors[y] and errors[y][x] then
+         buffer:draw_popup(errors[y][x])
+         return
+      end
+      local found, line, i = find_definition()
+      if found then
+         local data = { line }
+         local indent = line:match("^(%s*)")
+         while true do
+            i = i + 1
+            line = buffer[i]
+            if not line then break end
+            local curindent = line:match("^(%s*)")
+            if curindent > indent then
+               table.insert(data, line)
+            else
+               break
+            end
+         end
+         buffer:draw_popup(data)
+      else
+         local cmd = os.getenv("HOME").."/.cabal/bin/ghc-mod type "..buffer:filename().." "..y.." "..x.." 2> /dev/null"
+         local pd = io.popen(cmd, "r")
+         local typ = "not found"
+         if pd then
+            local line = pd:read("*l")
+            if line then
+               typ = line:match("[0-9]+ [0-9]+ [0-9]+ [0-9]+ \"(.*)\"")
+            end
+            pd:close()
+         end
+         buffer:draw_popup({ typ })
+      end
    end
 end
 
 function on_save()
    local cmd = io.popen("LANG=C ghc -i. -c "..current_file.." 2>&1")
-   local cmdout = cmd:read("*a")
-   cmd:close()
+   local curr_error
    errors = {}
-   for ey, ex in cmdout:gmatch("[^\n]*:([0-9]+):([0-9]+):") do
-      ey = tonumber(ey)
-      ex = tonumber(ex)
-      if not errors[ey] then errors[ey] = {} end
-      errors[ey][ex] = true
+   for line in cmd:lines() do
+      local ey, ex = line:match("[^\n]*:([0-9]+):([0-9]+):")
+      if ex then
+         ey = tonumber(ey)
+         ex = tonumber(ex)
+         if not errors[ey] then errors[ey] = {} end
+         curr_error = {}
+         errors[ey][ex] = curr_error
+      elseif curr_error then
+         if #line == 0 or line:match("^%s*In ") then
+            curr_error = nil
+         else
+            table.insert(curr_error, (line:gsub("%s$", "")))
+         end
+      end
    end
-   return true
+   cmd:close()
 end

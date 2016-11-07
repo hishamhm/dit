@@ -2,6 +2,7 @@
 local cscope = require("cscope")
 local code = require("dit.code")
 local tab_complete = require("dit.tab_complete")
+local line_commit = require("dit.line_commit")
 
 local function open_header()
    local name = buffer:filename()
@@ -22,6 +23,8 @@ function on_ctrl(key)
       cscope.go_to_definition()
    elseif key == "H" then
       open_header()
+   elseif key == "O" then
+      line_commit.line_commit()
    elseif key == "_" then
       code.comment_block("//")
    end
