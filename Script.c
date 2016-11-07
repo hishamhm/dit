@@ -96,6 +96,9 @@ STATIC int Script_Buffer_line(lua_State* L) {
       return 3;
    } else {
       int y = luaL_checkinteger(L, 2);
+      if (y < 1 || y > Buffer_size(buffer)) {
+         return 0;
+      }           
       line = Buffer_getLine(buffer, y-1);
       if (line) lua_pushstring(L, line);
       else lua_pushliteral(L, "");
