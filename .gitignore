@@ -20,5 +20,4 @@ config.status
 config.sub
 configure
 core
-dit
 lua*/src/*.a
