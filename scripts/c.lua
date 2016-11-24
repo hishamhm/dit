@@ -70,7 +70,7 @@ function on_change()
 end
 
 function on_save()
-   local cmd = io.popen("LANG=C gcc -I. -c "..current_file.." --std=c99 2>&1")
+   local cmd = io.popen("LANG=C gcc -I. -Ieditorconfig/include -c "..current_file.." --std=c99 2>&1")
    local cmdout = cmd:read("*a")
    cmd:close()
    errors = {}
