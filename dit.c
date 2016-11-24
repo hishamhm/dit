@@ -281,13 +281,13 @@ static void pasteInField(Field* field) {
    }
 }
 
-static void Dit_scrollTo(Buffer* buffer, int x, int y, bool dummy) {
+static void Dit_scrollTo(Buffer* buffer, int x, int y, bool anim) {
    // animate scrolling only when not via SSH
-   if (!getenv("SSH_TTY")) {
-      int diff = y - Buffer_y(buffer);
-      int absDiff = abs(diff);
-      if (diff == 0)
-         return;
+   int diff = y - Buffer_y(buffer);
+   int absDiff = abs(diff);
+   if (diff == 0)
+      return;
+   if (anim && !getenv("SSH_TTY") && !CRT_linuxConsole) {
       int n = floor(absDiff / 500) + 1;
       for (int i = absDiff; i > 0;) {
          int delta = MIN(i, n);
@@ -299,6 +299,8 @@ static void Dit_scrollTo(Buffer* buffer, int x, int y, bool dummy) {
             usleep(50000 / abs(diff));
          }
       }
+   } else {
+      Buffer_slideLines(buffer, diff);
    }
    Buffer_goto(buffer, x, y, false);
 }
@@ -326,7 +328,7 @@ static void Dit_goto(Buffer* buffer, TabManager* tabs) {
             if (switchedTab) {
                TabManager_jumpBack(tabs);
             }
-            Dit_scrollTo(buffer, saveX, saveY, true);
+            Dit_scrollTo(buffer, saveX, saveY, false);
             break;
          }
       }
@@ -338,7 +340,7 @@ static void Dit_goto(Buffer* buffer, TabManager* tabs) {
          if (y > 0)
             y--;
          if (y != lastY) {
-            Dit_scrollTo(buffer, 0, y, true);
+            Dit_scrollTo(buffer, 0, y, false);
             Buffer_draw(buffer);
             lastY = y;
          }
@@ -449,7 +451,7 @@ static void moveIfFound(Buffer* buffer, TabManager* tabs, int len, Coords found,
       if (found.y == first->y && found.x == first->x) {
          if (!*wrapped) {
             *wrapped = true;
-            Dit_scrollTo(buffer, found.x, found.y, true);
+            Dit_scrollTo(buffer, found.x, found.y, false);
             Buffer_setSelection(buffer, found.x, found.y, found.x + len, found.y);
             Buffer_draw(buffer);
             int answer = TabManager_question(tabs, "Search is back at the beginning. Continue?", "yn");
@@ -462,7 +464,7 @@ static void moveIfFound(Buffer* buffer, TabManager* tabs, int len, Coords found,
    }
    Dit_findField->fieldColor = CRT_colors[FieldColor];
    Dit_replaceField->fieldColor = CRT_colors[FieldColor];
-   Dit_scrollTo(buffer, found.x, found.y, true);
+   Dit_scrollTo(buffer, found.x, found.y, false);
    Buffer_setSelection(buffer, found.x, found.y, found.x + len, found.y);
    Buffer_draw(buffer);
    *failing = false;
@@ -610,7 +612,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                if (y > 0)
                   y--;
                if (y != lastY) {
-                  Dit_scrollTo(buffer, 0, y, true);
+                  Dit_scrollTo(buffer, 0, y, false);
                   Buffer_draw(buffer);
                   lastY = y;
                }
@@ -702,7 +704,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                break;
             case 27:
                quit = true;
-               Dit_scrollTo(buffer, saveX, saveY, true);
+               Dit_scrollTo(buffer, saveX, saveY, false);
                break;
             case KEY_RESIZE:
                resizeScreen(tabs);
@@ -714,7 +716,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
          }
       } else {
          if (code && (ch == KEY_UP || ch == KEY_DOWN)) {
-            Dit_scrollTo(buffer, saveX, saveY, true);
+            Dit_scrollTo(buffer, saveX, saveY, false);
             wrapped = false;
             first.x = NOT_A_COORD;
             first.y = NOT_A_COORD;
@@ -865,11 +867,35 @@ int Dit_open(TabManager* tabs, const char* name) {
 }
 
 static void Dit_scrollUp(Buffer* buffer) {
-   Dit_scrollTo(buffer, Buffer_x(buffer), Buffer_y(buffer) - 5, false);
+   struct timeval tv;
+   gettimeofday(&tv, NULL);
+   double now = tv.tv_sec * 1000000 + tv.tv_usec;
+   static double lastScroll = 0.0;
+   double diff = now - lastScroll;
+   double delta = -(diff * 0.00032) + 25;
+   double origDelta = delta;
+   if (delta < 1 || diff > 200000) delta = 1;
+   int newY = MAX(1, Buffer_y(buffer) - (int)delta);
+   Dit_scrollTo(buffer, Buffer_x(buffer), newY, true);
+   fprintf(stderr, "%f %f %f\n", now - lastScroll, delta, origDelta);
+   refresh();
+   lastScroll = now;
 }
 
 static void Dit_scrollDown(Buffer* buffer) {
-   Dit_scrollTo(buffer, Buffer_x(buffer), Buffer_y(buffer) + 5, false);
+   struct timeval tv;
+   gettimeofday(&tv, NULL);
+   double now = tv.tv_sec * 1000000 + tv.tv_usec;
+   static double lastScroll = 0.0;
+   double diff = now - lastScroll;
+   double delta = -(diff * 0.00032) + 25;
+   double origDelta = delta;
+   if (delta < 1 || diff > 200000) delta = 1;
+   int newY = MIN(Buffer_size(buffer), Buffer_y(buffer) + (int)delta);
+   Dit_scrollTo(buffer, Buffer_x(buffer), newY, true);
+   fprintf(stderr, "%f %f %f\n", now - lastScroll, delta, origDelta);
+   refresh();
+   lastScroll = now;
 }
 
 static void Dit_selectForwardWord(Buffer* buffer)     { Buffer_select(buffer, Buffer_forwardWord);     }
