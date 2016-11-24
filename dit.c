@@ -866,7 +866,7 @@ int Dit_open(TabManager* tabs, const char* name) {
    return page;
 }
 
-static void Dit_scrollUp(Buffer* buffer) {
+static void linearAccelScroll(Buffer* buffer, int direction) {
    struct timeval tv;
    gettimeofday(&tv, NULL);
    double now = tv.tv_sec * 1000000 + tv.tv_usec;
@@ -875,27 +875,19 @@ static void Dit_scrollUp(Buffer* buffer) {
    double delta = -(diff * 0.00032) + 25;
    double origDelta = delta;
    if (delta < 1 || diff > 200000) delta = 1;
-   int newY = MAX(1, Buffer_y(buffer) - (int)delta);
+   int newY = Buffer_y(buffer) + ( (int)delta * direction );
+   newY = MIN(Buffer_size(buffer), MAX(1, newY));
    Dit_scrollTo(buffer, Buffer_x(buffer), newY, true);
-   fprintf(stderr, "%f %f %f\n", now - lastScroll, delta, origDelta);
    refresh();
    lastScroll = now;
 }
 
+static void Dit_scrollUp(Buffer* buffer) {
+   linearAccelScroll(buffer, 1);
+}
+
 static void Dit_scrollDown(Buffer* buffer) {
-   struct timeval tv;
-   gettimeofday(&tv, NULL);
-   double now = tv.tv_sec * 1000000 + tv.tv_usec;
-   static double lastScroll = 0.0;
-   double diff = now - lastScroll;
-   double delta = -(diff * 0.00032) + 25;
-   double origDelta = delta;
-   if (delta < 1 || diff > 200000) delta = 1;
-   int newY = MIN(Buffer_size(buffer), Buffer_y(buffer) + (int)delta);
-   Dit_scrollTo(buffer, Buffer_x(buffer), newY, true);
-   fprintf(stderr, "%f %f %f\n", now - lastScroll, delta, origDelta);
-   refresh();
-   lastScroll = now;
+   linearAccelScroll(buffer, -1);
 }
 
 static void Dit_selectForwardWord(Buffer* buffer)     { Buffer_select(buffer, Buffer_forwardWord);     }
