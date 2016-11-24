@@ -1,5 +1,6 @@
 
 local code = require("dit.code")
+local tab_complete = require("dit.tab_complete")
 
 local colors = {
    'B',
@@ -191,4 +192,8 @@ function on_save()
       end
    end
    cmd:close()
+end
+
+function on_key(code)
+   return tab_complete.on_key(code)
 end
