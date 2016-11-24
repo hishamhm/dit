@@ -52,6 +52,8 @@ typedef enum {
    DimColor,
    ScrollBarColor,
    ScrollHandleColor,
+   ScrollHandleTopColor,
+   ScrollHandleBottomColor,
    HeaderColor,
    StatusColor,
    KeyColor,
@@ -101,11 +103,17 @@ typedef enum {
 #define CTRL_MASK 4
 #define ALTL_MASK 8
 
+extern bool CRT_linuxConsole;
+
 extern int CRT_delay;
 
-extern char CRT_scrollHandle;
+extern char* CRT_scrollHandle;
 
-extern char CRT_scrollBar;
+extern char* CRT_scrollHandleTop;
+
+extern char* CRT_scrollHandleBottom;
+
+extern char* CRT_scrollBar;
 
 extern int CRT_colors[Colors];
 
@@ -121,9 +129,13 @@ bool CRT_hasColors;
 
 int CRT_delay;
 
-char CRT_scrollHandle;
+char* CRT_scrollHandle;
 
-char CRT_scrollBar;
+char* CRT_scrollHandleTop;
+
+char* CRT_scrollHandleBottom;
+
+char* CRT_scrollBar;
 
 int CRT_colors[Colors];
 
@@ -172,11 +184,15 @@ void CRT_init() {
    
    CRT_hasColors = Display_init(term);
    if (CRT_hasColors) {
-      CRT_scrollHandle = ' ';
-      CRT_scrollBar = ' ';
+      CRT_scrollHandle = strdup("█");
+      CRT_scrollHandleTop = strdup("▀");
+      CRT_scrollHandleBottom = strdup("▄");
+      CRT_scrollBar = strdup(" ");
    } else {
-      CRT_scrollHandle = '*';
-      CRT_scrollBar = '|';
+      CRT_scrollHandle = strdup("*");
+      CRT_scrollHandleTop = strdup("*");
+      CRT_scrollHandleBottom = strdup("*");
+      CRT_scrollBar = strdup("|");
    }
 
    #define ANTARCTIC_THEME
@@ -204,7 +220,9 @@ void CRT_init() {
    CRT_colors[VerySpecialColor] = A_BOLD | CRT_color(Yellow, Red);
    CRT_colors[DimColor] = CRT_color(Yellow, Black);
    CRT_colors[ScrollBarColor] = CRT_color(White, Blue);
-   CRT_colors[ScrollHandleColor] = CRT_color(White, Cyan);
+   CRT_colors[ScrollHandleColor] = CRT_color(Cyan, Blue);
+   CRT_colors[ScrollHandleTopColor] = CRT_color(Cyan, Blue);
+   CRT_colors[ScrollHandleBottomColor] = CRT_color(Cyan, Blue);
    CRT_colors[StatusColor] = CRT_color(Black, Cyan);
    CRT_colors[KeyColor] = A_REVERSE | CRT_color(Black, White);
    CRT_colors[FieldColor] = CRT_color(White, Blue);
@@ -489,6 +507,10 @@ void CRT_init() {
 }
 
 void CRT_done() {
+   free(CRT_scrollHandle);
+   free(CRT_scrollHandleTop);
+   free(CRT_scrollHandleBottom);
+   free(CRT_scrollBar);
    Hashtable_delete(CRT_keys);
    Display_done();
 }

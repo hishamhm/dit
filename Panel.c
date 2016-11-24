@@ -282,23 +282,38 @@ void Panel_draw(Panel* this) {
 
       /* paint scrollbar */
       {
-         float step = (float)h / (float) itemCount ;
-         int handleHeight = ceil(step * (float)h);
-         int startAt = step * (float)this->scrollV;
+         int nBlocks = h * 2;
+         float linesPerBlock = (float)itemCount / (float)nBlocks;
+         int handleHeight = ceil((float)h / linesPerBlock);
+         int startAt = (float)this->scrollV / linesPerBlock;
          Color bar = CRT_colors[ScrollBarColor];
          Color handle = CRT_colors[ScrollHandleColor];
-         for (int i = 0; i < h; i++) {
-            char ch;
+         Color handleTop = CRT_colors[ScrollHandleTopColor];
+         Color handleBottom = CRT_colors[ScrollHandleBottomColor];
+         RichString_begin(barStr);
+         for (int i = 0; i < nBlocks; i += 2) {
+            bool set1 = false;
+            bool set2 = false;
             if (i >= startAt && handleHeight) {
-               Display_attrset(handle);
-               ch = CRT_scrollHandle;
+               set1 = true;
                handleHeight--;
-            } else {
-               Display_attrset(bar);
-               ch = CRT_scrollBar;
             }
-            Display_writeChAt(y + i, w, ch);
+            if (i+1 >= startAt && handleHeight) {
+               set2 = true;
+               handleHeight--;
+            }
+            if (set1 && set2) {
+               RichString_write(&barStr, handle, CRT_scrollHandle);
+            } else if (set1) {
+               RichString_write(&barStr, handleTop, CRT_scrollHandleTop);
+            } else if (set2) {
+               RichString_write(&barStr, handleBottom, CRT_scrollHandleBottom);
+            } else {
+               RichString_write(&barStr, bar, CRT_scrollBar);
+            }
+            Display_writeChstrAtn(y + (i/2), w, RichString_at(barStr, 0), 1);
          }
+         RichString_end(barStr);
          Display_attrset(this->color);
       }
 

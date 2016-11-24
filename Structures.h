@@ -289,6 +289,8 @@ typedef enum {
    DimColor,
    ScrollBarColor,
    ScrollHandleColor,
+   ScrollHandleTopColor,
+   ScrollHandleBottomColor,
    HeaderColor,
    StatusColor,
    KeyColor,
@@ -338,11 +340,17 @@ typedef enum {
 #define CTRL_MASK 4
 #define ALTL_MASK 8
 
+extern bool CRT_linuxConsole;
+
 extern int CRT_delay;
 
-extern char CRT_scrollHandle;
+extern char* CRT_scrollHandle;
 
-extern char CRT_scrollBar;
+extern char* CRT_scrollHandleTop;
+
+extern char* CRT_scrollHandleBottom;
+
+extern char* CRT_scrollBar;
 
 extern int CRT_colors[Colors];
 

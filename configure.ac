@@ -122,7 +122,7 @@ then
       enable_bundled_lua=yes
    else
       AX_LUA_HEADERS
-      AX_LUA_TRY_LIB_VERSION([501], [503], [], [enable_bundled_lua="yes"])
+      AX_LUA_TRY_LIB_VERSION([501], [504], [], [enable_bundled_lua="yes"])
    fi
 fi
 
