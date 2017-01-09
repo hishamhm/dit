@@ -1,0 +1,44 @@
+
+rule <- symbol
+rule ( symbol
+rule ) symbol
+rule * symbol
+rule ? symbol
+rule / symbol
+rule . symbol
+rule & symbol
+rule ! symbol
+
+rule ^ symbol
+rule ^+ symbol
+rule ^- symbol
+
+rule :} special
+rule =>`s`*`[a`-z`|A`-Z`|0`-9`|_`]`+ special
+rule ->`s`*`[a`-z`|A`-Z`|0`-9`|_`]`+ special
+rule ->`s`*'`[a`-z`|A`-Z`|0`-9`|_`]`+' special
+rule ->`s`*"`[a`-z`|A`-Z`|0`-9`|_`]`+" special
+
+rule `[a`-z`|A`-Z`|0`-9`|_`]`+`s`*<- bright
+
+rule =`[a`-z`|A`-Z`|0`-9`|_`]`+`s`* brightalt
+
+rule {| special
+rule |} special
+
+rule { special
+rule } special
+
+context [ ] symbol symbol diff
+   rule ^ symbol
+   rule - symbol
+/context
+
+context {: : special
+/context
+
+context ' ' diff
+/context
+
+context " " diff
+/context

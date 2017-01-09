@@ -47,6 +47,7 @@ rule .. symbol
 rule ... symbol
 rule ? symbol
 rule : symbol
+rule :: brightalt
 rule = symbol
 rule %= symbol
 rule /= symbol
@@ -103,6 +104,7 @@ rule alias bright
 rule undef bright
 
 rule :`[_`|A`-Z`|a`-z`]`[A`-Z`|a`-z`|0`-9`|_`]`* brightalt
+rule @@`[_`|A`-Z`|a`-z`]`[A`-Z`|a`-z`|0`-9`|_`]`* brightdiff
 rule @`[_`|A`-Z`|a`-z`]`[A`-Z`|a`-z`|0`-9`|_`]`* diff
 rule $`[_`|A`-Z`|a`-z`]`[A`-Z`|a`-z`|0`-9`|_`]`* brightdiff
 
@@ -127,6 +129,9 @@ context " " alt
    rule \" brightalt
    eager_rule \`[abcfnrtv`] brightalt
    rule " alt
+/context
+
+context %w[ ] alt
 /context
 
 context ' ' alt

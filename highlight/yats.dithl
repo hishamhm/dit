@@ -1,0 +1,9 @@
+FILES
+name suffix .yats
+RULES
+
+include gitconflict.dithlinc
+include html.dithlinc
+
+context << >> veryspecial veryspecial special
+/context

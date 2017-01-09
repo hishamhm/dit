@@ -1,0 +1,7 @@
+FILES
+name suffix .js
+RULES
+
+include gitconflict.dithlinc
+include javascript.dithlinc
+

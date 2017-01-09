@@ -1,5 +1,6 @@
 FILES
 name suffix .c
+name suffix .C
 name suffix .cc
 name suffix .cpp
 name suffix .cxx

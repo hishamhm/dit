@@ -167,18 +167,14 @@ context <p > alt
 rule </p> alt
 
 context <script script> alt
-   context " " diff
-   /context
-   rule = bright
-   rule type brightalt
-   context > </ alt alt special
-   /context
+   include javascript.dithlinc
 /context
 
 rule <small> alt
 rule </small> alt
 
-context <style> </style> alt alt diff
+context <style`[`sa`-z="/`]`*> </style> alt alt diff
+   include css.dithlinc
 /context
 
 context <table > alt

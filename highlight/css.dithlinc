@@ -1,0 +1,79 @@
+
+context url( ) brightalt brightalt alt
+/context
+
+context " " alt
+/context
+
+rule background-color bright
+rule color bright
+rule background bright
+rule background-image bright
+rule background-repeat bright
+rule margin bright
+rule font-family bright
+rule font-size bright
+rule border bright
+rule border-top bright
+rule font-weight bright
+rule height bright
+rule padding bright
+rule vertical-align bright
+rule font-style bright
+rule font-size bright
+rule text-align bright
+rule border-style bright
+rule border-color bright
+rule border-width bright
+rule text-decoration bright
+
+rule white brightalt
+rule black brightalt
+rule bold brightalt
+rule solid brightalt
+rule none brightalt
+rule underline brightalt
+rule repeat-`[xy`] brightalt
+rule no-repeat brightalt
+rule top brightalt
+rule bottom brightalt
+rule italic brightalt
+rule right brightalt
+rule left brightalt
+rule center brightalt
+rule smaller brightalt
+rule small brightalt
+
+rule sans brightalt
+rule mono brightalt
+
+rule :hover brightalt
+
+rule * brightdiff
+rule , diff
+rule ; diff
+rule : brightdiff
+rule { brightalt
+rule } brightalt
+
+rule #`[0`-9`|a`-f`]`[0`-9`|a`-f`]`[0`-9`|a`-f`] alt
+rule #`[0`-9`|a`-f`]`[0`-9`|a`-f`]`[0`-9`|a`-f`]`[0`-9`|a`-f`]`[0`-9`|a`-f`]`[0`-9`|a`-f`] alt
+
+rule `[0`-9`]`+px alt
+
+context /* */ dim
+/context
+
+rule body brightdiff
+rule pre brightdiff
+rule img brightdiff
+rule h`[1`-6`] brightdiff
+rule a brightdiff
+rule table brightdiff
+rule td brightdiff
+rule tr brightdiff
+rule tt brightdiff
+rule hr brightdiff
+rule p brightdiff
+rule div brightdiff
+rule span brightdiff
