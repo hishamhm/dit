@@ -1,6 +1,7 @@
    
 #define _GNU_SOURCE
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <math.h>
@@ -135,6 +136,7 @@ static bool Dit_save(Buffer* buffer, TabManager* tabs) {
                while (work && access(workName, F_OK) == 0) {
                   usleep(100000);
                }
+               wait(NULL);
                tabs->redrawBar = true;
                Dit_refresh(buffer, tabs);
             } else {
