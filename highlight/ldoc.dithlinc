@@ -1,10 +1,22 @@
+
+include markdown.dithlinc
+
 context @param `[`^`s`]`+ alt brightalt dim
+/context
+context @tparam`[`^`s`]`*`s`+ `s`+`[`^`s`]`+ alt brightalt diff
+/context
+context @treturn `[`^`s`]`+ alt diff dim
 /context
 context @type `[`^`s`]`+ alt brightalt dim
 /context
 context @module `[`^`s`]`+ alt brightalt dim
 /context
+rule @author alt
+rule @copyright alt
+rule @license alt
 rule @return alt
 rule @see alt
+rule @release alt
 rule TODO veryspecial
 rule FIXME veryspecial
+

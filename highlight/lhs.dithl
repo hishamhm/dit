@@ -1,0 +1,15 @@
+FILES
+name suffix .lhs
+RULES
+script haskell.lua
+
+include gitconflict.dithlinc
+include latex.dithlinc
+
+context \begin{code} \end{code} veryspecial veryspecial alt
+   include haskell.dithlinc
+/context 
+
+context \begin{spec} \end{spec} veryspecial veryspecial dim
+   include haskell.dithlinc
+/context 

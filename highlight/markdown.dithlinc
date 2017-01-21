@@ -1,0 +1,25 @@
+
+rule * brightalt
+
+rule `^=`* brightdiff
+rule `^-`* diff
+
+rule `^#`s`[`s`-~`]`* brightdiff
+rule `^##`+`s`[`s`-~`]`* diff
+
+context [ ] diff diff bright
+/context
+
+context `` `` bright
+/context
+
+context `^`s`s`s`s `$ dim
+/context
+context `^`t `$ dim
+/context
+
+context ** ** brightspecialdiff
+/context
+
+rule *`[`^`s`]`+* bright
+

@@ -4,7 +4,10 @@ name regex ^....\.conf$
 name regex ^...\.conf$
 name regex ^..\.conf$
 name regex ^.\.conf$
+name regex ^\..*rc$
 RULES
+
+script shell.lua
 
 include gitconflict.dithlinc
 
