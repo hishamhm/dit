@@ -1207,14 +1207,26 @@ Coords Buffer_find(Buffer* this, Text needle, bool findNext, bool caseSensitive,
          }
       }
 
-      int pastFound = found + Text_chars(needle);
-      if (wholeWord && found > 0 && pastFound < Text_chars(haystack)) {
-         wchar_t prevChar = Text_at(haystack, found - 1);
-         wchar_t nextChar = Text_at(haystack, pastFound);
-         if ( iswword(prevChar) || iswword(nextChar) ) {
-            if (forward)
-               x = pastFound;
-            continue;
+      if (wholeWord && found != -1) {
+         int pastFound = found + Text_chars(needle);
+//fprintf(stderr, "found:%d\tlen:%d\tpast:%d\tx:%d\ty:%d\n", found, Text_chars(haystack), pastFound, x, y);
+         bool moreToTheLeft  = found > 0;
+         bool moreToTheRight = pastFound < Text_chars(haystack);
+         bool charToTheLeft  = moreToTheLeft && iswword(Text_at(haystack, found - 1));
+         bool charToTheRight = moreToTheRight && iswword(Text_at(haystack, pastFound));
+         if (charToTheLeft || charToTheRight) {
+            if (forward) {
+               if (moreToTheRight) {
+                  x = pastFound;
+                  continue;
+               }
+            } else {
+               if (moreToTheLeft) {
+                  x--;
+                  continue;
+               }
+            }
+            found = -1;
          }
       }
 
