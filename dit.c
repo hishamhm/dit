@@ -589,6 +589,8 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             case KEY_CTRL('W'):
             case KEY_F(6):
             {
+               first.x = NOT_A_COORD;
+               first.y = NOT_A_COORD;
                wholeWord = !wholeWord;
                found = Buffer_find(buffer, Field_text(Dit_findField), false, caseSensitive, wholeWord, true);
                searched = true;
