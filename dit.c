@@ -1054,8 +1054,8 @@ static void Dit_loadHardcodedBindings(Dit_Action* keys) {
    keys[KEY_ALT('J')] = (Dit_Action) Dit_moveTabPageLeft;
    keys[KEY_ALT('K')] = (Dit_Action) Dit_moveTabPageRight;
 
-   keys[KEY_WHEELUP]   = (Dit_Action) Dit_scrollUp;
-   keys[KEY_WHEELDOWN] = (Dit_Action) Dit_scrollDown;
+   keys[KEY_WHEELUP]   = (Dit_Action) Dit_scrollDown;
+   keys[KEY_WHEELDOWN] = (Dit_Action) Dit_scrollUp;
 }
 
 void Dit_checkFileAccess(char** argv, char* name, int* jump, int* column) {

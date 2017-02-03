@@ -71,5 +71,5 @@ ALT_A Dit_selectUpLine
 ALT_B Dit_selectDownLine
 ALT_C Dit_selectForwardChar
 ALT_D Dit_selectBackwardChar
-WHEELUP Dit_scrollUp
-WHEELDOWN Dit_scrollDown
+WHEELUP Dit_scrollDown
+WHEELDOWN Dit_scrollUp
