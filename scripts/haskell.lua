@@ -124,7 +124,11 @@ end
 
 function on_ctrl(key)
    if key == "_" then
-      code.comment_block("--", "%-%-")
+      if current_file:match("%.lhs$") then
+         code.comment_block("%", "%%")
+      else
+         code.comment_block("--", "%-%-")
+      end
    elseif key == "]" then
       code.expand_selection()
    elseif key == "R" then
