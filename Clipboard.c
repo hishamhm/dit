@@ -12,11 +12,11 @@ struct Clipboard_ {
 
 }*/
 
-Clipboard* Clipboard_new() {
+Clipboard* Clipboard_new(bool disk) {
    Clipboard* this = (Clipboard*) malloc(sizeof(Clipboard));
    sprintf(this->clipFileName, "%s/.clipboard", getenv("HOME"));
    this->text = NULL;
-   this->disk = true;
+   this->disk = disk;
    return this;
 }
 

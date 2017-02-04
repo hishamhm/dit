@@ -69,6 +69,36 @@ void Line_updateContext(Line* this) {
    buffer->selecting = selecting;
 }
 
+static void paintSelection(Line* this, int y, char* out, int* outIdx, int* attrs, int tabSize, int xFrom, int yFrom, int xTo, int yTo) {
+   if ((y >= yFrom && y <= yTo) || (y >= yTo && y <= yFrom)) {
+      int from, to;
+      if (yFrom > yTo || (yFrom == yTo && xFrom > xTo)) {
+         int tmp = yFrom; yFrom = yTo; yTo = tmp;
+         tmp = xFrom; xFrom = xTo; xTo = tmp;
+      }
+      if (y == yFrom && y == yTo) {
+         from = Text_cellsUntil(this->text, xFrom, tabSize);
+         to = Text_cellsUntil(this->text, xTo, tabSize);
+      } else if (y == yFrom && y < yTo) {
+         from = Text_cellsUntil(this->text, xFrom, tabSize);
+         out[(*outIdx)++] = ' ';
+         out[(*outIdx)] = '\0';
+         to = *outIdx;
+      } else if (y > yFrom && y == yTo) {
+         from = 0;
+         to = Text_cellsUntil(this->text, xTo, tabSize);
+      } else { // if (y > yFrom && y < yTo) {
+         from = 0;
+         out[(*outIdx)++] = ' ';
+         out[(*outIdx)] = '\0';
+         to = *outIdx;
+      }
+      for (int i = from; i < to; i++) {
+         attrs[i] = CRT_colors[SelectionColor];
+      }
+   }
+}
+
 void Line_display(Object* cast, RichString* str) {
    Line* this = (Line*) cast;
    Buffer* buffer = (Buffer*)(this->super.list->data);
@@ -83,7 +113,7 @@ void Line_display(Object* cast, RichString* str) {
    memset(attrs, 0, sizeAttrs);
    
    int outIdx = 0;
-   char out[this->text.bytes * tabSize + 1];
+   char out[this->text.bytes * tabSize + 2];
 
    HighlightContext* context = this->super.prev
                              ? ((Line*)this->super.prev)->context
@@ -121,37 +151,23 @@ void Line_display(Object* cast, RichString* str) {
       attrs[buffer->bracketX] = CRT_colors[BracketColor];
    }
    
-   if (buffer->selecting) {
-      int yFrom = buffer->selectYfrom;
-      int yTo = buffer->selectYto;
-      if ((y >= yFrom && y <= yTo) || (y >= yTo && y <= yFrom)) {
-         int from, to;
-         int xFrom = buffer->selectXfrom;
-         int xTo = buffer->selectXto;
-         if (yFrom > yTo || (yFrom == yTo && xFrom > xTo)) {
-            int tmp = yFrom; yFrom = yTo; yTo = tmp;
-            tmp = xFrom; xFrom = xTo; xTo = tmp;
+   if (buffer->nCursors > 0) {
+      for (int i = 0; i < buffer->nCursors; i++) {
+         if (buffer->selecting) {
+            paintSelection(this, y, out, &outIdx, attrs, tabSize, buffer->cursors[i].selectXfrom, buffer->cursors[i].selectYfrom, buffer->cursors[i].selectXto, buffer->cursors[i].selectYto);
          }
-         if (y == yFrom && y == yTo) {
-            from = Text_cellsUntil(this->text, xFrom, tabSize);
-            to = Text_cellsUntil(this->text, xTo, tabSize);
-         } else if (y == yFrom && y < yTo) {
-            from = Text_cellsUntil(this->text, xFrom, tabSize);
-            out[outIdx++] = ' ';
-            out[outIdx] = '\0';
-            to = outIdx;
-         } else if (y > yFrom && y == yTo) {
-            from = 0;
-            to = Text_cellsUntil(this->text, xTo, tabSize);
-         } else { // if (y > yFrom && y < yTo) {
-            from = 0;
-            out[outIdx++] = ' ';
-            out[outIdx] = '\0';
-            to = outIdx;
+         if (buffer->cursors[i].y == y) {
+            int cx = buffer->cursors[i].x;
+            attrs[cx] = CRT_colors[AlertColor];
+            if (cx == UTF8_chars(out)) {
+               out[outIdx++] = ' ';
+               out[outIdx] = '\0';
+            }
          }
-         for (int i = from; i < to; i++) {
-            attrs[i] = CRT_colors[SelectionColor];
-         }
+      }
+   } else {
+      if (buffer->selecting) {
+         paintSelection(this, y, out, &outIdx, attrs, tabSize, buffer->selectXfrom, buffer->selectYfrom, buffer->selectXto, buffer->selectYto);
       }
    }
    
@@ -252,7 +268,7 @@ static StringBuffer* getBlock(Line* this, int lines, int xFrom, int xTo, bool de
          lineToBufferFrom(str, l, xFrom);
          StringBuffer_addChar(str, '\n');
          if (delete) Text_deleteChars(&(l->text), xFrom, Text_chars(l->text) - xFrom);
-      } else {
+   } else {
          lineToBuffer(str, l);
          StringBuffer_addChar(str, '\n');
          if (delete) Text_prune(&(l->text));

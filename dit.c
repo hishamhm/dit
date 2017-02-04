@@ -194,11 +194,13 @@ static bool confirmClose(Buffer* buffer, TabManager* tabs, char* question) {
 
 static Clipboard* Dit_clipboard = NULL;
 
+static Clipboard* Dit_multipleClipboards[100] = { NULL };
+
 static int xclipOk = 1;
 
 static void copy(Buffer* buffer, bool x11copy) {
    if (!Dit_clipboard)
-      Dit_clipboard = Clipboard_new();
+      Dit_clipboard = Clipboard_new(true);
    int blockLen;
    char* block = Buffer_copyBlock(buffer, &blockLen);
    if (block) {
@@ -238,7 +240,7 @@ static void Dit_x11copy(Buffer* buffer) {
 
 static void Dit_paste(Buffer* buffer) {
    if (!Dit_clipboard)
-      Dit_clipboard = Clipboard_new();
+      Dit_clipboard = Clipboard_new(true);
    Text block = Clipboard_get(Dit_clipboard);
    if (Text_isSet(block)) {
       Buffer_pasteBlock(buffer, block);
@@ -274,7 +276,7 @@ static Field* Dit_gotoField = NULL;
 
 static void pasteInField(Field* field) {
    if (!Dit_clipboard)
-      Dit_clipboard = Clipboard_new();
+      Dit_clipboard = Clipboard_new(true);
    Text block = Clipboard_get(Dit_clipboard);
    if (Text_isSet(block)) {
       if (!Text_hasChar(block, '\n'))
@@ -917,6 +919,132 @@ typedef bool (*Dit_Action)(Buffer*, TabManager*, int*, int*);
 
 static Hashtable* Dit_actions = NULL;
 
+static void saveCursor(Buffer* buffer, int c) {
+   buffer->cursors[c].x = buffer->x;
+   buffer->cursors[c].y = buffer->y;
+   buffer->cursors[c].savedX = buffer->savedX;
+   buffer->cursors[c].savedY = buffer->savedY;
+   buffer->cursors[c].selecting = buffer->selecting;
+   buffer->cursors[c].selectXfrom = buffer->selectXfrom;
+   buffer->cursors[c].selectYfrom = buffer->selectYfrom;
+   buffer->cursors[c].selectXto = buffer->selectXto;
+   buffer->cursors[c].selectYto = buffer->selectYto;
+}
+
+static void restoreCursor(Buffer* buffer, int c) {
+   buffer->x = buffer->cursors[c].x;
+   buffer->y = buffer->cursors[c].y;
+   buffer->savedX = buffer->cursors[c].savedX;
+   buffer->savedY = buffer->cursors[c].savedY;
+   buffer->selecting = buffer->cursors[c].selecting;
+   buffer->selectXfrom = buffer->cursors[c].selectXfrom;
+   buffer->selectYfrom = buffer->cursors[c].selectYfrom;
+   buffer->selectXto = buffer->cursors[c].selectXto;
+   buffer->selectYto = buffer->cursors[c].selectYto;
+   if (buffer->selecting) {
+      Buffer_setSelection(buffer, buffer->cursors[c].selectXfrom, buffer->cursors[c].selectYfrom, buffer->cursors[c].selectXto, buffer->cursors[c].selectYto);
+   }
+   Buffer_goto(buffer, buffer->cursors[c].x, buffer->cursors[c].y, true);
+}
+
+static void checkCollapseCursors(Buffer* buffer) {
+   for (int i = 0; i < buffer->nCursors; i++) {
+      if (buffer->cursors[i].x == -1)
+         continue;
+      for (int j = i + 1; j < buffer->nCursors; j++) {
+         if (buffer->cursors[i].x == buffer->cursors[j].x && buffer->cursors[i].y == buffer->cursors[j].y) {
+            buffer->cursors[j].x = -1;
+         }
+      }
+   }
+   int dead = 0;
+   for (int i = 1; i < buffer->nCursors; i++) {
+      if (buffer->cursors[i].x == -1) {
+         dead++;
+      } else {
+         if (dead > 0) {
+            restoreCursor(buffer, i);
+            saveCursor(buffer, i - dead);
+         }
+      }
+   }
+   buffer->nCursors -= dead;
+   if (buffer->nCursors == 1) {
+      restoreCursor(buffer, 0);
+      buffer->panel->needsRedraw = true;
+      buffer->selecting = false;
+      buffer->nCursors = 0;
+   }
+}
+
+static void Dit_multipleCursors(Buffer* buffer) {
+   if (buffer->nCursors == 100) {
+      return;
+   }
+   int c = buffer->nCursors;
+   Coords found = { .x = NOT_A_COORD, .y = NOT_A_COORD };
+   int newX, newY;
+   char* block;
+   if (buffer->selecting) {
+      int blockLen;
+      block = Buffer_copyBlock(buffer, &blockLen);
+      if (!block) {
+         return;
+      }
+      if (strchr(block, '\n')) {
+         free(block);
+         return;
+      }
+      found = Buffer_find(buffer, Text_new(block), true, true, false, true);
+      if (found.x == NOT_A_COORD) {
+         free(block);
+         return;
+      }
+   }
+   if (buffer->nCursors == 0) {
+      saveCursor(buffer, c);
+      c++;
+      if (!Dit_multipleClipboards[buffer->nCursors]) {
+         Dit_multipleClipboards[buffer->nCursors] = Clipboard_new(false);
+      }
+      buffer->nCursors++;
+   }
+   if (buffer->selecting) {
+      newX = found.x + strlen(block);
+      newY = found.y;
+   } else {
+      if (buffer->y == Buffer_size(buffer) - 1) {
+         return;
+      }
+      Buffer_goto(buffer, buffer->x, buffer->y + 1, false);
+      newX = buffer->x;
+      newY = buffer->y;
+   }
+   
+   buffer->cursors[c].x = newX;
+   buffer->cursors[c].y = newY;
+   buffer->cursors[c].savedX = newX;
+   buffer->cursors[c].savedY = newY;
+   buffer->cursors[c].selecting = buffer->selecting;
+   if (found.x != NOT_A_COORD) {
+      buffer->cursors[c].selectXfrom = found.x;
+      buffer->cursors[c].selectYfrom = found.y;
+      buffer->cursors[c].selectXto = newX;
+      buffer->cursors[c].selectYto = found.y;
+      Buffer_setSelection(buffer, found.x, found.y, newX, found.y);
+   } else {
+      buffer->cursors[c].selectXfrom = -1;
+      buffer->cursors[c].selectYfrom = -1;
+      buffer->cursors[c].selectXto = -1;
+      buffer->cursors[c].selectYto = -1;
+   }
+   if (!Dit_multipleClipboards[buffer->nCursors]) {
+      Dit_multipleClipboards[buffer->nCursors] = Clipboard_new(false);
+   }
+   buffer->nCursors++;
+   Buffer_goto(buffer, newX, newY, true);
+}
+
 static void Dit_registerActions() {
    Dit_actions = Hashtable_new(100, Hashtable_STR, Hashtable_BORROW_REFS);
    Hashtable_putString(Dit_actions, "Buffer_backwardChar", (void*)(long) Buffer_backwardChar);
@@ -976,13 +1104,14 @@ static void Dit_registerActions() {
    Hashtable_putString(Dit_actions, "Dit_selectUpLine", (void*)(long) Dit_selectUpLine);
    Hashtable_putString(Dit_actions, "Dit_undo", (void*)(long) Dit_undo);
    Hashtable_putString(Dit_actions, "Dit_wordWrap", (void*)(long) Dit_wordWrap);
+   Hashtable_putString(Dit_actions, "Dit_multipleCursors", (void*)(long) Dit_multipleCursors);
 }
 
 static void Dit_loadHardcodedBindings(Dit_Action* keys) {
    keys[KEY_CTRL('A')] = (Dit_Action) Buffer_beginningOfLine;
    keys[KEY_CTRL('B')] = (Dit_Action) Dit_jumpBack;
    keys[KEY_CTRL('C')] = (Dit_Action) Dit_copy;
-   /* Ctrl D is FREE */
+   /* Ctrl D is free */
    keys[KEY_CTRL('E')] = (Dit_Action) Buffer_endOfLine;
    keys[KEY_CTRL('F')] = (Dit_Action) Dit_find;
    keys[KEY_CTRL('G')] = (Dit_Action) Dit_goto;
@@ -1010,6 +1139,7 @@ static void Dit_loadHardcodedBindings(Dit_Action* keys) {
    keys[KEY_SIC]       = (Dit_Action) Dit_paste;
    keys[KEY_CS_INSERT] = (Dit_Action) Dit_paste;
    keys[KEY_SDC]       = (Dit_Action) Dit_cut;
+   keys[KEY_F(5)]      = (Dit_Action) Dit_multipleCursors;
    keys[KEY_F(8)]      = (Dit_Action) Dit_deleteLine;
    keys[KEY_F(10)]     = (Dit_Action) Dit_quit;
    keys[0x0d]          = (Dit_Action) Dit_breakLine;
@@ -1219,6 +1349,11 @@ int main(int argc, char** argv) {
       if (buffer->dosLineBreaks) {
          Display_printAt(lines - 1, 17, "DOS");
       }
+      if (buffer->nCursors > 0) {
+         Display_attrset(CRT_colors[AlertColor]);
+         Display_printAt(lines - 1, 17, "%3d", buffer->nCursors);
+      }
+      Display_attrset(CRT_colors[TabColor]);
 
       Display_attrset(A_NORMAL);
       buffer->lastKey = ch;
@@ -1262,13 +1397,40 @@ int main(int argc, char** argv) {
             break;
          }
       }
-      
-      bool done = Script_onKey(buffer, ch);
-      if (!done) {
-         if (ch < limit && keys[ch]) {
-            (keys[ch])(buffer, tabs, &ch, &quit);
-         } else {
-            Buffer_defaultKeyHandler(buffer, ch, code);
+
+      if (ch == 27) {
+         buffer->panel->needsRedraw = true;
+         buffer->selecting = false;
+         buffer->nCursors = 0;
+         continue;
+      }
+      if (buffer->nCursors > 0 && keys[ch] != Dit_multipleCursors) {
+         buffer->panel->needsRedraw = true;
+         Clipboard* saveClipboard = Dit_clipboard;
+         for (int i = buffer->nCursors - 1; i >= 0; i--) {
+            Dit_clipboard = Dit_multipleClipboards[i];
+            restoreCursor(buffer, i);
+            bool done = Script_onKey(buffer, ch);
+            if (!done) {
+               if (ch < limit && keys[ch]) {
+                  (keys[ch])(buffer, tabs, &ch, &quit);
+               } else {
+                  Buffer_defaultKeyHandler(buffer, ch, code);
+               }
+            }
+            saveCursor(buffer, i);
+         }
+         restoreCursor(buffer, buffer->nCursors - 1);
+         Dit_clipboard = saveClipboard;
+         checkCollapseCursors(buffer);
+      } else {
+         bool done = Script_onKey(buffer, ch);
+         if (!done) {
+            if (ch < limit && keys[ch]) {
+               (keys[ch])(buffer, tabs, &ch, &quit);
+            } else {
+               Buffer_defaultKeyHandler(buffer, ch, code);
+            }
          }
       }
    }

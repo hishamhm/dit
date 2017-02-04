@@ -91,6 +91,18 @@ struct Buffer_ {
    double lastTime;
    // size of Tab (\t) in cells
    int tabSize;
+   int nCursors;
+   struct {
+      chars x;
+      int y;
+      chars savedX;
+      int savedY;
+      chars selectXfrom;
+      int selectYfrom;
+      chars selectXto;
+      int selectYto;
+      bool selecting;
+   } cursors[100];
    // Lua state
    ScriptState script;
    bool skipOnChange;
@@ -241,6 +253,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
    this->tabulation = 3;
    this->dosLineBreaks = false;
    this->tabSize = 8;
+   this->nCursors = 0;
    
    Script_initState(&this->script, tabs, this);
    

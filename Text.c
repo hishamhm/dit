@@ -56,7 +56,7 @@ int UTF8_bytes(const char sc) {
    return 1;
 }
 
-static int UTF8_chars(const char* s) {
+int UTF8_chars(const char* s) {
    int i = 0;
    unsigned char* c = (unsigned char*) s;
    while (*c) {

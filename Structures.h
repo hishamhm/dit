@@ -223,6 +223,18 @@ struct Buffer_ {
    double lastTime;
    // size of Tab (\t) in cells
    int tabSize;
+   int nCursors;
+   struct {
+      chars x;
+      int y;
+      chars savedX;
+      int savedY;
+      chars selectXfrom;
+      int selectYfrom;
+      chars selectXto;
+      int selectYto;
+      bool selecting;
+   } cursors[100];
    // Lua state
    ScriptState script;
    bool skipOnChange;
