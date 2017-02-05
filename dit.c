@@ -32,6 +32,8 @@
 
 //#link m
 
+typedef bool (*Dit_Action)(Buffer*, TabManager*, int*, int*);
+
 static int lines, cols;
 
 static void printVersionFlag() {
@@ -474,6 +476,170 @@ static void moveIfFound(Buffer* buffer, TabManager* tabs, int len, Coords found,
    *failing = false;
 }
 
+static void saveCursor(Buffer* buffer, int c) {
+   buffer->cursors[c].x = buffer->x;
+   buffer->cursors[c].y = buffer->y;
+   buffer->cursors[c].lineLen = Buffer_getLineLength(buffer, buffer->y);
+   buffer->cursors[c].savedX = buffer->savedX;
+   buffer->cursors[c].savedY = buffer->savedY;
+   buffer->cursors[c].selecting = buffer->selecting;
+   buffer->cursors[c].selectXfrom = buffer->selectXfrom;
+   buffer->cursors[c].selectYfrom = buffer->selectYfrom;
+   buffer->cursors[c].selectXto = buffer->selectXto;
+   buffer->cursors[c].selectYto = buffer->selectYto;
+}
+
+static void restoreCursor(Buffer* buffer, int c) {
+   buffer->x = buffer->cursors[c].x;
+   buffer->y = buffer->cursors[c].y;
+   buffer->savedX = buffer->cursors[c].savedX;
+   buffer->savedY = buffer->cursors[c].savedY;
+   buffer->selecting = buffer->cursors[c].selecting;
+   buffer->selectXfrom = buffer->cursors[c].selectXfrom;
+   buffer->selectYfrom = buffer->cursors[c].selectYfrom;
+   buffer->selectXto = buffer->cursors[c].selectXto;
+   buffer->selectYto = buffer->cursors[c].selectYto;
+   if (buffer->selecting) {
+      Buffer_setSelection(buffer, buffer->cursors[c].selectXfrom, buffer->cursors[c].selectYfrom, buffer->cursors[c].selectXto, buffer->cursors[c].selectYto);
+   }
+   Buffer_goto(buffer, buffer->cursors[c].x, buffer->cursors[c].y, true);
+}
+
+static void adjustOtherCursors(Buffer* buffer, int c, Dit_Action action) {
+   int cx = buffer->x;
+   int cy = buffer->y;
+   int lineLen = Buffer_getLineLength(buffer, buffer->y);
+   int delta = lineLen - buffer->cursors[c].lineLen;
+   if (delta) {
+      for (int i = 0; i < buffer->nCursors; i++) {
+         if (i == c)
+            continue;
+         if (buffer->cursors[i].y == cy && buffer->cursors[i].x > cx) {
+            buffer->cursors[i].x += delta;
+            buffer->cursors[i].savedX += delta;
+            if (buffer->cursors[i].selectYfrom == cy && buffer->cursors[i].selectXfrom > cx) {
+               buffer->cursors[i].selectXfrom += delta;
+            }
+            if (buffer->cursors[i].selectYto == cy && buffer->cursors[i].selectXto > cx) {
+               buffer->cursors[i].selectXto += delta;
+            }
+         }
+         buffer->cursors[i].lineLen = Buffer_getLineLength(buffer, buffer->cursors[i].y);
+      }
+   }
+}
+
+static void checkCollapseCursors(Buffer* buffer) {
+   for (int i = 0; i < buffer->nCursors; i++) {
+      if (buffer->cursors[i].x == -1)
+         continue;
+      for (int j = i + 1; j < buffer->nCursors; j++) {
+         if (buffer->cursors[i].x == buffer->cursors[j].x && buffer->cursors[i].y == buffer->cursors[j].y) {
+            buffer->cursors[j].x = -1;
+         }
+      }
+   }
+   int dead = 0;
+   for (int i = 1; i < buffer->nCursors; i++) {
+      if (buffer->cursors[i].x == -1) {
+         dead++;
+      } else {
+         if (dead > 0) {
+            restoreCursor(buffer, i);
+            saveCursor(buffer, i - dead);
+         }
+      }
+   }
+   buffer->nCursors -= dead;
+   if (buffer->nCursors == 1) {
+      restoreCursor(buffer, 0);
+      buffer->panel->needsRedraw = true;
+      buffer->selecting = false;
+      buffer->nCursors = 0;
+   }
+}
+
+static void Dit_decreaseMultipleCursors(Buffer* buffer) {
+   if (buffer->nCursors == 0) {
+      return;
+   }
+   buffer->nCursors--;
+   buffer->panel->needsRedraw = true;
+   restoreCursor(buffer, buffer->nCursors - 1);
+   if (buffer->nCursors == 1) {
+      buffer->nCursors = 0;
+   }
+}
+
+static void Dit_multipleCursors(Buffer* buffer) {
+   if (buffer->nCursors == 100) {
+      return;
+   }
+   int c = buffer->nCursors;
+   Coords found = { .x = NOT_A_COORD, .y = NOT_A_COORD };
+   int newX, newY;
+   char* block;
+   if (buffer->selecting) {
+      int blockLen;
+      block = Buffer_copyBlock(buffer, &blockLen);
+      if (!block) {
+         return;
+      }
+      if (strchr(block, '\n')) {
+         free(block);
+         return;
+      }
+      found = Buffer_find(buffer, Text_new(block), true, true, false, true);
+      if (found.x == NOT_A_COORD) {
+         free(block);
+         return;
+      }
+   }
+   if (buffer->nCursors == 0) {
+      saveCursor(buffer, c);
+      c++;
+      if (!Dit_multipleClipboards[buffer->nCursors]) {
+         Dit_multipleClipboards[buffer->nCursors] = Clipboard_new(false);
+      }
+      buffer->nCursors++;
+   }
+   if (buffer->selecting) {
+      newX = found.x + strlen(block);
+      newY = found.y;
+   } else {
+      if (buffer->y == Buffer_size(buffer) - 1) {
+         return;
+      }
+      Buffer_goto(buffer, buffer->x, buffer->y + 1, false);
+      newX = buffer->x;
+      newY = buffer->y;
+   }
+   
+   buffer->cursors[c].x = newX;
+   buffer->cursors[c].y = newY;
+   buffer->cursors[c].lineLen = Buffer_getLineLength(buffer, newY);
+   buffer->cursors[c].savedX = newX;
+   buffer->cursors[c].savedY = newY;
+   buffer->cursors[c].selecting = buffer->selecting;
+   if (found.x != NOT_A_COORD) {
+      buffer->cursors[c].selectXfrom = found.x;
+      buffer->cursors[c].selectYfrom = found.y;
+      buffer->cursors[c].selectXto = newX;
+      buffer->cursors[c].selectYto = found.y;
+      Buffer_setSelection(buffer, found.x, found.y, newX, found.y);
+   } else {
+      buffer->cursors[c].selectXfrom = -1;
+      buffer->cursors[c].selectYfrom = -1;
+      buffer->cursors[c].selectXto = -1;
+      buffer->cursors[c].selectYto = -1;
+   }
+   if (!Dit_multipleClipboards[buffer->nCursors]) {
+      Dit_multipleClipboards[buffer->nCursors] = Clipboard_new(false);
+   }
+   buffer->nCursors++;
+   Buffer_goto(buffer, newX, newY, true);
+}
+
 static void Dit_find(Buffer* buffer, TabManager* tabs) {
    TabManager_markJump(tabs);
    if (!Dit_findField)
@@ -525,7 +691,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
       bool handled;
       bool code;
       int ch = Field_run(Dit_findField, false, &handled, &code);
-     
+
       int lastY = buffer->y + 1;
       if (!handled) {
          if (!code && (ch >= 32 || ch == 9 || ch == KEY_CTRL('T'))) {
@@ -581,7 +747,6 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                break;
             case KEY_CTRL('I'):
             case KEY_CTRL('C'):
-            case KEY_F(5):
             {
                caseSensitive = !caseSensitive;
                found = Buffer_find(buffer, Field_text(Dit_findField), false, caseSensitive, wholeWord, true);
@@ -589,7 +754,6 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                break;
             }
             case KEY_CTRL('W'):
-            case KEY_F(6):
             {
                first.x = NOT_A_COORD;
                first.y = NOT_A_COORD;
@@ -644,7 +808,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                      quit = 1;
                      break;
                   }
-                  bool quitMask[255] = {0};
+                  bool quitMask[256] = {0};
                   quitMask[KEY_CTRL('R')] = true;
                   quitMask[KEY_CTRL('C')] = true;
                   quitMask[KEY_CTRL('F')] = true;
@@ -708,6 +872,11 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
             case 13:
                quit = true;
                break;
+            case KEY_F(5):
+               quit = true;
+               Dit_multipleCursors(buffer);
+               TabManager_refreshCurrent(tabs);
+               return;
             case 27:
                quit = true;
                Dit_scrollTo(buffer, saveX, saveY, false);
@@ -915,173 +1084,8 @@ static void Dit_selectEndOfFile(Buffer* buffer, TabManager* tabs)       { TabMan
 static void Dit_beginningOfFile(Buffer* buffer, TabManager* tabs) { TabManager_markJump(tabs); Buffer_beginningOfFile(buffer); }
 static void Dit_endOfFile(Buffer* buffer, TabManager* tabs)       { TabManager_markJump(tabs); Buffer_endOfFile(buffer);       }
 
-typedef bool (*Dit_Action)(Buffer*, TabManager*, int*, int*);
-
 static Hashtable* Dit_actions = NULL;
 
-static void saveCursor(Buffer* buffer, int c) {
-   buffer->cursors[c].x = buffer->x;
-   buffer->cursors[c].y = buffer->y;
-   buffer->cursors[c].lineLen = Buffer_getLineLength(buffer, buffer->y);
-   buffer->cursors[c].savedX = buffer->savedX;
-   buffer->cursors[c].savedY = buffer->savedY;
-   buffer->cursors[c].selecting = buffer->selecting;
-   buffer->cursors[c].selectXfrom = buffer->selectXfrom;
-   buffer->cursors[c].selectYfrom = buffer->selectYfrom;
-   buffer->cursors[c].selectXto = buffer->selectXto;
-   buffer->cursors[c].selectYto = buffer->selectYto;
-}
-
-static void restoreCursor(Buffer* buffer, int c) {
-   buffer->x = buffer->cursors[c].x;
-   buffer->y = buffer->cursors[c].y;
-   buffer->savedX = buffer->cursors[c].savedX;
-   buffer->savedY = buffer->cursors[c].savedY;
-   buffer->selecting = buffer->cursors[c].selecting;
-   buffer->selectXfrom = buffer->cursors[c].selectXfrom;
-   buffer->selectYfrom = buffer->cursors[c].selectYfrom;
-   buffer->selectXto = buffer->cursors[c].selectXto;
-   buffer->selectYto = buffer->cursors[c].selectYto;
-   if (buffer->selecting) {
-      Buffer_setSelection(buffer, buffer->cursors[c].selectXfrom, buffer->cursors[c].selectYfrom, buffer->cursors[c].selectXto, buffer->cursors[c].selectYto);
-   }
-   Buffer_goto(buffer, buffer->cursors[c].x, buffer->cursors[c].y, true);
-}
-
-static void adjustOtherCursors(Buffer* buffer, int c, Dit_Action action) {
-   int cx = buffer->x;
-   int cy = buffer->y;
-   int lineLen = Buffer_getLineLength(buffer, buffer->y);
-   int delta = lineLen - buffer->cursors[c].lineLen;
-   if (delta) {
-      for (int i = 0; i < buffer->nCursors; i++) {
-         if (i == c)
-            continue;
-         if (buffer->cursors[i].y == cy && buffer->cursors[i].x > cx) {
-            buffer->cursors[i].x += delta;
-            buffer->cursors[i].savedX += delta;
-            if (buffer->cursors[i].selectYfrom == cy && buffer->cursors[i].selectXfrom > cx) {
-               buffer->cursors[i].selectXfrom += delta;
-            }
-            if (buffer->cursors[i].selectYto == cy && buffer->cursors[i].selectXto > cx) {
-               buffer->cursors[i].selectXto += delta;
-            }
-         }
-         buffer->cursors[i].lineLen = Buffer_getLineLength(buffer, buffer->cursors[i].y);
-      }
-   }
-}
-
-static void checkCollapseCursors(Buffer* buffer) {
-   for (int i = 0; i < buffer->nCursors; i++) {
-      if (buffer->cursors[i].x == -1)
-         continue;
-      for (int j = i + 1; j < buffer->nCursors; j++) {
-         if (buffer->cursors[i].x == buffer->cursors[j].x && buffer->cursors[i].y == buffer->cursors[j].y) {
-            buffer->cursors[j].x = -1;
-         }
-      }
-   }
-   int dead = 0;
-   for (int i = 1; i < buffer->nCursors; i++) {
-      if (buffer->cursors[i].x == -1) {
-         dead++;
-      } else {
-         if (dead > 0) {
-            restoreCursor(buffer, i);
-            saveCursor(buffer, i - dead);
-         }
-      }
-   }
-   buffer->nCursors -= dead;
-   if (buffer->nCursors == 1) {
-      restoreCursor(buffer, 0);
-      buffer->panel->needsRedraw = true;
-      buffer->selecting = false;
-      buffer->nCursors = 0;
-   }
-}
-
-static void Dit_decreaseMultipleCursors(Buffer* buffer) {
-   if (buffer->nCursors == 0) {
-      return;
-   }
-   buffer->nCursors--;
-   buffer->panel->needsRedraw = true;
-   restoreCursor(buffer, buffer->nCursors - 1);
-   if (buffer->nCursors == 1) {
-      buffer->nCursors = 0;
-   }
-}
-
-static void Dit_multipleCursors(Buffer* buffer) {
-   if (buffer->nCursors == 100) {
-      return;
-   }
-   int c = buffer->nCursors;
-   Coords found = { .x = NOT_A_COORD, .y = NOT_A_COORD };
-   int newX, newY;
-   char* block;
-   if (buffer->selecting) {
-      int blockLen;
-      block = Buffer_copyBlock(buffer, &blockLen);
-      if (!block) {
-         return;
-      }
-      if (strchr(block, '\n')) {
-         free(block);
-         return;
-      }
-      found = Buffer_find(buffer, Text_new(block), true, true, false, true);
-      if (found.x == NOT_A_COORD) {
-         free(block);
-         return;
-      }
-   }
-   if (buffer->nCursors == 0) {
-      saveCursor(buffer, c);
-      c++;
-      if (!Dit_multipleClipboards[buffer->nCursors]) {
-         Dit_multipleClipboards[buffer->nCursors] = Clipboard_new(false);
-      }
-      buffer->nCursors++;
-   }
-   if (buffer->selecting) {
-      newX = found.x + strlen(block);
-      newY = found.y;
-   } else {
-      if (buffer->y == Buffer_size(buffer) - 1) {
-         return;
-      }
-      Buffer_goto(buffer, buffer->x, buffer->y + 1, false);
-      newX = buffer->x;
-      newY = buffer->y;
-   }
-   
-   buffer->cursors[c].x = newX;
-   buffer->cursors[c].y = newY;
-   buffer->cursors[c].lineLen = Buffer_getLineLength(buffer, newY);
-   buffer->cursors[c].savedX = newX;
-   buffer->cursors[c].savedY = newY;
-   buffer->cursors[c].selecting = buffer->selecting;
-   if (found.x != NOT_A_COORD) {
-      buffer->cursors[c].selectXfrom = found.x;
-      buffer->cursors[c].selectYfrom = found.y;
-      buffer->cursors[c].selectXto = newX;
-      buffer->cursors[c].selectYto = found.y;
-      Buffer_setSelection(buffer, found.x, found.y, newX, found.y);
-   } else {
-      buffer->cursors[c].selectXfrom = -1;
-      buffer->cursors[c].selectYfrom = -1;
-      buffer->cursors[c].selectXto = -1;
-      buffer->cursors[c].selectYto = -1;
-   }
-   if (!Dit_multipleClipboards[buffer->nCursors]) {
-      Dit_multipleClipboards[buffer->nCursors] = Clipboard_new(false);
-   }
-   buffer->nCursors++;
-   Buffer_goto(buffer, newX, newY, true);
-}
 
 static void Dit_registerActions() {
    Dit_actions = Hashtable_new(100, Hashtable_STR, Hashtable_BORROW_REFS);
@@ -1425,6 +1429,10 @@ int main(int argc, char** argv) {
          }
 
          if (ch == KEY_MOUSE) {
+            if (buffer->nCursors > 0) {
+               buffer->panel->needsRedraw = true;
+               buffer->nCursors = 0;
+            }
             ch = handleMouse(&mstate, tabs);
          }
    
