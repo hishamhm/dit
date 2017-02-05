@@ -234,6 +234,7 @@ struct Buffer_ {
       chars selectXto;
       int selectYto;
       bool selecting;
+      int lineLen;
    } cursors[100];
    // Lua state
    ScriptState script;

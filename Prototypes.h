@@ -139,6 +139,7 @@ int Buffer_scrollV(Buffer* this);
 int Buffer_scrollH(Buffer* this);
 const char* Buffer_currentLine(Buffer* this);
  const char* Buffer_getLine(Buffer* this, int i);
+ int Buffer_getLineLength(Buffer* this, int i);
 const char* Buffer_previousLine(Buffer* this);
 void Buffer_delete(Buffer* this);
 void Buffer_refreshHighlight(Buffer* this);

@@ -102,6 +102,7 @@ struct Buffer_ {
       chars selectXto;
       int selectYto;
       bool selecting;
+      int lineLen;
    } cursors[100];
    // Lua state
    ScriptState script;
@@ -583,6 +584,14 @@ inline const char* Buffer_getLine(Buffer* this, int i) {
       return Line_toString(line);
    else
       return NULL;
+}
+
+inline int Buffer_getLineLength(Buffer* this, int i) {
+   Line* line = (Line*) Panel_get(this->panel, i);
+   if (line) 
+      return Line_chars(line);
+   else
+      return -1;
 }
 
 const char* Buffer_previousLine(Buffer* this) {

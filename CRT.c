@@ -426,6 +426,14 @@ void CRT_init() {
    Hashtable_putString(CRT_keys, "F10", (void*) KEY_F(10));
    Hashtable_putString(CRT_keys, "F11", (void*) KEY_F(11));
    Hashtable_putString(CRT_keys, "F12", (void*) KEY_F(12));
+   Hashtable_putString(CRT_keys, "SHIFT_F3", (void*) KEY_F(13));
+   Hashtable_putString(CRT_keys, "SHIFT_F4", (void*) KEY_F(14));
+   Hashtable_putString(CRT_keys, "SHIFT_F5", (void*) KEY_F(15));
+   Hashtable_putString(CRT_keys, "SHIFT_F6", (void*) KEY_F(16));
+   Hashtable_putString(CRT_keys, "SHIFT_F7", (void*) KEY_F(17));
+   Hashtable_putString(CRT_keys, "SHIFT_F8", (void*) KEY_F(18));
+   Hashtable_putString(CRT_keys, "SHIFT_F9", (void*) KEY_F(19));
+   Hashtable_putString(CRT_keys, "SHIFT_F10", (void*) KEY_F(20));
    Hashtable_putString(CRT_keys, "FIND", (void*) KEY_FIND);
    Hashtable_putString(CRT_keys, "HELP", (void*) KEY_HELP);
    Hashtable_putString(CRT_keys, "HOME", (void*) KEY_HOME);

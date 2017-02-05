@@ -922,6 +922,7 @@ static Hashtable* Dit_actions = NULL;
 static void saveCursor(Buffer* buffer, int c) {
    buffer->cursors[c].x = buffer->x;
    buffer->cursors[c].y = buffer->y;
+   buffer->cursors[c].lineLen = Buffer_getLineLength(buffer, buffer->y);
    buffer->cursors[c].savedX = buffer->savedX;
    buffer->cursors[c].savedY = buffer->savedY;
    buffer->cursors[c].selecting = buffer->selecting;
@@ -945,6 +946,30 @@ static void restoreCursor(Buffer* buffer, int c) {
       Buffer_setSelection(buffer, buffer->cursors[c].selectXfrom, buffer->cursors[c].selectYfrom, buffer->cursors[c].selectXto, buffer->cursors[c].selectYto);
    }
    Buffer_goto(buffer, buffer->cursors[c].x, buffer->cursors[c].y, true);
+}
+
+static void adjustOtherCursors(Buffer* buffer, int c, Dit_Action action) {
+   int cx = buffer->x;
+   int cy = buffer->y;
+   int lineLen = Buffer_getLineLength(buffer, buffer->y);
+   int delta = lineLen - buffer->cursors[c].lineLen;
+   if (delta) {
+      for (int i = 0; i < buffer->nCursors; i++) {
+         if (i == c)
+            continue;
+         if (buffer->cursors[i].y == cy && buffer->cursors[i].x > cx) {
+            buffer->cursors[i].x += delta;
+            buffer->cursors[i].savedX += delta;
+            if (buffer->cursors[i].selectYfrom == cy && buffer->cursors[i].selectXfrom > cx) {
+               buffer->cursors[i].selectXfrom += delta;
+            }
+            if (buffer->cursors[i].selectYto == cy && buffer->cursors[i].selectXto > cx) {
+               buffer->cursors[i].selectXto += delta;
+            }
+         }
+         buffer->cursors[i].lineLen = Buffer_getLineLength(buffer, buffer->cursors[i].y);
+      }
+   }
 }
 
 static void checkCollapseCursors(Buffer* buffer) {
@@ -973,6 +998,18 @@ static void checkCollapseCursors(Buffer* buffer) {
       restoreCursor(buffer, 0);
       buffer->panel->needsRedraw = true;
       buffer->selecting = false;
+      buffer->nCursors = 0;
+   }
+}
+
+static void Dit_decreaseMultipleCursors(Buffer* buffer) {
+   if (buffer->nCursors == 0) {
+      return;
+   }
+   buffer->nCursors--;
+   buffer->panel->needsRedraw = true;
+   restoreCursor(buffer, buffer->nCursors - 1);
+   if (buffer->nCursors == 1) {
       buffer->nCursors = 0;
    }
 }
@@ -1023,6 +1060,7 @@ static void Dit_multipleCursors(Buffer* buffer) {
    
    buffer->cursors[c].x = newX;
    buffer->cursors[c].y = newY;
+   buffer->cursors[c].lineLen = Buffer_getLineLength(buffer, newY);
    buffer->cursors[c].savedX = newX;
    buffer->cursors[c].savedY = newY;
    buffer->cursors[c].selecting = buffer->selecting;
@@ -1105,6 +1143,7 @@ static void Dit_registerActions() {
    Hashtable_putString(Dit_actions, "Dit_undo", (void*)(long) Dit_undo);
    Hashtable_putString(Dit_actions, "Dit_wordWrap", (void*)(long) Dit_wordWrap);
    Hashtable_putString(Dit_actions, "Dit_multipleCursors", (void*)(long) Dit_multipleCursors);
+   Hashtable_putString(Dit_actions, "Dit_decreaseMultipleCursors", (void*)(long) Dit_decreaseMultipleCursors);
 }
 
 static void Dit_loadHardcodedBindings(Dit_Action* keys) {
@@ -1398,13 +1437,18 @@ int main(int argc, char** argv) {
          }
       }
 
-      if (ch == 27) {
+      if (ch == 27
+         || keys[ch] == (Dit_Action) Dit_save) {
          buffer->panel->needsRedraw = true;
          buffer->selecting = false;
          buffer->nCursors = 0;
-         continue;
+         if (ch == 27) {
+            continue;
+         }
       }
-      if (buffer->nCursors > 0 && keys[ch] != Dit_multipleCursors) {
+      if (buffer->nCursors > 0
+         && keys[ch] != (Dit_Action) Dit_multipleCursors
+         && keys[ch] != (Dit_Action) Dit_decreaseMultipleCursors) {
          buffer->panel->needsRedraw = true;
          Clipboard* saveClipboard = Dit_clipboard;
          for (int i = buffer->nCursors - 1; i >= 0; i--) {
@@ -1418,6 +1462,7 @@ int main(int argc, char** argv) {
                   Buffer_defaultKeyHandler(buffer, ch, code);
                }
             }
+            adjustOtherCursors(buffer, i, keys[ch]);
             saveCursor(buffer, i);
          }
          restoreCursor(buffer, buffer->nCursors - 1);
