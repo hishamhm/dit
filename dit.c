@@ -640,6 +640,22 @@ static void Dit_multipleCursors(Buffer* buffer) {
    Buffer_goto(buffer, newX, newY, true);
 }
 
+static bool canKeyDoMultiple(int ch, int limit, Dit_Action* keys) {
+   if (ch > limit)
+      return true;
+   if (keys[ch] == (Dit_Action) Dit_multipleCursors) return false;
+   if (keys[ch] == (Dit_Action) Dit_decreaseMultipleCursors) return false;
+   return true;
+}
+
+static bool keyDisablesMultiple(int ch, int limit, Dit_Action* keys) {
+   if (ch > limit)
+      return false;
+   if (ch == 27) return true;
+   if (keys[ch] == (Dit_Action) Dit_save) return true;
+   return false;
+}
+
 static void Dit_find(Buffer* buffer, TabManager* tabs) {
    TabManager_markJump(tabs);
    if (!Dit_findField)
@@ -1445,8 +1461,7 @@ int main(int argc, char** argv) {
          }
       }
 
-      if (ch == 27
-         || keys[ch] == (Dit_Action) Dit_save) {
+      if (keyDisablesMultiple(ch, limit, keys)) {
          buffer->panel->needsRedraw = true;
          buffer->selecting = false;
          buffer->nCursors = 0;
@@ -1454,9 +1469,7 @@ int main(int argc, char** argv) {
             continue;
          }
       }
-      if (buffer->nCursors > 0
-         && keys[ch] != (Dit_Action) Dit_multipleCursors
-         && keys[ch] != (Dit_Action) Dit_decreaseMultipleCursors) {
+      if (buffer->nCursors > 0 && canKeyDoMultiple(ch, limit, keys)) {
          buffer->panel->needsRedraw = true;
          Clipboard* saveClipboard = Dit_clipboard;
          for (int i = buffer->nCursors - 1; i >= 0; i--) {
@@ -1470,7 +1483,7 @@ int main(int argc, char** argv) {
                   Buffer_defaultKeyHandler(buffer, ch, code);
                }
             }
-            adjustOtherCursors(buffer, i, keys[ch]);
+            adjustOtherCursors(buffer, i, ch < limit ? keys[ch] : NULL);
             saveCursor(buffer, i);
          }
          restoreCursor(buffer, buffer->nCursors - 1);
