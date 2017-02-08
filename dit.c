@@ -580,13 +580,20 @@ static void Dit_multipleCursors(Buffer* buffer) {
    int newX, newY;
    char* block;
    if (buffer->selecting) {
+      if (buffer->selectYfrom != buffer->selectYto) {
+         int x = buffer->selectXfrom;
+         int lines = buffer->selectYto - buffer->selectYfrom;
+         buffer->selecting = false;
+         Buffer_goto(buffer, buffer->selectXfrom, buffer->selectYfrom, false);
+         for (int i = 0; i < lines; i++) {
+            Dit_multipleCursors(buffer);
+            Buffer_goto(buffer, x, buffer->y, false);
+         }
+         return;
+      }
       int blockLen;
       block = Buffer_copyBlock(buffer, &blockLen);
       if (!block) {
-         return;
-      }
-      if (strchr(block, '\n')) {
-         free(block);
          return;
       }
       found = Buffer_find(buffer, Text_new(block), true, true, false, true);
