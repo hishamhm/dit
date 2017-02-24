@@ -85,6 +85,7 @@ int Text_forwardWord(Text this, int cursor);
 int Text_backwardWord(Text this, int cursor);
 Text Text_wordAt(Text this, int cursor);
 int Text_indexOf(Text haystack, Text needle);
+int Text_indexOfFrom(Text haystack, Text needle, int from);
 int Text_indexOfi(Text haystack, Text needle);
 int Text_strncmp(Text haystack, Text needle);
 int Text_strncasecmp(Text haystack, Text needle);

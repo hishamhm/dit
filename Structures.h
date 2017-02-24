@@ -311,6 +311,7 @@ typedef enum {
    FieldFailColor,
    AlertColor,
    PopupColor,
+   HighlightColor,
    Colors
 } Color;
 

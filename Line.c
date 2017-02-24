@@ -151,6 +151,7 @@ void Line_display(Object* cast, RichString* str) {
       attrs[buffer->bracketX] = CRT_colors[BracketColor];
    }
    
+   Text outText = Text_new(out);
    if (buffer->nCursors > 0) {
       for (int i = 0; i < buffer->nCursors; i++) {
          if (buffer->selecting) {
@@ -168,10 +169,31 @@ void Line_display(Object* cast, RichString* str) {
    } else {
       if (buffer->selecting) {
          paintSelection(this, y, out, &outIdx, attrs, tabSize, buffer->selectXfrom, buffer->selectYfrom, buffer->selectXto, buffer->selectYto);
+         if (buffer->selectYfrom == buffer->selectYto && buffer->selectXto != buffer->selectXfrom) {
+            int minX = MIN(buffer->selectXto, buffer->selectXfrom);
+            int blockLen;
+            char* block = Buffer_copyBlock(buffer, &blockLen);
+            
+            if (block) {
+               Text selText = Text_new(block);
+               int from = 0;
+               for (;;) {
+                  int found = Text_indexOfFrom(outText, selText, from);
+                  if (found != -1 && !(y == buffer->selectYfrom && found == minX)) {
+                     for (int i = 0; i < Text_chars(selText); i++) {
+                        attrs[found + i] = CRT_colors[HighlightColor];
+                     }
+                     from = found + 1;
+                  } else {
+                     break;
+                  }                  
+               }
+               free(block);
+            }
+         }
       }
    }
    
-   Text outText = Text_new(out);
    if (str && Text_chars(outText) >= scrollH) {
       RichString_appendn(str, 0, Text_stringAt(outText, scrollH), Text_chars(outText) - scrollH);
       RichString_paintAttrs(str, attrs + scrollH);

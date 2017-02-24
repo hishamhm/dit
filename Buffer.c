@@ -645,6 +645,7 @@ void Buffer_select(Buffer* this, void(*motion)(Buffer*)) {
    this->selectXto = this->x;
    this->selectYto = this->y;
    this->selecting = true;
+   this->panel->needsRedraw = true;
    if (this->selectYfrom != oldSelectYfrom || this->selectYto != oldSelectYto)
       this->panel->needsRedraw = true;
 }

@@ -61,6 +61,7 @@ typedef enum {
    FieldFailColor,
    AlertColor,
    PopupColor,
+   HighlightColor,
    Colors
 } Color;
 
@@ -203,7 +204,7 @@ void CRT_init() {
    CRT_colors[CurrentTabShadeColor] = A_BOLD | CRT_color(Black, Blue);
    CRT_colors[CurrentTabColor] = A_BOLD | CRT_color(Yellow, Blue);
    CRT_colors[CurrentTabROColor] = A_BOLD | CRT_color(Red, Blue);
-   CRT_colors[SelectionColor] = A_REVERSE | CRT_color(Blue, White);
+   CRT_colors[SelectionColor] = A_REVERSE | CRT_color(Cyan, Black);
    CRT_colors[UnfocusedSelectionColor] = A_REVERSE | CRT_color(White, Blue);
    CRT_colors[BracketColor] = A_REVERSE | CRT_color(Cyan, Black);
    CRT_colors[BrightColor] = A_BOLD | CRT_color(White, Black);
@@ -228,6 +229,7 @@ void CRT_init() {
    CRT_colors[FieldColor] = CRT_color(White, Blue);
    CRT_colors[FieldFailColor] = CRT_color(Red, Blue);
    CRT_colors[AlertColor] = CRT_color(White, Red);
+   CRT_colors[HighlightColor] = CRT_color(White, Blue);
    CRT_colors[PopupColor] = A_BOLD | CRT_color(Yellow, Blue);
    #endif
    #ifdef VIM_THEME
@@ -259,6 +261,7 @@ void CRT_init() {
    CRT_colors[FieldColor] = CRT_color(White, Black);
    CRT_colors[FieldFailColor] = CRT_color(Red, Black);
    CRT_colors[AlertColor] = CRT_color(Red, Black);
+   CRT_colors[HighlightColor] = CRT_color(White, Green);
    #endif
    #ifdef EMACS_THEME
    CRT_colors[NormalColor] = A_NORMAL;
@@ -290,6 +293,7 @@ void CRT_init() {
    CRT_colors[FieldFailColor] = CRT_color(Red, Black);
    CRT_colors[AlertColor] = CRT_color(White, Red);
    CRT_colors[PopupColor] = CRT_color(White, Green);
+   CRT_colors[HighlightColor] = CRT_color(White, Green);
    #endif
    #ifdef CLASSIC_TURBO_THEME
    CRT_colors[NormalColor] = (CRT_color(White, Blue));
@@ -321,6 +325,7 @@ void CRT_init() {
    CRT_colors[FieldFailColor] = CRT_color(Red, Blue);
    CRT_colors[AlertColor] = CRT_color(White, Red);
    CRT_colors[PopupColor] = CRT_color(White, Green);
+   CRT_colors[HighlightColor] = CRT_color(White, Green);
    #endif
    #ifdef BLACK_TURBO_THEME
    CRT_colors[NormalColor] = (CRT_color(White, Black));
@@ -352,6 +357,7 @@ void CRT_init() {
    CRT_colors[FieldFailColor] = CRT_color(Red, Blue);
    CRT_colors[AlertColor] = CRT_color(White, Red);
    CRT_colors[PopupColor] = CRT_color(White, Green);
+   CRT_colors[HighlightColor] = CRT_color(White, Green);
    #endif
 
    CRT_keys = Hashtable_new(200, Hashtable_STR, Hashtable_BORROW_REFS);

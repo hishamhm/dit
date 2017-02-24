@@ -330,6 +330,13 @@ int Text_indexOf(Text haystack, Text needle) {
    return -1;
 }
 
+int Text_indexOfFrom(Text haystack, Text needle, int from) {
+   char* found = strstr(UTF8_forward(haystack.data, from), needle.data);
+   if (found)
+      return UTF8_offset(haystack.data, found);
+   return -1;
+}
+
 int Text_indexOfi(Text haystack, Text needle) {
    char* found = strcasestr(haystack.data, needle.data);
    if (found)
