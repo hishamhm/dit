@@ -522,7 +522,11 @@ void Script_onFKey(Buffer* this, int key) {
    
    lua_State* L = this->script.L;
    char ch[10];
-   snprintf(ch, 10, "F%d", key - KEY_F(1) + 1);
+   if (key <= KEY_F(12)) {
+      snprintf(ch, 10, "F%d", key - KEY_F(1) + 1);
+   } else {
+      snprintf(ch, 10, "SHIFT_F%d", key - KEY_F(10) + 1);
+   }
    this->skipOnFKey = !callFunction(L, "on_fkey", ch);
 }
 

@@ -1159,7 +1159,7 @@ void Buffer_defaultKeyHandler(Buffer* this, int ch, bool code) {
    } else if (ch >= 1 && ch <= 31) {
       Script_onCtrl(this, ch);
       Buffer_correctPosition(this);
-   } else if (ch >= KEY_F(1) && ch <= KEY_F(12)) {
+   } else if (ch >= KEY_F(1) && ch <= KEY_F(20)) {
       Script_onFKey(this, ch);
       Buffer_correctPosition(this);
    } else {
