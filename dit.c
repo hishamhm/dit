@@ -460,11 +460,6 @@ static void moveIfFound(Buffer* buffer, TabManager* tabs, int len, Coords found,
             Dit_scrollTo(buffer, found.x, found.y, false);
             Buffer_setSelection(buffer, found.x, found.y, found.x + len, found.y);
             Buffer_draw(buffer);
-            int answer = TabManager_question(tabs, "Search is back at the beginning. Continue?", "yn");
-            if (answer == 1) {
-               *stopWrap = true;
-               return;
-            }
          }
       }
    }
