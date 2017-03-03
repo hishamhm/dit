@@ -17,8 +17,9 @@ function highlight_file(filename)
       local ok, err = loadfile(filename)
       if err then
          local nr = err:match("^[^:]*:([%d]+):.*")
+         local errmsg = err:match("^[^:]*:[%d]+: (.*)")
          if nr then 
-            lines[tonumber(nr)] = {{ column = 1, name = (" "):rep(255), }}
+            lines[tonumber(nr)] = {{ column = 1, name = (" "):rep(255), code = 0, message = errmsg }}
          end
       end
       return
@@ -66,6 +67,14 @@ function highlight_line(line, y)
       end
       for i = fchar, lchar do
          ret[i] = key
+      end
+   end
+   if ret == nil then
+      return ""
+   end
+   for i = 1, #ret do
+      if not ret[i] then
+         ret[i] = " "
       end
    end
    return table.concat(ret)
@@ -125,6 +134,10 @@ local function get_message_format(warning)
       return "invalid inline option"
    elseif warning.unpaired then
       return "unpaired inline option"
+   end
+
+   if warning.code == 0 then
+      return warning.message
    end
 
    local message_format = message_formats[warning.code]
