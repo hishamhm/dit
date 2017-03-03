@@ -99,6 +99,16 @@ static void paintSelection(Line* this, int y, char* out, int* outIdx, int* attrs
    }
 }
 
+static bool allSpace(char* s) {
+   while(*s) {
+      if (!isblank(*s)) {
+         return false;
+      }
+      s++;
+   }
+   return true;
+}
+
 void Line_display(Object* cast, RichString* str) {
    Line* this = (Line*) cast;
    Buffer* buffer = (Buffer*)(this->super.list->data);
@@ -174,7 +184,7 @@ void Line_display(Object* cast, RichString* str) {
             int blockLen;
             char* block = Buffer_copyBlock(buffer, &blockLen);
             
-            if (block) {
+            if (block && !allSpace(block)) {
                Text selText = Text_new(block);
                int from = 0;
                for (;;) {
