@@ -4,6 +4,9 @@ local code = require("dit.code")
 local tab_complete = require("dit.tab_complete")
 local line_commit = require("dit.line_commit")
 
+local current_file = nil
+local errors = nil
+
 local function open_header()
    local name = buffer:filename()
    if name:match("%.c$") then
@@ -18,9 +21,23 @@ local function open_header()
    tabs:setPage(page)
 end
 
+local function popup_error()
+   local _, x, y = buffer:token()
+   if errors[y] then
+      for ex, err in pairs(errors[y]) do
+         if x == ex then
+            buffer:draw_popup({err})
+            return
+         end
+      end
+   end
+end
+
 function on_ctrl(key)
    if key == "D" then
       cscope.go_to_definition()
+   elseif key == "R" then
+      popup_error()
    elseif key == "H" then
       open_header()
    elseif key == "O" then
@@ -36,9 +53,6 @@ function on_fkey(key)
    end
 end
 
-current_file = nil
-errors = nil
-
 function highlight_file(filename)
    current_file = filename
 end
@@ -47,7 +61,6 @@ function highlight_line(line, y)
    if errors and errors[y] then
       local out = {}
       for i = 1, #line do out[i] = " " end
-      local marking = false
       for x, _ in pairs(errors[y]) do
          if x <= #line then
             out[x] = "*"
@@ -74,11 +87,11 @@ function on_save()
    local cmdout = cmd:read("*a")
    cmd:close()
    errors = {}
-   for ey, ex in cmdout:gmatch("[^\n]*:([0-9]+):([0-9]+): error:[^\n]*") do
+   for ey, ex, err in cmdout:gmatch("[^\n]*:([0-9]+):([0-9]+): error: ([^\n]*)") do
       ey = tonumber(ey)
       ex = tonumber(ex)
       if not errors[ey] then errors[ey] = {} end
-      errors[ey][ex] = true
+      errors[ey][ex] = err
    end
    return true
 end
