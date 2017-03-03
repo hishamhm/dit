@@ -193,6 +193,7 @@ void Line_display(Object* cast, RichString* str) {
          }
       }
    }
+   outText = Text_new(out);
    
    if (str && Text_chars(outText) >= scrollH) {
       RichString_appendn(str, 0, Text_stringAt(outText, scrollH), Text_chars(outText) - scrollH);
