@@ -205,7 +205,7 @@ void Undo_insertBlock(Undo* this, int x, int y, Text block) {
          yTo++;
          walk = at + 1;
       } else {
-         xTo += (len - (walk - block.data)) + (yTo == y ? x : 0);
+         xTo += Text_chars(Text_new((char*)walk)) + (yTo == y ? x : 0);
          break;
       }
    }
