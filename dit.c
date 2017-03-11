@@ -828,6 +828,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                   }
                   bool quitMask[256] = {0};
                   quitMask[KEY_CTRL('R')] = true;
+                  quitMask[KEY_CTRL('L')] = true;
                   quitMask[KEY_CTRL('C')] = true;
                   quitMask[KEY_CTRL('F')] = true;
                   quitMask[KEY_CTRL('N')] = true;
@@ -842,6 +843,26 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                         Buffer_draw(buffer);
                         found = Buffer_find(buffer, Field_text(Dit_findField), true, caseSensitive, wholeWord, true);
                         searched = true;
+                     }
+                  } else if (rch == KEY_CTRL('L')) { // Replace all
+                     if (buffer->selecting) {
+                        Undo_beginGroup(buffer->undo, buffer->x, buffer->y);
+                        do {
+                           Buffer_pasteBlock(buffer, Dit_replaceField->current->text);
+                           buffer->selecting = false;
+                           found = Buffer_find(buffer, Field_text(Dit_findField), true, caseSensitive, wholeWord, true);
+                           searched = true;
+                           moveIfFound(buffer, tabs, Text_chars(Field_text(Dit_findField)), found, &first, &stopWrap, &failing, &searched, &wrapped);
+                        } while (found.x != -1 && !wrapped);
+                        Undo_endGroup(buffer->undo, buffer->x, buffer->y);
+                        Dit_scrollTo(buffer, saveX, saveY, false);
+                        Field_setValue(Dit_findField, Dit_replaceField->current->text);
+                        found = Buffer_find(buffer, Field_text(Dit_findField), true, caseSensitive, wholeWord, true);
+                        moveIfFound(buffer, tabs, Text_chars(Field_text(Dit_findField)), found, &first, &stopWrap, &failing, &searched, &wrapped);
+                        Buffer_draw(buffer);
+                        searched = true;
+                        wrapped = false;
+                        break;
                      }
                   } else if (rch == KEY_CTRL('C')) { // Case-matching replace
                      if (buffer->selecting) {
