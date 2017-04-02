@@ -1,5 +1,6 @@
 
 local cscope = require("cscope")
+local tmux = require("tmux")
 local code = require("dit.code")
 local tab_complete = require("dit.tab_complete")
 local line_commit = require("dit.line_commit")
@@ -44,6 +45,8 @@ function on_ctrl(key)
       line_commit.line_commit()
    elseif key == "_" then
       code.comment_block("//")
+   elseif key == "P" then
+      tmux.man()
    end
 end
 
