@@ -59,6 +59,9 @@ rule , symbol
 rule | symbol
 rule & symbol
 rule ; brightsymbol
+rule TODO veryspecial
+rule XXX veryspecial
+rule FIXME veryspecial
 context /* */ dim
    rule TODO veryspecial
    rule XXX veryspecial
@@ -87,5 +90,10 @@ context #include `$ brightspecial
    /context
    context < > special
    /context
+/context
+context #if`[`s`|`t`]`+0 #endif dim
+   rule TODO veryspecial
+   rule XXX veryspecial
+   rule FIXME veryspecial
 /context
 
