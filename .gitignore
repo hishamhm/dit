@@ -21,3 +21,7 @@ config.sub
 configure
 core
 lua*/src/*.a
+Prototypes.h
+config.h.in
+dit
+libeditorconfig.a
