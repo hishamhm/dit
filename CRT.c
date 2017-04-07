@@ -360,6 +360,43 @@ void CRT_init() {
    CRT_colors[HighlightColor] = CRT_color(White, Green);
    #endif
 
+   //#define MINIMAL_THEME_DARK
+   #ifdef MINIMAL_THEME_DARK
+   CRT_colors[NormalColor] = A_NORMAL;
+   CRT_colors[TabColor]    = A_NORMAL|A_REVERSE;
+   CRT_colors[CurrentTabShadeColor] = A_NORMAL;
+   CRT_colors[CurrentTabColor]   = A_NORMAL;
+   CRT_colors[CurrentTabROColor] = CRT_color(Cyan, Black); // A_NORMAL|A_STANDOUT;
+   CRT_colors[SelectionColor]          = A_REVERSE | A_NORMAL;
+   CRT_colors[UnfocusedSelectionColor] = A_DIM|CRT_colors[SelectionColor];
+   CRT_colors[BracketColor] = A_REVERSE|CRT_color(White, Green);
+   CRT_colors[BrightColor] = A_NORMAL|A_BOLD;
+   CRT_colors[SymbolColor]       = CRT_color(Cyan, Black);
+   CRT_colors[BrightSymbolColor] = CRT_colors[SymbolColor]|A_BOLD;
+   CRT_colors[AltColor]       = CRT_color(Blue, Black);
+   CRT_colors[BrightAltColor] = CRT_color(Magenta, Black);
+   CRT_colors[DiffColor]       = CRT_color(Green, Black);
+   CRT_colors[BrightDiffColor] = CRT_colors[DiffColor]|A_BOLD;
+   CRT_colors[SpecialColor]       = CRT_color(Yellow, Black);
+   CRT_colors[BrightSpecialColor] = CRT_colors[BrightSpecialColor]|A_BOLD;
+   CRT_colors[SpecialDiffColor] = CRT_color(Red, Black);
+   CRT_colors[BrightSpecialDiffColor] = CRT_color(Magenta, Black);
+   CRT_colors[VerySpecialColor] = CRT_colors[SpecialColor]|A_STANDOUT;
+   CRT_colors[DimColor] = CRT_colors[SpecialColor]|A_DIM;
+   CRT_colors[ScrollBarColor] = CRT_color(Black,Black); // detune the scrollbar
+   CRT_colors[ScrollHandleColor] = CRT_colors[ScrollBarColor];
+   CRT_colors[ScrollHandleTopColor] = CRT_colors[ScrollBarColor];
+   CRT_colors[ScrollHandleBottomColor] = CRT_colors[ScrollBarColor];
+   CRT_colors[StatusColor] = CRT_color(Black, Blue);
+   CRT_colors[KeyColor] = A_REVERSE | CRT_color(Black, White);
+   CRT_colors[FieldColor]     = CRT_color(Black, Blue);
+   CRT_colors[FieldFailColor] = CRT_color(Red, Blue);
+   CRT_colors[AlertColor] = CRT_color(White, Red);
+   CRT_colors[PopupColor] = CRT_color(Black, Blue);
+   CRT_colors[HighlightColor] = CRT_color(Red, Black);
+   CRT_colors[PopupColor] = CRT_color(Black, Green);
+   #endif
+
    CRT_keys = Hashtable_new(200, Hashtable_STR, Hashtable_BORROW_REFS);
    for (int c = ' '; c <= '~'; c++) {
       char key[10];
