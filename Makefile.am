@@ -12,36 +12,39 @@ my_dit_C_sources = dit.c Buffer.c CRT.c Clipboard.c DebugMemory.c Field.c \
  Text.c lua-compat-5.3/compat-5.3.c
 BUILT_SOURCES = Prototypes.h Structures.h
 
-# find bindings terminals highlight scripts -type f | tr '\n' ' ' | fold -s -w 70 | sed 's,$,\\,'
-# find bindings terminals highlight scripts -type l | tr '\n' ' ' | fold -s -w 70 | sed 's,$,\\,'
+# find bindings terminals highlight scripts -type f -or -type -l | tr '\n' ' ' | fold -s -w 70 | sed 's,$,\\,'
 nobase_dist_pkgdata_DATA = \
-bindings/default terminals/rxvt terminals/xterm-color \
-terminals/konsole terminals/wsvt25 terminals/linux \
-highlight/gitcommit.dithl highlight/ltp.dithl highlight/ldoc.dithlinc \
-highlight/python.dithl highlight/css.dithl highlight/c.dithlinc \
-highlight/gitconflict.dithlinc highlight/nestedm4.dithlinc \
-highlight/java.dithl highlight/autoconf.dithl highlight/conf.dithl \
-highlight/make.dithl highlight/diff.dithl highlight/php.dithl \
-highlight/dithl.dithl highlight/shell.dithlinc highlight/html.dithl \
-highlight/shell.dithl highlight/ruby.dithl highlight/perl.dithl \
-highlight/yacc.dithl highlight/lua.dithlinc highlight/markdown.dithl \
-highlight/lex.dithl highlight/shellbacktick.dithlinc \
-highlight/haskell.dithl highlight/c.dithl highlight/latex.dithl \
-highlight/diff.dithlinc highlight/lua.dithl highlight/xml.dithl \
-highlight/html.dithlinc highlight/etlua.dithl scripts/lua.lua \
-scripts/haskell.lua scripts/shell.lua scripts/latex.lua \
-scripts/luacheck/argparse.lua scripts/luacheck/check.lua \
-scripts/luacheck/linearize.lua scripts/luacheck/inline_options.lua \
-scripts/luacheck/lexer.lua scripts/luacheck/options.lua \
-scripts/luacheck/format.lua scripts/luacheck/expand_rockspec.lua \
-scripts/luacheck/analyze.lua scripts/luacheck/reachability.lua \
-scripts/luacheck/utils.lua scripts/luacheck/init.lua \
-scripts/luacheck/parser.lua scripts/luacheck/core_utils.lua \
-scripts/luacheck/filter.lua scripts/luacheck/stds.lua scripts/cmd.lua \
-scripts/dit/code.lua scripts/dit/tab_complete.lua \
-scripts/dit/line_commit.lua scripts/cscope.lua scripts/c.lua \
-scripts/java.lua \
-terminals/xterm-1002
+bindings/default terminals/linux terminals/konsole \
+terminals/xterm-color terminals/rxvt terminals/wsvt25 \
+terminals/xterm-1002 highlight/c.dithlinc highlight/latex.dithl \
+highlight/nestedm4.dithlinc highlight/shell.dithlinc \
+highlight/php.dithl highlight/ldoc.dithlinc highlight/lhs.dithl \
+highlight/lua.dithlinc highlight/c.dithl highlight/ruby.dithl \
+highlight/diff.dithlinc highlight/java.dithl \
+highlight/lpeg_re.dithlinc highlight/lua.dithl highlight/python.dithl \
+highlight/markdown.dithlinc highlight/javascript.dithl \
+highlight/latex.dithlinc highlight/gitconflict.dithlinc \
+highlight/etlua.dithl highlight/shell.dithl highlight/perl.dithl \
+highlight/dithl.dithl highlight/yacc.dithl highlight/css.dithl \
+highlight/css.dithlinc highlight/ltp.dithl \
+highlight/shellbacktick.dithlinc highlight/html.dithl \
+highlight/yats.dithl highlight/xml.dithl highlight/haskell.dithlinc \
+highlight/html.dithlinc highlight/conf.dithl highlight/autoconf.dithl \
+highlight/make.dithl highlight/javascript.dithlinc \
+highlight/haskell.dithl highlight/markdown.dithl \
+highlight/gitcommit.dithl highlight/diff.dithl highlight/lex.dithl \
+scripts/lua.lua scripts/shell.lua scripts/c.lua scripts/cmd.lua \
+scripts/latex.lua scripts/dit/tab_complete.lua scripts/dit/code.lua \
+scripts/dit/line_commit.lua scripts/haskell.lua \
+scripts/luacheck/filter.lua scripts/luacheck/init.lua \
+scripts/luacheck/format.lua scripts/luacheck/core_utils.lua \
+scripts/luacheck/options.lua scripts/luacheck/check.lua \
+scripts/luacheck/reachability.lua scripts/luacheck/inline_options.lua \
+scripts/luacheck/stds.lua scripts/luacheck/lexer.lua \
+scripts/luacheck/linearize.lua scripts/luacheck/expand_rockspec.lua \
+scripts/luacheck/argparse.lua scripts/luacheck/utils.lua \
+scripts/luacheck/parser.lua scripts/luacheck/analyze.lua \
+scripts/java.lua scripts/cscope.lua
 
 EXTRA_DIST = tools/GenHeaders extras/dit.keytab \
    lua-$(DIT_LUA_VERSION)/src/*.[ch] \
@@ -83,6 +86,3 @@ install-data-local:
 
 debug:
 	$(MAKE) CFLAGS="-g -O0 $(LUA_FLAGS)"
-
-
-
