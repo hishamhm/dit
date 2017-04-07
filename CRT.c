@@ -360,8 +360,8 @@ void CRT_init() {
    CRT_colors[HighlightColor] = CRT_color(White, Green);
    #endif
 
-   //#define MINIMAL_THEME_DARK
-   #ifdef MINIMAL_THEME_DARK
+   //#define MINIMAL_DARK_THEME
+   #ifdef MINIMAL_DARK_THEME
    CRT_colors[NormalColor] = A_NORMAL;
    CRT_colors[TabColor]    = A_NORMAL|A_REVERSE;
    CRT_colors[CurrentTabShadeColor] = A_NORMAL;
