@@ -176,7 +176,7 @@ function on_ctrl(key)
 end
 
 function on_save()
-   local cmd = io.popen("LANG=C ghc -i. -c "..current_file.." 2>&1")
+   local cmd = io.popen("LANG=C ghc -fno-code -i. -c "..current_file.." 2>&1")
    local curr_error
    errors = {}
    for line in cmd:lines() do
