@@ -1,20 +1,36 @@
 
 local code = require("dit.code")
 local tab_complete = require("dit.tab_complete")
-local luacheck = require("luacheck.init")
+
+local check = require "luacheck.check"
+local filter = require "luacheck.filter"
+local utils = require "luacheck.utils"
+
+local ok, picotyped = pcall(require, "picotyped")
+if not ok then
+   picotyped = nil
+end
 
 local lines
 local commented_lines = {}
 local controlled_change = false
 
-function highlight_file(filename)
+local function run_luacheck(src)
+   if picotyped then
+      src = picotyped.translate(src)
+   end
+   return filter.filter({ utils.pcall(check, src) or {error = "syntax"} })
+end
+
+function highlight_file()
    lines = {}
-   local report, err = luacheck({filename})
+   local src = table.concat(buffer, "\n")
+   local report, err = run_luacheck(src)
    if not report then 
       return
    end
    if #report == 1 and report[1].error == "syntax" then
-      local ok, err = loadfile(filename)
+      local ok, err = load(src)
       if err then
          local nr = err:match("^[^:]*:([%d]+):.*")
          local errmsg = err:match("^[^:]*:[%d]+: (.*)")
@@ -87,7 +103,7 @@ function on_change()
 end
 
 function on_save(filename)
-   highlight_file(filename)
+   highlight_file()
 end
 
 local message_formats = {
