@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
+#include "Structures.h"
 #include <strings.h>
 #include <string.h>
 #include <stdlib.h>
@@ -27,10 +28,13 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <regex.h>
+#include "Prototypes.h"
 #include <poll.h>
+#include "md5.h"
 #include <math.h>
 #include <lualib.h>
 #include <lua.h>
+#include "lua-compat-5.3/compat-5.3.h"
 #include <locale.h>
 #include <limits.h>
 #include <libgen.h>
@@ -39,14 +43,10 @@
 #include <errno.h>
 #include <editorconfig/editorconfig.h>
 #include <dirent.h>
-#include <ctype.h>
-#include <assert.h>
-#include "md5.h"
-#include "lua-compat-5.3/compat-5.3.h"
 #include "debug.h"
+#include <ctype.h>
 #include "config.h"
-#include "Structures.h"
-#include "Prototypes.h"
+#include <assert.h>
 void Object_delete(Object* this);
 void Object_display(Object* this, RichString* out);
 bool Object_equals(const Object* this, const Object* o);

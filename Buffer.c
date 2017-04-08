@@ -322,6 +322,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
       this->hl = Highlight_new(fileName, Text_new(""), &this->script);
       Panel_set(p, 0, (ListItem*) Line_new(p->items, Text_new(strdup("")), this->hl->mainContext));
    }
+   Script_highlightFile(this->hl, fileName);
    
    this->savedContext = this->hl->mainContext;
 
@@ -677,7 +678,6 @@ void Buffer_undo(Buffer* this) {
    int ux = this->x;
    int uy = this->y;
    bool modified = Undo_undo(this->undo, &ux, &uy);
-   Script_onChange(this);
    this->x = ux;
    Panel_setSelected(this->panel, uy);
    this->line = (Line*) Panel_getSelected(this->panel);
@@ -685,6 +685,7 @@ void Buffer_undo(Buffer* this) {
    this->savedX = Line_widthUntil(this->line, this->x, this->tabSize);
    this->selecting = false;
    this->modified = modified;
+   Script_onChange(this);
 }
 
 char Buffer_getLastKey(Buffer* this) {
@@ -712,7 +713,6 @@ void Buffer_breakLine(Buffer* this) {
 
    int indent = Line_breakAt(this->line, this->x, doIndent);
    Undo_breakAt(this->undo, this->x, this->y, indent);
-   Script_onChange(this);
    
    Panel_onKey(this->panel, KEY_DOWN);
    this->line = (Line*) Panel_getSelected(this->panel);
@@ -726,6 +726,7 @@ void Buffer_breakLine(Buffer* this) {
    }
 
    this->lastKey = 0;
+   Script_onChange(this);
 }
 
 void Buffer_forwardChar(Buffer* this) {
@@ -863,8 +864,8 @@ void Buffer_wordWrap(Buffer* this, int wrap) {
    }
    this->panel->needsRedraw = true;
    Undo_endGroup(this->undo, this->x, this->y);
-   Script_onChange(this);
    Buffer_endOfLine(this);
+   Script_onChange(this);
 }
 
 void Buffer_deleteBlock(Buffer* this) {
@@ -889,12 +890,12 @@ void Buffer_deleteBlock(Buffer* this) {
    assert (len > 0);
    char* block = StringBuffer_deleteGet(str);
    Undo_deleteBlock(this->undo, this->x, this->y, block, len);
-   Script_onChange(this);
    this->savedX = Line_widthUntil(this->line, this->x, this->tabSize);
    this->selecting = false;
    this->modified = true;
    if (lines > 1)
       this->panel->needsRedraw = true;
+   Script_onChange(this);
 }
 
 /*
@@ -942,9 +943,9 @@ void Buffer_pasteBlock(Buffer* this, Text block) {
    this->savedX = Line_widthUntil(this->line, this->x, this->tabSize);
    
    Undo_endGroup(this->undo, this->x, this->y);
-   Script_onChange(this);
    this->selecting = false;
    this->modified = true;
+   Script_onChange(this);
 }
 
 bool Buffer_setLine(Buffer* this, int y, const Text text) {
@@ -961,8 +962,8 @@ bool Buffer_setLine(Buffer* this, int y, const Text text) {
    Undo_insertBlock(this->undo, 0, y, text);
    Line_insertTextAt(line, text, 0);
    Undo_endGroup(this->undo, this->x, this->y);
-   Script_onChange(this);
    this->modified = true;
+   Script_onChange(this);
    return true;
 }
 
@@ -974,7 +975,6 @@ void Buffer_deleteChar(Buffer* this) {
    if (this->x < last_x(this)) {
       Undo_deleteCharAt(this->undo, this->x, this->y, Line_charAt(this->line, this->x));
       Line_deleteChars(this->line, this->x, 1);
-      Script_onChange(this);
    } else {
       if (this->dosLineBreaks) {
          Undo_beginGroup(this->undo, this->x, this->y);
@@ -984,7 +984,6 @@ void Buffer_deleteChar(Buffer* this) {
       if (this->line->super.next) {
          Undo_joinNext(this->undo, this->x, this->y, false);
          Line_joinNext(this->line);
-         Script_onChange(this);
          this->line = (Line*) Panel_getSelected(this->panel);
          this->y--;
       }
@@ -995,6 +994,7 @@ void Buffer_deleteChar(Buffer* this) {
    }
    this->savedX = Line_widthUntil(this->line, this->x, this->tabSize);
    this->modified = true;
+   Script_onChange(this);
 }
 
 void Buffer_backwardDeleteChar(Buffer* this) {
@@ -1006,7 +1006,6 @@ void Buffer_backwardDeleteChar(Buffer* this) {
       this->x--;
       Undo_backwardDeleteCharAt(this->undo, this->x, this->y, Line_charAt(this->line, this->x));
       Line_deleteChars(this->line, this->x, 1);
-      Script_onChange(this);
    } else {
       if (this->line->super.prev) {
          if (this->dosLineBreaks) {
@@ -1016,7 +1015,6 @@ void Buffer_backwardDeleteChar(Buffer* this) {
          this->x = Line_chars(prev);
          Undo_joinNext(this->undo, this->x, this->y - 1, true);
          Line_joinNext(prev);
-         Script_onChange(this);
          Panel_onKey(this->panel, KEY_UP);
          this->line = (Line*) Panel_getSelected(this->panel);
          this->y--;
@@ -1029,6 +1027,7 @@ void Buffer_backwardDeleteChar(Buffer* this) {
    }
    this->savedX = Line_widthUntil(this->line, this->x, this->tabSize);
    this->modified = true;
+   Script_onChange(this);
 }
 
 void Buffer_upLine(Buffer* this) {
@@ -1113,11 +1112,11 @@ void Buffer_unindent(Buffer* this) {
    Buffer_blockOperation(this, &firstLine, &yStart, &lines);
    int* unindented = Line_unindent(firstLine, lines, spaces);
    Undo_unindent(this->undo, this->x, yStart, unindented, lines, this->tabulation);
-   Script_onChange(this);
    if (unindented[0] > 0 && this->y >= yStart && this->y <= (yStart + lines - 1))
       this->x = MAX(0, this->x - move);
    this->panel->needsRedraw = true;
    this->modified = true;
+   Script_onChange(this);
 }
 
 void Buffer_indent(Buffer* this) {
@@ -1137,11 +1136,11 @@ void Buffer_indent(Buffer* this) {
    Buffer_blockOperation(this, &firstLine, &yStart, &lines);
    Undo_indent(this->undo, this->x, yStart, lines, spaces);
    Line_indent(firstLine, lines, spaces);
-   Script_onChange(this);
    if (this->y >= yStart && this->y <= (yStart + lines - 1))
       this->x += move;
    this->panel->needsRedraw = true;
    this->modified = true;
+   Script_onChange(this);
 }
       
 void Buffer_defaultKeyHandler(Buffer* this, int ch, bool code) {
@@ -1151,11 +1150,11 @@ void Buffer_defaultKeyHandler(Buffer* this, int ch, bool code) {
       }
       Undo_insertCharAt(this->undo, this->x, this->y, ch);
       Line_insertChar(this->line, this->x, ch);
-      Script_onChange(this);
       this->x++;
       this->savedX = Line_widthUntil(this->line, this->x, this->tabSize);
       this->modified = true;
       this->selecting = false;
+      Script_onChange(this);
    } else if (ch >= 1 && ch <= 31) {
       Script_onCtrl(this, ch);
       Buffer_correctPosition(this);

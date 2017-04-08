@@ -136,7 +136,6 @@ Highlight* Highlight_new(const char* fileName, Text firstLine, ScriptState* scri
       this->mainContext = Highlight_addContext(this, NULL, NULL, NULL, NormalColor);
       this->currentContext = this->mainContext;
    }
-   Script_highlightFile(this, fileName);
    return this;
 }
 
