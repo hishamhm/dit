@@ -143,7 +143,7 @@ function tab_complete.on_key(code)
          end
          display_match()
          return true
-      elseif code >= 32 and code <= 255 and code ~= 128 then
+      elseif code >= 32 and code <= 255 and code ~= 128 or code == 13 then
          if matching.suggestion then
             if (code >= 65 and code <= 90) or (code >= 97 and code <= 122) then
                matching = nil
