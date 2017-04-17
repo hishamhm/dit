@@ -1,3 +1,5 @@
+local utils = require "luacheck.utils"
+
 -- Lexer should support syntax of Lua 5.1, Lua 5.2, Lua 5.3 and LuaJIT(64bit and complex cdata literals).
 local lexer = {}
 
@@ -77,30 +79,9 @@ local function is_space(b)
       (b == BYTE_TAB) or (b == BYTE_VTAB)
 end
 
-local keywords = {
-   ["and"] = "TK_AND",
-   ["break"] = "TK_BREAK",
-   ["do"] = "TK_DO",
-   ["else"] = "TK_ELSE",
-   ["elseif"] = "TK_ELSEIF",
-   ["end"] = "TK_END",
-   ["false"] = "TK_FALSE",
-   ["for"] = "TK_FOR",
-   ["function"] = "TK_FUNCTION",
-   ["goto"] = "TK_GOTO",
-   ["if"] = "TK_IF",
-   ["in"] = "TK_IN",
-   ["local"] = "TK_LOCAL",
-   ["nil"] = "TK_NIL",
-   ["not"] = "TK_NOT",
-   ["or"] = "TK_OR",
-   ["repeat"] = "TK_REPEAT",
-   ["return"] = "TK_RETURN",
-   ["then"] = "TK_THEN",
-   ["true"] = "TK_TRUE",
-   ["until"] = "TK_UNTIL",
-   ["while"] = "TK_WHILE"
-}
+local keywords = utils.array_to_set({
+   "and", "break", "do", "else", "elseif", "end", "false", "for", "function", "goto", "if", "in",
+   "local", "nil", "not", "or", "repeat", "return", "then", "true", "until", "while"})
 
 local simple_escapes = {
    [sbyte("a")] = sbyte("\a"),
@@ -137,7 +118,7 @@ local function skip_newline(state, newline)
 end
 
 local function skip_till_newline(state, b)
-   while not is_newline(b) and b ~= nil do 
+   while not is_newline(b) and b ~= nil do
       b = next_byte(state)
    end
 
@@ -197,14 +178,13 @@ local function lex_long_string(state, opening_long_bracket, token)
             break
          end
       elseif b == nil then
-         -- Unfinished long string.
-         error({})
+         return nil, token == "string" and "unfinished long string" or "unfinished long comment"
       else
          b = next_byte(state)
       end
    end
 
-   -- Add last line. 
+   -- Add last line.
    lines[#lines+1] = ssub(state.src, line_start, state.offset-opening_long_bracket-2)
    next_byte(state)
    return token, tconcat(lines, "\n")
@@ -250,44 +230,60 @@ local function lex_short_string(state, quote)
 
             if b then
                c1 = to_hex(b)
-               b = next_byte(state)
-
-               if b then
-                  c2 = to_hex(b)
-                  b = next_byte(state)
-               end
             end
 
-            if c1 and c2 then
-               s = schar(c1*16 + c2)
-            else
-               error({})
+            if not c1 then
+               return nil, "invalid hexadecimal escape sequence", -2
             end
+
+            b = next_byte(state)
+
+            if b then
+               c2 = to_hex(b)
+            end
+
+            if not c2 then
+               return nil, "invalid hexadecimal escape sequence", -3
+            end
+
+            b = next_byte(state)
+            s = schar(c1*16 + c2)
          elseif b == BYTE_u then
             b = next_byte(state)  -- Skip "u".
 
             if b ~= BYTE_OBRACE then
-               error({})
+               return nil, "invalid UTF-8 escape sequence", -2
             end
 
             b = next_byte(state)  -- Skip "{".
 
-            local codepoint = to_hex(b)  -- There should be at least one digit.
+            local codepoint  -- There should be at least one digit.
+
+            if b then
+               codepoint = to_hex(b)
+            end
 
             if not codepoint then
-               error({})
+               return nil, "invalid UTF-8 escape sequence", -3
             end
+
+            local hexdigits = 0
 
             while true do
                b = next_byte(state)
-               local hex = to_hex(b)
+               local hex
+
+               if b then
+                  hex = to_hex(b)
+               end
 
                if hex then
+                  hexdigits = hexdigits + 1
                   codepoint = codepoint*16 + hex
 
                   if codepoint > 0x10FFFF then
                      -- UTF-8 value too large.
-                     error({})
+                     return nil, "invalid UTF-8 escape sequence", -hexdigits-3
                   end
                else
                   break
@@ -295,7 +291,7 @@ local function lex_short_string(state, quote)
             end
 
             if b ~= BYTE_CBRACE then
-               error({})
+               return nil, "invalid UTF-8 escape sequence", -hexdigits-4
             end
 
             b = next_byte(state)  -- Skip "}".
@@ -305,11 +301,14 @@ local function lex_short_string(state, quote)
             b = skip_space(state, next_byte(state))
          else
             -- Must be a decimal escape.
-            local cb = to_dec(b)
+            local cb
+
+            if b then
+               cb = to_dec(b)
+            end
 
             if not cb then
-               -- Unknown escape sequence.
-               error({})
+               return nil, "invalid escape sequence", -1
             end
 
             -- Up to three decimal digits.
@@ -327,14 +326,15 @@ local function lex_short_string(state, quote)
 
                      if c3 then
                         cb = 10*cb + c3
+
+                        if cb > 255 then
+                           return nil, "invalid decimal escape sequence", -3
+                        end
+
                         b = next_byte(state)
                      end
                   end
                end
-            end
-
-            if cb > 255 then
-               error({})
             end
 
             s = schar(cb)
@@ -347,8 +347,7 @@ local function lex_short_string(state, quote)
          -- Next chunk starts after escape sequence.
          chunk_start = state.offset
       elseif b == nil or is_newline(b) then
-         -- Unfinished short string.
-         error({})
+         return nil, "unfinished string"
       else
          b = next_byte(state)
       end
@@ -370,7 +369,7 @@ local function lex_short_string(state, quote)
    end
 
    next_byte(state)  -- Skip the closing quote.
-   return "TK_STRING", string_value
+   return "string", string_value
 end
 
 -- Payload for a number is simply a substring.
@@ -425,7 +424,7 @@ local function lex_number(state, b)
 
       -- Exponent consists of one or more decimal digits.
       if b == nil or not to_dec(b) then
-         error({})
+         return nil, "malformed number"
       end
 
       repeat
@@ -434,7 +433,7 @@ local function lex_number(state, b)
    end
 
    if not has_digits then
-      error({})
+      return nil, "malformed number"
    end
 
    -- Is it cdata literal?
@@ -469,7 +468,7 @@ local function lex_number(state, b)
       end
    end
 
-   return "TK_NUMBER", ssub(state.src, start, state.offset-1)
+   return "number", ssub(state.src, start, state.offset-1)
 end
 
 local function lex_ident(state)
@@ -481,12 +480,11 @@ local function lex_ident(state)
    end
 
    local ident = ssub(state.src, start, state.offset-1)
-   local keyword = keywords[ident]
 
-   if keyword then
-      return keyword
+   if keywords[ident] then
+      return ident
    else
-      return "TK_NAME", ident
+      return "name", ident
    end
 end
 
@@ -507,7 +505,7 @@ local function lex_dash(state)
          b, long_bracket = skip_long_bracket(state)
 
          if b == BYTE_OBRACK then
-            return lex_long_string(state, long_bracket, "TK_COMMENT")
+            return lex_long_string(state, long_bracket, "comment")
          end
       end
 
@@ -515,7 +513,7 @@ local function lex_dash(state)
       b = skip_till_newline(state, b)
       local comment_value = ssub(state.src, start, state.offset-1)
       skip_newline(state, b)
-      return "TK_COMMENT", comment_value
+      return "comment", comment_value
    end
 end
 
@@ -524,11 +522,11 @@ local function lex_bracket(state)
    local b, long_bracket = skip_long_bracket(state)
 
    if b == BYTE_OBRACK then
-      return lex_long_string(state, long_bracket, "TK_STRING")
+      return lex_long_string(state, long_bracket, "string")
    elseif long_bracket == 0 then
       return "["
    else
-      error({})
+      return nil, "invalid long string delimiter"
    end
 end
 
@@ -537,7 +535,7 @@ local function lex_eq(state)
 
    if b == BYTE_EQ then
       next_byte(state)
-      return "TK_EQ"
+      return "=="
    else
       return "="
    end
@@ -548,10 +546,10 @@ local function lex_lt(state)
 
    if b == BYTE_EQ then
       next_byte(state)
-      return "TK_LE"
+      return "<="
    elseif b == BYTE_LT then
       next_byte(state)
-      return "TK_SHL"
+      return "<<"
    else
       return "<"
    end
@@ -562,10 +560,10 @@ local function lex_gt(state)
 
    if b == BYTE_EQ then
       next_byte(state)
-      return "TK_GE"
+      return ">="
    elseif b == BYTE_GT then
       next_byte(state)
-      return "TK_SHR"
+      return ">>"
    else
       return ">"
    end
@@ -576,7 +574,7 @@ local function lex_div(state)
 
    if b == BYTE_SLASH then
       next_byte(state)
-      return "TK_IDIV"
+      return "//"
    else
       return "/"
    end
@@ -587,7 +585,7 @@ local function lex_ne(state)
 
    if b == BYTE_EQ then
       next_byte(state)
-      return "TK_NE"
+      return "~="
    else
       return "~"
    end
@@ -598,7 +596,7 @@ local function lex_colon(state)
 
    if b == BYTE_COLON then
       next_byte(state)
-      return "TK_DBCOLON"
+      return "::"
    else
       return ":"
    end
@@ -612,11 +610,11 @@ local function lex_dot(state)
 
       if b == BYTE_DOT then
          next_byte(state)
-         return "TK_DOTS"
+         return "...", "..."
       else
-         return "TK_CONCAT"
+         return ".."
       end
-   elseif to_dec(b) then
+   elseif b and to_dec(b) then
       -- Backtrack to dot.
       return lex_number(state, next_byte(state, -1))
    else
@@ -633,6 +631,7 @@ end
 -- Each handler takes the first byte as an argument.
 -- Each handler stops at the character after the token and returns the token and,
 --    optionally, a value associated with the token.
+-- On error handler returns nil, error message and, optionally, start of reported location as negative offset.
 local byte_handlers = {
    [BYTE_DOT] = lex_dot,
    [BYTE_COLON] = lex_colon,
@@ -660,6 +659,15 @@ for b=BYTE_A, BYTE_Z do
    byte_handlers[b] = lex_ident
 end
 
+local function decimal_escaper(char)
+   return "\\" .. tostring(sbyte(char))
+end
+
+-- Returns quoted printable representation of s.
+function lexer.quote(s)
+   return "'" .. s:gsub("[^\32-\126]", decimal_escaper) .. "'"
+end
+
 -- Creates and returns lexer state for source.
 function lexer.new_state(src)
    local state = {
@@ -678,25 +686,35 @@ function lexer.new_state(src)
 end
 
 -- Looks for next token starting from state.line, state.line_offset, state.offset.
--- Returns next token, its value and its location(line, column, offset).
+-- Returns next token, its value and its location (line, column, offset).
 -- Sets state.line, state.line_offset, state.offset to token end location + 1.
+-- On error returns nil, error message, error location (line, column, offset), error end column.
 function lexer.next_token(state)
    local b = skip_space(state, sbyte(state.src, state.offset))
 
    -- Save location of token start.
    local token_line = state.line
-   local token_column = state.offset-state.line_offset+1
+   local token_column = state.offset - state.line_offset + 1
    local token_offset = state.offset
 
-   local token, token_value
+   local token, token_value, err_offset, err_end_column
 
    if b == nil then
-      token = "TK_EOS"
+      token = "eof"
    else
-      token, token_value = (byte_handlers[b] or lex_any)(state, b)
+      token, token_value, err_offset = (byte_handlers[b] or lex_any)(state, b)
    end
 
-   return token, token_value, token_line, token_column, token_offset
+   if err_offset then
+      local token_body = ssub(state.src, state.offset + err_offset, state.offset)
+      token_value = token_value .. " " .. lexer.quote(token_body)
+      token_line = state.line
+      token_column = state.offset - state.line_offset + 1 + err_offset
+      token_offset = state.offset + err_offset
+      err_end_column = token_column + #token_body - 1
+   end
+
+   return token, token_value, token_line, token_column, token_offset, err_end_column or token_column
 end
 
 return lexer

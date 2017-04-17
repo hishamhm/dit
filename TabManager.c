@@ -247,6 +247,22 @@ Buffer* TabManager_draw(TabManager* this, int width) {
    return buffer;
 }
 
+/**
+ * This is like TabManager_draw, but it never loads new files,
+ * it only shows what's already loaded. This is used in the
+ * error handler of the script engine, to avoid an endless
+ * loop in case of errors when loading a file.
+ */
+void TabManager_redraw(TabManager* this, int width) {
+   TabPage* page = (TabPage*) Vector_get(this->items, this->currentPage);
+   if (!page || !page->buffer) {
+      return;
+   }
+   if (this->redrawBar)
+      TabManager_drawBar(this, width);
+   Buffer_draw(page->buffer);
+}
+
 bool TabManager_checkLock(TabManager* this, char* fileName) {
    if (!fileName)
       return true;

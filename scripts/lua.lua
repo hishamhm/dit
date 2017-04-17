@@ -20,7 +20,9 @@ local function run_luacheck(src)
       src = picotyped.translate(src)
    end
    local checker = type(check) == "function" and check or check.check
-   return filter.filter({ utils.pcall(check, src) or {error = "syntax"} })
+   local ok, report = pcall(checker, src)
+   if not ok then report = {error = "syntax"} end
+   return filter.filter({ report })
 end
 
 function highlight_file()
@@ -30,8 +32,8 @@ function highlight_file()
    if not report then 
       return
    end
-   if #report == 1 and report[1].error == "syntax" then
-      local ok, err = load(src)
+   if report.error == "syntax" then
+      local _, err = load(src)
       if err then
          local nr = err:match("^[^:]*:([%d]+):.*")
          local errmsg = err:match("^[^:]*:[%d]+: (.*)")
@@ -107,56 +109,96 @@ function on_save(filename)
    highlight_file()
 end
 
+local function prefix_if_indirect(fmt)
+   return function(w)
+      if w.indirect then
+         return "indirectly " .. fmt
+      else
+         return fmt
+      end
+   end
+end
+
 local message_formats = {
+   ["011"] = "{msg}",
+   ["021"] = "invalid inline option",
+   ["022"] = "unpaired push directive",
+   ["023"] = "unpaired pop directive",
    ["111"] = function(w)
-      if w.module then return "setting non-module global variable %s"
-         else return "setting non-standard global variable %s" end end,
-   ["112"] = "mutating non-standard global variable %s",
-   ["113"] = "accessing undefined variable %s",
-   ["121"] = "setting read-only global variable %s",
-   ["122"] = "mutating read-only global variable %s",
-   ["131"] = "unused global variable %s",
+      if w.module then
+         return "setting non-module global variable {name!}"
+      else
+         return "setting non-standard global variable {name!}"
+      end
+   end,
+   ["112"] = "mutating non-standard global variable {name!}",
+   ["113"] = "accessing undefined variable {name!}",
+   ["121"] = "setting read-only global variable {name!}",
+   ["122"] = prefix_if_indirect("setting read-only field {field!} of global {name!}"),
+   ["131"] = "unused global variable {name!}",
+   ["142"] = prefix_if_indirect("setting undefined field {field!} of global {name!}"),
+   ["143"] = prefix_if_indirect("accessing undefined field {field!} of global {name!}"),
    ["211"] = function(w)
-      if w.func then return "unused function %s"
-         else return "unused variable %s" end end,
+      if w.func then
+         if w.recursive then
+            return "unused recursive function {name!}"
+         elseif w.mutually_recursive then
+            return "unused mutually recursive function {name!}"
+         else
+            return "unused function {name!}"
+         end
+      else
+         return "unused variable {name!}"
+      end
+   end,
    ["212"] = function(w)
-      if w.vararg then return "unused variable length argument"
-         else return "unused argument %s" end end,
-   ["213"] = "unused loop variable %s",
-   ["221"] = "variable %s is never set",
-   ["231"] = "variable %s is never accessed",
-   ["232"] = "argument %s is never accessed",
-   ["233"] = "loop variable %s is never accessed",
-   ["311"] = "value assigned to variable %s is unused",
-   ["312"] = "value of argument %s is unused",
-   ["313"] = "value of loop variable %s is unused",
-   ["321"] = "accessing uninitialized variable %s",
-   ["411"] = "variable %s was previously defined on line %s",
-   ["412"] = "variable %s was previously defined as an argument on line %s",
-   ["413"] = "variable %s was previously defined as a loop variable on line %s",
-   ["421"] = "shadowing definition of variable %s on line %s",
-   ["422"] = "shadowing definition of argument %s on line %s",
-   ["423"] = "shadowing definition of loop variable %s on line %s",
+      if w.name == "..." then
+         return "unused variable length argument"
+      else
+         return "unused argument {name!}"
+      end
+   end,
+   ["213"] = "unused loop variable {name!}",
+   ["221"] = "variable {name!} is never set",
+   ["231"] = "variable {name!} is never accessed",
+   ["232"] = "argument {name!} is never accessed",
+   ["233"] = "loop variable {name!} is never accessed",
+   ["241"] = "variable {name!} is mutated but never accessed",
+   ["311"] = "value assigned to variable {name!} is unused",
+   ["312"] = "value of argument {name!} is unused",
+   ["313"] = "value of loop variable {name!} is unused",
+   ["314"] = function(w)
+      return "value assigned to " .. (w.index and "index" or "field") .. " {field!} is unused"
+   end,
+   ["321"] = "accessing uninitialized variable {name!}",
+   ["331"] = "value assigned to variable {name!} is mutated but never accessed",
+   ["341"] = "mutating uninitialized variable {name!}",
+   ["411"] = "variable {name!} was previously defined on line {prev_line}",
+   ["412"] = "variable {name!} was previously defined as an argument on line {prev_line}",
+   ["413"] = "variable {name!} was previously defined as a loop variable on line {prev_line}",
+   ["421"] = "shadowing definition of variable {name!} on line {prev_line}",
+   ["422"] = "shadowing definition of argument {name!} on line {prev_line}",
+   ["423"] = "shadowing definition of loop variable {name!} on line {prev_line}",
+   ["431"] = "shadowing upvalue {name!} on line {prev_line}",
+   ["432"] = "shadowing upvalue argument {name!} on line {prev_line}",
+   ["433"] = "shadowing upvalue loop variable {name!} on line {prev_line}",
    ["511"] = "unreachable code",
    ["512"] = "loop is executed at most once",
-   ["521"] = "unused label %s",
+   ["521"] = "unused label {label!}",
    ["531"] = "left-hand side of assignment is too short",
    ["532"] = "left-hand side of assignment is too long",
    ["541"] = "empty do..end block",
-   ["542"] = "empty if branch"
+   ["542"] = "empty if branch",
+   ["551"] = "empty statement",
+   ["611"] = "line contains only whitespace",
+   ["612"] = "line contains trailing whitespace",
+   ["613"] = "trailing whitespace in a string",
+   ["614"] = "trailing whitespace in a comment",
+   ["621"] = "inconsistent indentation (SPACE followed by TAB)",
+   ["631"] = "line is too long ({end_column} > {max_length})"
 }
 
 local function get_message_format(warning)
-   if warning.invalid then
-      return "invalid inline option"
-   elseif warning.unpaired then
-      return "unpaired inline option"
-   end
-
-   if warning.code == 0 then
-      return warning.message
-   end
-
    local message_format = message_formats[warning.code]
 
    if type(message_format) == "function" then
@@ -164,6 +206,21 @@ local function get_message_format(warning)
    else
       return message_format
    end
+end
+
+-- Substitutes markers within string format with values from a table.
+-- "{field_name}" marker is replaced with `values.field_name`.
+-- "{field_name!}" marker adds quoting.
+local function substitute(string_format, values)
+   return (string_format:gsub("{([_a-zA-Z0-9]+)(!?)}", function(field_name, highlight)
+      local value = tostring(assert(values[field_name], "No field " .. field_name))
+
+      if highlight == "!" then
+         return "'" .. value .. "'"
+      else
+         return value
+      end
+   end))
 end
 
 function on_ctrl(key)
@@ -174,8 +231,7 @@ function on_ctrl(key)
    elseif key == "D" then
       local x, y = buffer:xy()
       for note in each_note(y, x) do
-         local message_format = get_message_format(note)
-         local message = message_format:format(note.name, note.prev_line)
+         local message = substitute(get_message_format(note), note)
          buffer:draw_popup({message}) -- lines[y][x].description)
          return true
       end

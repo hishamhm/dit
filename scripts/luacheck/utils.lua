@@ -1,121 +1,100 @@
+local unpack = table.unpack or unpack -- luacheck: compat
+
 local utils = {}
 
-local dir_sep = package.config:sub(1,1)
+utils.dir_sep = package.config:sub(1,1)
+utils.is_windows = utils.dir_sep == "\\"
 
-utils.is_windows = dir_sep == "\\"
+local bom = "\239\187\191"
 
-local has_lfs, lfs = pcall(require, "lfs")
-
-if has_lfs then
-   -- Returns whether path points to a directory. 
-   function utils.is_dir(path)
-      return lfs.attributes(path, "mode") == "directory"
-   end
-
-   -- Returns whether path points to a file. 
-   function utils.is_file(path)
-      return lfs.attributes(path, "mode") == "file"
-   end
-
-   -- Returns list of all files in directory matching pattern. 
-   function utils.extract_files(dir_path, pattern)
-      local res = {}
-
-      local function scan(dir_path)
-         for path in lfs.dir(dir_path) do
-            if path ~= "." and path ~= ".." then
-               local full_path = dir_path .. dir_sep .. path
-
-               if utils.is_dir(full_path) then
-                  scan(full_path)
-               elseif path:match(pattern) and utils.is_file(full_path) then
-                  table.insert(res, full_path)
-               end
-            end
-         end
-      end
-
-      scan(dir_path)
-      table.sort(res)
-      return res
-   end
-else
-   -- No luafilesystem. Effectively disable recursive directory checking.
-   -- Using something like os.execute("ls") may be possible but is a hack.
-
-   function utils.is_dir(_)
-      return false
-   end
-
-   function utils.is_file(path)
-      local fh = io.open(path)
-
-      if fh then
-         fh:close()
-         return true
-      else
-         return false
-      end
-   end
-
-   function utils.extract_files(_, _)
-      return {}
-   end
-end
-
--- Returns all contents of file(path or file handler) or nil. 
+-- Returns all contents of file (path or file handler) or nil + error message.
 function utils.read_file(file)
-   local res
+   local handler
 
-   return pcall(function()
-      local handler = type(file) == "string" and io.open(file, "rb") or file
-      res = assert(handler:read("*a"))
-      handler:close()
-   end) and res or nil
-end
+   if type(file) == "string" then
+      local open_err
+      handler, open_err = io.open(file, "rb")
 
--- Parses rockspec-like source, returns data or nil. 
-local function capture_env(src, env)
-   -- luacheck: compat
-   env = env or {}
-   local func
-
-   if _VERSION:find "5.1" then
-      func = loadstring(src)
-
-      if func then
-         setfenv(func, env)
+      if not handler then
+         open_err = utils.unprefix(open_err, file .. ": ")
+         return nil, "couldn't read: " .. open_err
       end
    else
-      func = load(src, nil, "t", env)
+      handler = file
    end
 
-   return func and pcall(func) and env
+   local res, read_err = handler:read("*a")
+   handler:close()
+
+   if not res then
+      return nil, "couldn't read: " .. read_err
+   end
+
+   -- Use :len() instead of # operator because in some environments
+   -- string library is patched to handle UTF.
+   if res:sub(1, bom:len()) == bom then
+      res = res:sub(bom:len() + 1)
+   end
+
+   return res
 end
 
--- Loads config containing assignments to global variables from path. 
--- Returns config table or nil and error message("I/O" or "syntax"). 
+-- luacheck: push
+-- luacheck: compat
+if _VERSION:find "5.1" then
+   -- Loads Lua source string in an environment, returns function or nil, error.
+   function utils.load(src, env, chunkname)
+      local func, err = loadstring(src, chunkname)
+
+      if func then
+         if env then
+            setfenv(func, env)
+         end
+
+         return func
+      else
+         return nil, err
+      end
+   end
+else
+   -- Loads Lua source string in an environment, returns function or nil, error.
+   function utils.load(src, env, chunkname)
+      return load(src, chunkname, "t", env or _ENV)
+   end
+end
+-- luacheck: pop
+
+-- Loads config containing assignments to global variables from path.
+-- Returns config table and return value of config or nil and error type
+-- ("I/O" or "syntax" or "runtime") and error message.
 function utils.load_config(path, env)
-   local src = utils.read_file(path)
+   env = env or {}
+   local src, read_err = utils.read_file(path)
 
    if not src then
-      return nil, "I/O"
+      return nil, "I/O", read_err
    end
 
-   local cfg = capture_env(src, env)
+   local func, load_err = utils.load(src, env, "chunk")
 
-   if not cfg then
-      return nil, "syntax"
+   if not func then
+      return nil, "syntax", "line " .. utils.unprefix(load_err, "[string \"chunk\"]:")
    end
 
-   return cfg
+   local ok, res = pcall(func)
+
+   if not ok then
+      return nil, "runtime", "line " .. utils.unprefix(res, "[string \"chunk\"]:")
+   end
+
+   return env, res
 end
 
 function utils.array_to_set(array)
    local set = {}
 
-   for _, item in ipairs(array) do
-      set[item] = true
+   for index, value in ipairs(array) do
+      set[value] = index
    end
 
    return set
@@ -141,6 +120,12 @@ function utils.update(t1, t2)
    return t1
 end
 
+function utils.remove(t1, t2)
+   for k in pairs(t2) do
+      t1[k] = nil
+   end
+end
+
 local class_metatable = {}
 
 function class_metatable.__call(class, ...)
@@ -157,6 +142,10 @@ function utils.class()
    local class = setmetatable({}, class_metatable)
    class.__index = class
    return class
+end
+
+function utils.is_instance(object, class)
+   return rawequal(debug.getmetatable(object), class)
 end
 
 utils.Stack = utils.class()
@@ -179,31 +168,36 @@ function utils.Stack:pop()
    return value
 end
 
+local ErrorWrapper = utils.class()
+
+function ErrorWrapper:__init(err, traceback)
+   self.err = err
+   self.traceback = traceback
+end
+
+function ErrorWrapper:__tostring()
+   return tostring(self.err) .. "\n" .. self.traceback
+end
+
 local function error_handler(err)
-   if type(err) == "table" then
-      return false
+   if utils.is_instance(err, ErrorWrapper) then
+      return err
    else
-      return tostring(err) .. "\n" .. debug.traceback()
+      return ErrorWrapper(err, debug.traceback())
    end
 end
 
--- Calls f with arg, returns what it does.
--- If f throws a table, returns nil.
--- If f throws not a table, rethrows.
-function utils.pcall(f, arg)
+-- Like pcall, but wraps errors in {err = err, traceback = traceback}
+-- tables unless already wrapped.
+function utils.try(f, ...)
+   local args = {...}
+   local num_args = select("#", ...)
+
    local function task()
-      return f(arg)
+      return f(unpack(args, 1, num_args))
    end
 
-   local ok, res = xpcall(task, error_handler)
-
-   if ok then
-      return res
-   elseif not res then
-      return nil
-   else
-      error(res, 0)
-   end
+   return xpcall(task, error_handler)
 end
 
 local function ripairs_iterator(array, i)
@@ -217,6 +211,14 @@ end
 
 function utils.ripairs(array)
    return ripairs_iterator, array, #array + 1
+end
+
+function utils.unprefix(str, prefix)
+   if str:sub(1, #prefix) == prefix then
+      return str:sub(#prefix + 1)
+   else
+      return str
+   end
 end
 
 function utils.after(str, pattern)
@@ -250,6 +252,110 @@ function utils.split(str, sep)
    end
 
    return parts
+end
+
+-- Splits a string into an array of lines.
+-- "\n", "\r", "\r\n", and "\n\r" are considered
+-- line endings to be consistent with Lua lexer.
+function utils.split_lines(str)
+   local lines = {}
+   local pos = 1
+
+   while true do
+      local line_end_pos, _, line_end = str:find("([\n\r])", pos)
+
+      if not line_end_pos then
+         break
+      end
+
+      local line = str:sub(pos, line_end_pos - 1)
+      table.insert(lines, line)
+
+      pos = line_end_pos + 1
+      local next_char = str:sub(pos, pos)
+
+      if next_char:match("[\n\r]") and next_char ~= line_end then
+         pos = pos + 1
+      end
+   end
+
+   if pos <= #str then
+      local last_line = str:sub(pos)
+      table.insert(lines, last_line)
+   end
+
+   return lines
+end
+
+utils.InvalidPatternError = utils.class()
+
+function utils.InvalidPatternError:__init(err, pattern)
+   self.err = err
+   self.pattern = pattern
+end
+
+function utils.InvalidPatternError:__tostring()
+   return self.err
+end
+
+-- Behaves like string.match, except it normally returns boolean and
+-- throws an instance of utils.InvalidPatternError on invalid pattern.
+-- The error object turns into original error when tostring is used on it,
+-- to ensure behaviour is predictable when luacheck is used as a module.
+function utils.pmatch(str, pattern)
+   assert(type(str) == "string")
+   assert(type(pattern) == "string")
+
+   local ok, res = pcall(string.match, str, pattern)
+
+   if not ok then
+      error(utils.InvalidPatternError(res, pattern), 0)
+   else
+      return not not res
+   end
+end
+
+-- Maps func over array.
+function utils.map(func, array)
+   local res = {}
+
+   for i, item in ipairs(array) do
+      res[i] = func(item)
+   end
+
+   return res
+end
+
+-- Returns predicate checking type.
+function utils.has_type(type_)
+   return function(x)
+      return type(x) == type_
+   end
+end
+
+-- Returns predicate checking that value is an array with
+-- elements of type.
+function utils.array_of(type_)
+   return function(x)
+      if type(x) ~= "table" then
+         return false
+      end
+
+      for _, item in ipairs(x) do
+         if type(item) ~= type_ then
+            return false
+         end
+      end
+
+      return true
+   end
+end
+
+-- Returns predicate chacking if value satisfies on of predicates.
+function utils.either(pred1, pred2)
+   return function(x)
+      return pred1(x) or pred2(x)
+   end
 end
 
 return utils

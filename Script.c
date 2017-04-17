@@ -33,7 +33,7 @@ STATIC void error(lua_State* L) {
    lua_getglobal(L, "tabs");
    TabManager* tabs = (TabManager*) ((Proxy*)lua_touserdata(L, -1))->ptr;
    TabManager_refreshCurrent(tabs);
-   TabManager_draw(tabs, cols);
+   TabManager_redraw(tabs, cols);
 }
 
 STATIC void Script_pushObject(lua_State* L, void* ptr, const char* klass, const luaL_Reg* functions) {
@@ -433,7 +433,7 @@ STATIC int errorHandler(lua_State* L) {
    return 1;
 }
 
-inline bool callFunction(lua_State* L, const char* fn, const char* arg) {
+inline bool callFunction(lua_State* L, bool* skip, const char* fn, const char* arg) {
    lua_pushcfunction(L, errorHandler);
    int errFunc = lua_gettop(L);
    lua_getglobal(L, fn);
@@ -442,16 +442,19 @@ inline bool callFunction(lua_State* L, const char* fn, const char* arg) {
    if (arg)
       lua_pushstring(L, arg);
    int err = lua_pcall(L, arg ? 1 : 0, 0, errFunc);
-   if (err) error(L);
+   if (err) {
+      *skip = true;
+      error(L);
+   }
    lua_pop(L, lua_gettop(L));
    return (err == 0);
 }
 
-void Script_highlightFile(Highlight* this, const char* fileName) {
+bool Script_highlightFile(Highlight* this, const char* fileName) {
    if (!this->hasScript)
       return;
    lua_State* L = this->script->L;
-   this->hasScript = callFunction(L, "highlight_file", fileName);
+   return callFunction(L, &(this->hasScript), "highlight_file", fileName);
 }
 
 void Script_highlightLine(Highlight* this, const char* buffer, int* attrs, int len, int y) {
@@ -479,7 +482,10 @@ void Script_highlightLine(Highlight* this, const char* buffer, int* attrs, int l
          }
       }
    } else {
-      if (err) error(L);
+      if (err) {
+         this->hasScript = false;
+         error(L);
+      }
    }
    lua_pop(L, lua_gettop(L));
 }
@@ -514,7 +520,7 @@ void Script_onCtrl(Buffer* this, int key) {
    
    lua_State* L = this->script.L;
    char ch[2] = { 'A' + key - 1, '\0' };
-   this->skipOnCtrl = !callFunction(L, "on_ctrl", ch);
+   callFunction(L, &(this->skipOnCtrl), "on_ctrl", ch);
 }
 
 void Script_onFKey(Buffer* this, int key) {
@@ -527,19 +533,19 @@ void Script_onFKey(Buffer* this, int key) {
    } else {
       snprintf(ch, 10, "SHIFT_F%d", key - KEY_F(10) + 1);
    }
-   this->skipOnFKey = !callFunction(L, "on_fkey", ch);
+   callFunction(L, &(this->skipOnFKey), "on_fkey", ch);
 }
 
 void Script_onSave(Buffer* this, const char* fileName) {
    if (this->skipOnSave) return;
    
    lua_State* L = this->script.L;
-   this->skipOnSave = !callFunction(L, "on_save", fileName);
+   callFunction(L, &(this->skipOnSave), "on_save", fileName);
 }
 
 void Script_onChange(Buffer* this) {
    if (this->skipOnChange) return;
    
    lua_State* L = this->script.L;
-   this->skipOnChange = !callFunction(L, "on_change", NULL);
+   callFunction(L, &(this->skipOnChange), "on_change", NULL);
 }
