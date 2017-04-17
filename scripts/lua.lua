@@ -19,6 +19,7 @@ local function run_luacheck(src)
    if picotyped then
       src = picotyped.translate(src)
    end
+   local checker = type(check) == "function" and check or check.check
    return filter.filter({ utils.pcall(check, src) or {error = "syntax"} })
 end
 
