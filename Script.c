@@ -437,8 +437,10 @@ inline bool callFunction(lua_State* L, bool* skip, const char* fn, const char* a
    lua_pushcfunction(L, errorHandler);
    int errFunc = lua_gettop(L);
    lua_getglobal(L, fn);
-   if (!lua_isfunction(L, -1))
+   if (!lua_isfunction(L, -1)) {
+      lua_settop(L, 0);
       return false;
+   }
    if (arg)
       lua_pushstring(L, arg);
    int err = lua_pcall(L, arg ? 1 : 0, 0, errFunc);
@@ -446,13 +448,13 @@ inline bool callFunction(lua_State* L, bool* skip, const char* fn, const char* a
       *skip = true;
       error(L);
    }
-   lua_pop(L, lua_gettop(L));
+   lua_settop(L, 0);
    return (err == 0);
 }
 
 bool Script_highlightFile(Highlight* this, const char* fileName) {
    if (!this->hasScript)
-      return;
+      return false;
    lua_State* L = this->script->L;
    return callFunction(L, &(this->hasScript), "highlight_file", fileName);
 }
@@ -466,6 +468,7 @@ void Script_highlightLine(Highlight* this, const char* buffer, int* attrs, int l
    lua_getglobal(L, "highlight_line");
    if (!lua_isfunction(L, -1)) {
       this->hasScript = false;
+      lua_settop(L, 0);
       return;
    }
    lua_pushstring(L, buffer);
@@ -487,7 +490,7 @@ void Script_highlightLine(Highlight* this, const char* buffer, int* attrs, int l
          error(L);
       }
    }
-   lua_pop(L, lua_gettop(L));
+   lua_settop(L, 0);
 }
 
 bool Script_onKey(Buffer* this, int key) {
@@ -499,6 +502,7 @@ bool Script_onKey(Buffer* this, int key) {
    lua_getglobal(L, "on_key");
    if (!lua_isfunction(L, -1)) {
       this->skipOnKey = true;
+      lua_settop(L, 0);
       return false;
    }
    lua_pushinteger(L, key);
@@ -511,7 +515,7 @@ bool Script_onKey(Buffer* this, int key) {
    } else {
       ok = lua_toboolean(L, -1);
    }
-   lua_pop(L, lua_gettop(L));
+   lua_settop(L, 0);
    return ok;
 }
 
