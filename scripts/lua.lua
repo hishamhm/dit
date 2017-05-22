@@ -83,6 +83,8 @@ function highlight_line(line, y)
       -- For error numbers, see http://luacheck.readthedocs.org/en/0.11.0/warnings.html
       elseif note.secondary or note.code == "421" or (note.code == "411" and note.name == "err") then
          key = " "
+      elseif note.code:sub(1,1) == "6" then -- cosmetic notes
+         key = " "
       end
       for i = fchar, lchar do
          ret[i] = key
