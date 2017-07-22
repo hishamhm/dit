@@ -44,7 +44,7 @@ scripts/luacheck/stds.lua scripts/luacheck/lexer.lua \
 scripts/luacheck/linearize.lua scripts/luacheck/expand_rockspec.lua \
 scripts/luacheck/argparse.lua scripts/luacheck/utils.lua \
 scripts/luacheck/parser.lua scripts/luacheck/analyze.lua \
-scripts/java.lua scripts/cscope.lua
+scripts/java.lua scripts/cscope.lua scripts/tmux.lua
 
 EXTRA_DIST = tools/GenHeaders extras/dit.keytab \
    lua-$(DIT_LUA_VERSION)/src/*.[ch] \
