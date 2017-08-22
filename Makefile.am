@@ -14,37 +14,42 @@ BUILT_SOURCES = Prototypes.h Structures.h
 
 # find bindings terminals highlight scripts -type f -or -type -l | tr '\n' ' ' | fold -s -w 70 | sed 's,$,\\,'
 nobase_dist_pkgdata_DATA = \
-bindings/default terminals/linux terminals/konsole \
-terminals/xterm-color terminals/rxvt terminals/wsvt25 \
-terminals/xterm-1002 highlight/c.dithlinc highlight/latex.dithl \
-highlight/nestedm4.dithlinc highlight/shell.dithlinc \
-highlight/php.dithl highlight/ldoc.dithlinc highlight/lhs.dithl \
-highlight/lua.dithlinc highlight/c.dithl highlight/ruby.dithl \
-highlight/diff.dithlinc highlight/java.dithl \
-highlight/lpeg_re.dithlinc highlight/lua.dithl highlight/python.dithl \
-highlight/markdown.dithlinc highlight/javascript.dithl \
-highlight/latex.dithlinc highlight/gitconflict.dithlinc \
-highlight/etlua.dithl highlight/shell.dithl highlight/perl.dithl \
-highlight/dithl.dithl highlight/yacc.dithl highlight/css.dithl \
-highlight/css.dithlinc highlight/ltp.dithl \
-highlight/shellbacktick.dithlinc highlight/html.dithl \
-highlight/yats.dithl highlight/xml.dithl highlight/haskell.dithlinc \
-highlight/html.dithlinc highlight/conf.dithl highlight/autoconf.dithl \
-highlight/make.dithl highlight/javascript.dithlinc \
-highlight/haskell.dithl highlight/markdown.dithl \
-highlight/gitcommit.dithl highlight/diff.dithl highlight/lex.dithl \
-scripts/lua.lua scripts/shell.lua scripts/c.lua scripts/cmd.lua \
-scripts/latex.lua scripts/dit/tab_complete.lua scripts/dit/code.lua \
-scripts/dit/line_commit.lua scripts/haskell.lua \
-scripts/luacheck/filter.lua scripts/luacheck/init.lua \
-scripts/luacheck/format.lua scripts/luacheck/core_utils.lua \
-scripts/luacheck/options.lua scripts/luacheck/check.lua \
-scripts/luacheck/reachability.lua scripts/luacheck/inline_options.lua \
-scripts/luacheck/stds.lua scripts/luacheck/lexer.lua \
-scripts/luacheck/linearize.lua scripts/luacheck/expand_rockspec.lua \
-scripts/luacheck/argparse.lua scripts/luacheck/utils.lua \
-scripts/luacheck/parser.lua scripts/luacheck/analyze.lua \
-scripts/java.lua scripts/cscope.lua scripts/tmux.lua
+bindings/default terminals/wsvt25 terminals/xterm-color \
+terminals/konsole terminals/linux terminals/rxvt terminals/xterm-1002 \
+highlight/conf.dithl highlight/xml.dithl highlight/ltp.dithl \
+highlight/shell.dithlinc highlight/lhs.dithl highlight/html.dithl \
+highlight/yats.dithl highlight/diff.dithlinc highlight/c.dithl \
+highlight/c.dithlinc highlight/yacc.dithl highlight/java.dithl \
+highlight/gitcommit.dithl highlight/shellbacktick.dithlinc \
+highlight/make.dithl highlight/haskell.dithlinc \
+highlight/nestedm4.dithlinc highlight/css.dithl \
+highlight/markdown.dithl highlight/haskell.dithl \
+highlight/lpeg_re.dithlinc highlight/markdown.dithlinc \
+highlight/lua.dithl highlight/shell.dithl \
+highlight/javascript.dithlinc highlight/diff.dithl \
+highlight/css.dithlinc highlight/autoconf.dithl highlight/php.dithl \
+highlight/html.dithlinc highlight/python.dithl highlight/latex.dithl \
+highlight/ldoc.dithlinc highlight/latex.dithlinc \
+highlight/lua.dithlinc highlight/gitconflict.dithlinc \
+highlight/dithl.dithl highlight/lex.dithl highlight/javascript.dithl \
+highlight/etlua.dithl highlight/perl.dithl highlight/ruby.dithl \
+scripts/cscope.lua scripts/java.lua scripts/c.lua scripts/latex.lua \
+scripts/cmd.lua scripts/luacheck/main.lua scripts/luacheck/lexer.lua \
+scripts/luacheck/core_utils.lua scripts/luacheck/cache.lua \
+scripts/luacheck/whitespace.lua scripts/luacheck/check.lua \
+scripts/luacheck/globbing.lua scripts/luacheck/init.lua \
+scripts/luacheck/config.lua scripts/luacheck/multithreading.lua \
+scripts/luacheck/detect_globals.lua scripts/luacheck/linearize.lua \
+scripts/luacheck/reachability.lua scripts/luacheck/utils.lua \
+scripts/luacheck/standards.lua scripts/luacheck/expand_rockspec.lua \
+scripts/luacheck/inline_options.lua scripts/luacheck/analyze.lua \
+scripts/luacheck/options.lua scripts/luacheck/format.lua \
+scripts/luacheck/argparse.lua scripts/luacheck/builtin_standards.lua \
+scripts/luacheck/filter.lua scripts/luacheck/stds.lua \
+scripts/luacheck/parser.lua scripts/luacheck/fs.lua \
+scripts/luacheck/version.lua scripts/dit/line_commit.lua \
+scripts/dit/code.lua scripts/dit/tab_complete.lua scripts/shell.lua \
+scripts/haskell.lua scripts/tmux.lua scripts/lua.lua
 
 EXTRA_DIST = tools/GenHeaders extras/dit.keytab \
    lua-$(DIT_LUA_VERSION)/src/*.[ch] \
