@@ -216,6 +216,7 @@ STATIC int Script_Buffer___newindex(lua_State* L) {
       size_t len;
       const char* text = lua_tolstring(L, 3, &len);
       Buffer_setLine(buffer, y, Text_new((char*) text));
+      buffer->panel->needsRedraw = true;
    }
    return 0;
 }
