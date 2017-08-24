@@ -12,7 +12,7 @@ my_dit_C_sources = dit.c Buffer.c CRT.c Clipboard.c DebugMemory.c Field.c \
  Text.c lua-compat-5.3/compat-5.3.c
 BUILT_SOURCES = Prototypes.h Structures.h
 
-# find bindings terminals highlight scripts -type f -or -type -l | tr '\n' ' ' | fold -s -w 70 | sed 's,$,\\,'
+# find bindings terminals highlight scripts -type f -or -type l | tr '\n' ' ' | fold -s -w 70 | sed 's,$,\\,'
 nobase_dist_pkgdata_DATA = \
 bindings/default terminals/wsvt25 terminals/xterm-color \
 terminals/konsole terminals/linux terminals/rxvt terminals/xterm-1002 \
