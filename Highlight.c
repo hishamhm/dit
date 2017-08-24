@@ -293,6 +293,7 @@ HighlightParserState parseFile(ReadHighlightFileArgs* args, FILE* file, const ch
    }
    freeTokens(tokens);
    fclose(file);
+   Script_load(this->script, "dit/global.lua");
    return state;
 }
 

@@ -49,7 +49,7 @@ scripts/luacheck/filter.lua scripts/luacheck/stds.lua \
 scripts/luacheck/parser.lua scripts/luacheck/fs.lua \
 scripts/luacheck/version.lua scripts/dit/line_commit.lua \
 scripts/dit/code.lua scripts/dit/tab_complete.lua scripts/shell.lua \
-scripts/haskell.lua scripts/tmux.lua scripts/lua.lua
+scripts/haskell.lua scripts/tmux.lua scripts/lua.lua scripts/dit/global.lua
 
 EXTRA_DIST = tools/GenHeaders extras/dit.keytab \
    lua-$(DIT_LUA_VERSION)/src/*.[ch] \
