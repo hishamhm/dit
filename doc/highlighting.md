@@ -52,14 +52,16 @@ end_context :- "/context" <newline>
 
 match :- ("`^")? match_item+
 
-match_item :- character_set
-            / match_item "`+"
-            / match_item "`*"
-            / match_item "`?"
-            / "``"
-            / "`t"
-            / "`s"
-            / <character>
+match_item :- character_match "`+"
+            / character_match "`*"
+            / character_match "`?"
+            / character_match
+
+character_match :- character_set
+                 / "``"
+                 / "`t"
+                 / "`s"
+                 / <character>
 
 character_set :- "`[" ("`^")? ( ( <character> | character_sequence ) ("`|")? )+ "`]"
 
