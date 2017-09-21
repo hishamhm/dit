@@ -87,6 +87,8 @@ struct Buffer_ {
    bool dosLineBreaks;
    // trim trailing whitespace when saving
    bool trimTrailingWhitespace;
+   // make sure file ends with a line break
+   bool insertFinalNewline;
    // document uses UTF-8 (if false, assume ISO-8859-15)
    bool isUTF8;
    // time tracker to disable auto-indent when pasting;
@@ -236,6 +238,12 @@ static void Buffer_checkEditorConfig(Buffer* this, const char* fileName) {
             } else {
                this->trimTrailingWhitespace = false;
             }
+         } else if (strcmp(name, "insert_final_newline") == 0) {
+            if (strcmp(value, "true") == 0) {
+               this->insertFinalNewline = true;
+            } else {
+               this->insertFinalNewline = false;
+            }
          }
       }
    }
@@ -262,6 +270,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
    this->tabulation = 3;
    this->dosLineBreaks = false;
    this->trimTrailingWhitespace = false;
+   this->insertFinalNewline = false;
    this->tabSize = 8;
    this->nCursors = 0;
    
@@ -1295,7 +1304,7 @@ Coords Buffer_find(Buffer* this, Text needle, bool findNext, bool caseSensitive,
    return notFound;
 }
 
-static void writeLineInFormat(FILE* fd, Line* l, bool utf8, bool trimTrailingWhitespace, iconv_t cd) {
+static int writeLineInFormat(FILE* fd, Line* l, bool utf8, bool trimTrailingWhitespace, iconv_t cd) {
    char* intext = Line_toString(l);
    size_t insize = Line_bytes(l);
    if (trimTrailingWhitespace) {
@@ -1305,20 +1314,21 @@ static void writeLineInFormat(FILE* fd, Line* l, bool utf8, bool trimTrailingWhi
    }
    if (utf8) {
       fwrite(intext, insize, 1, fd);
-   } else {
-      size_t outsize = insize + 1;
-      char* outtext = calloc(outsize, 1);
-      size_t outleft = outsize;
-      char* outptr = outtext;
-      int err = iconv(cd, &intext, &insize, &outptr, &outleft);
-      if (err == -1) {
-         fwrite(intext, insize, 1, fd);
-         return;
-      }
-      int size = outsize - outleft;
-      fwrite(outtext, size, 1, fd);
-      free(outtext);
+      return insize;
    }
+   size_t outsize = insize + 1;
+   char* outtext = calloc(outsize, 1);
+   size_t outleft = outsize;
+   char* outptr = outtext;
+   int err = iconv(cd, &intext, &insize, &outptr, &outleft);
+   if (err == -1) {
+      fwrite(intext, insize, 1, fd);
+      return insize;
+   }
+   int size = outsize - outleft;
+   fwrite(outtext, size, 1, fd);
+   free(outtext);
+   return size;
 }
 
 void Buffer_saveAndCloseFd(Buffer* this, FILE* fd) {
@@ -1328,11 +1338,19 @@ void Buffer_saveAndCloseFd(Buffer* this, FILE* fd) {
    if (!this->isUTF8) {
       cd = iconv_open("ISO-8859-15", "UTF-8");
    }
+   int lastLineLen;
    while (l) {
-      writeLineInFormat(fd, l, this->isUTF8, this->trimTrailingWhitespace, cd);
+      lastLineLen = writeLineInFormat(fd, l, this->isUTF8, this->trimTrailingWhitespace, cd);
       l = (Line*) l->super.next;
       if (l)
          fwrite("\n", 1, 1, fd);
+   }
+   if (this->insertFinalNewline && lastLineLen != 0) {
+      if (this->dosLineBreaks) {
+         fwrite("\r\n", 2, 1, fd);
+      } else {
+         fwrite("\n", 1, 1, fd);
+      }
    }
    fclose(fd);
    if (!this->isUTF8) {

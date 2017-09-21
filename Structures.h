@@ -219,6 +219,8 @@ struct Buffer_ {
    bool dosLineBreaks;
    // trim trailing whitespace when saving
    bool trimTrailingWhitespace;
+   // make sure file ends with a line break
+   bool insertFinalNewline;
    // document uses UTF-8 (if false, assume ISO-8859-15)
    bool isUTF8;
    // time tracker to disable auto-indent when pasting;
