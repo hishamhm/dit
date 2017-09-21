@@ -217,6 +217,8 @@ struct Buffer_ {
    int saveTabulationY;
    // document uses DOS-style ctrl-M
    bool dosLineBreaks;
+   // trim trailing whitespace when saving
+   bool trimTrailingWhitespace;
    // document uses UTF-8 (if false, assume ISO-8859-15)
    bool isUTF8;
    // time tracker to disable auto-indent when pasting;

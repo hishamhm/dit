@@ -85,6 +85,8 @@ struct Buffer_ {
    int saveTabulationY;
    // document uses DOS-style ctrl-M
    bool dosLineBreaks;
+   // trim trailing whitespace when saving
+   bool trimTrailingWhitespace;
    // document uses UTF-8 (if false, assume ISO-8859-15)
    bool isUTF8;
    // time tracker to disable auto-indent when pasting;
@@ -228,6 +230,12 @@ static void Buffer_checkEditorConfig(Buffer* this, const char* fileName) {
             } else {
                this->isUTF8 = true;
             }
+         } else if (strcmp(name, "trim_trailing_whitespace") == 0) {
+            if (strcmp(value, "true") == 0) {
+               this->trimTrailingWhitespace = true;
+            } else {
+               this->trimTrailingWhitespace = false;
+            }
          }
       }
    }
@@ -253,6 +261,7 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
    this->modified = false;
    this->tabulation = 3;
    this->dosLineBreaks = false;
+   this->trimTrailingWhitespace = false;
    this->tabSize = 8;
    this->nCursors = 0;
    
@@ -1286,9 +1295,14 @@ Coords Buffer_find(Buffer* this, Text needle, bool findNext, bool caseSensitive,
    return notFound;
 }
 
-static void writeLineInFormat(FILE* fd, Line* l, bool utf8, iconv_t cd) {
+static void writeLineInFormat(FILE* fd, Line* l, bool utf8, bool trimTrailingWhitespace, iconv_t cd) {
    char* intext = Line_toString(l);
    size_t insize = Line_bytes(l);
+   if (trimTrailingWhitespace) {
+      while(insize > 0 && intext[insize - 1] == ' ') {
+         insize--;
+      }
+   }
    if (utf8) {
       fwrite(intext, insize, 1, fd);
    } else {
@@ -1315,7 +1329,7 @@ void Buffer_saveAndCloseFd(Buffer* this, FILE* fd) {
       cd = iconv_open("ISO-8859-15", "UTF-8");
    }
    while (l) {
-      writeLineInFormat(fd, l, this->isUTF8, cd);
+      writeLineInFormat(fd, l, this->isUTF8, this->trimTrailingWhitespace, cd);
       l = (Line*) l->super.next;
       if (l)
          fwrite("\n", 1, 1, fd);
