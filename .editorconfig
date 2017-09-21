@@ -1,0 +1,9 @@
+root = true
+
+[*]
+end_of_line = lf
+
+[*.c]
+indent_style = space
+indent_size = 3
+trim_trailing_whitespace = false
