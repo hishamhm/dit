@@ -1,6 +1,4 @@
 
-include markdown.dithlinc
-
 context @param `[`^`s`]`+ alt brightalt dim
 /context
 context @tparam`[`^`s`]`*`s`+ `s`+`[`^`s`]`+ alt brightalt diff
