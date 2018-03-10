@@ -1,0 +1,16 @@
+FILES
+name suffix .json
+RULES
+
+rule "`[!#`-~`]`+": brightalt
+
+context " " diff
+/context
+
+
+rule [ bright
+rule ] bright
+rule { bright
+rule } bright
+rule , symbol
+
