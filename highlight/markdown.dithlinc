@@ -4,8 +4,14 @@ rule * brightalt
 rule `^=`* brightdiff
 rule `^-`* diff
 
-rule `^#`s`[`s`-~`]`* brightdiff
-rule `^##`+`s`[`s`-~`]`* diff
+#rule `^#`s`[`s`-~`]`* brightdiff
+#rule `^##`+`s`[`s`-~`]`* diff
+
+context `^## `$ diff
+/context
+
+context `^# `$ brightdiff
+/context
 
 context [ ] diff diff bright
 /context
@@ -18,8 +24,8 @@ context `^`s`s`s`s `$ dim
 context `^`t `$ dim
 /context
 
-context ** ** brightspecialdiff
+context ** ** brightspecialdiff brightspecialdiff brightspecial 
 /context
 
-rule *`[`^`s`]`+* bright
+rule *`[`^`s*`]`+* bright
 
