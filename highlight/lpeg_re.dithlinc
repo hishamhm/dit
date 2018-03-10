@@ -1,4 +1,3 @@
-
 rule <- symbol
 rule ( symbol
 rule ) symbol
@@ -8,23 +7,28 @@ rule / symbol
 rule . symbol
 rule & symbol
 rule ! symbol
+rule + symbol
 
 rule ^ symbol
 rule ^+ symbol
 rule ^- symbol
 
-rule :} special
-rule =>`s`*`[a`-z`|A`-Z`|0`-9`|_`]`+ special
-rule ->`s`*`[a`-z`|A`-Z`|0`-9`|_`]`+ special
-rule ->`s`*'`[a`-z`|A`-Z`|0`-9`|_`]`+' special
-rule ->`s`*"`[a`-z`|A`-Z`|0`-9`|_`]`+" special
+rule :} specialdiff
+rule =>`s`*`[a`-z`|A`-Z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* special
+rule ->`s`*`[a`-z`|A`-Z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* special
+rule ->`s`*'`[a`-z`|A`-Z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`*' special
+rule ->`s`*"`[a`-z`|A`-Z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`*" special
 
-rule `[a`-z`|A`-Z`|0`-9`|_`]`+`s`*<- bright
+rule =`[a`-z`|A`-Z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* brightalt
 
-rule =`[a`-z`|A`-Z`|0`-9`|_`]`+`s`* brightalt
+rule `[a`-z`|A`-Z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`* alt
 
-rule {| special
+rule `[a`-z`|A`-Z`|_`]`[a`-z`|A`-Z`|0`-9`|_`]`*`s`*<- bright
+
+#rule `[0`-9`]`+ normal
+
 rule |} special
+rule {| special
 
 rule { special
 rule } special
@@ -34,7 +38,10 @@ context [ ] symbol symbol diff
    rule - symbol
 /context
 
-context {: : special
+context {: : specialdiff
+/context
+
+context -- `$ dim
 /context
 
 context ' ' diff
