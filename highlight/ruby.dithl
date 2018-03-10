@@ -121,7 +121,9 @@ context class `$ bright bright brightdiff
 context module `$ bright bright brightdiff
 /context
 
-context / / brightspecial
+# Homebrew patches
+context __END__ <EOF> bright bright normal
+   include diff.dithlinc
 /context
 
 context " " alt
