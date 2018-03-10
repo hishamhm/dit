@@ -25,7 +25,7 @@ end
 
 local function popup_error()
    local _, x, y = buffer:token()
-   if errors[y] then
+   if errors and errors[y] then
       for ex, err in pairs(errors[y]) do
          if x == ex then
             buffer:draw_popup({err})
