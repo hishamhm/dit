@@ -95,6 +95,11 @@ context -- `$ dim
    include ldoc.dithlinc
 /context
 
+
+context [[--lpeg.re ]] special special alt
+   include lpeg_re.dithlinc
+/context
+
 context re.compile([[ ]] special special alt
    include lpeg_re.dithlinc
 /context
