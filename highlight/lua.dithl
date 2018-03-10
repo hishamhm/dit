@@ -3,6 +3,7 @@ name suffix .tl
 name suffix .lua
 name suffix .rockspec
 firstline regex ^#!.*lua.*
+firstline regex ^#!.*resty.*
 RULES   
 script lua.lua
 
