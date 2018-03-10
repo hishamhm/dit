@@ -1,0 +1,117 @@
+FILES
+name suffix .t
+
+RULES
+
+context `^=== `$ brightdiff
+/context
+
+context `^--- `$ alt
+/context
+
+rule __DATA__ veryspecial
+
+context init_by_lua_block`s`*{ } brightspecial brightspecial normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   rule } brightspecial
+/context
+
+context init_worker_by_lua_block`s`*{ } brightspecial brightspecial normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   rule } brightspecial
+/context
+
+context content_by_lua_block`s`*{ } brightspecial brightspecial normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   rule } brightspecial
+/context
