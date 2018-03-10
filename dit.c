@@ -1408,6 +1408,7 @@ int main(int argc, char** argv) {
       .fromX = NOT_A_COORD,
       .fromY = NOT_A_COORD,
    };
+   bool dumpCodes = false;
    while (!quit) {
       int y, x;
 
@@ -1442,6 +1443,23 @@ int main(int argc, char** argv) {
       Display_move(y, x);
       
       ch = CRT_getCharacter(&code);
+      if (dumpCodes) {
+         if (ch == KEY_F(12)) {
+            dumpCodes = false;
+            continue;
+         }
+         char* c = malloc(100);
+         snprintf(c, 99, "(%d,%d)", ch, code);
+         Text t = Text_new(c);
+         Buffer_pasteBlock(buffer, t);
+         Text_prune(&t);
+         continue;
+      } else {
+         if (ch == KEY_F(12)) {
+            dumpCodes = true;
+            continue;
+         }
+      }
       int limit = 32;
       if (code) {
          limit = KEY_MAX;
