@@ -866,7 +866,6 @@ struct Pool_ {
 
 struct StackItem_ {
    void* data;
-   int size;
    StackItem* next;
 };
 

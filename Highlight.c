@@ -258,16 +258,16 @@ HighlightParserState parseFile(ReadHighlightFileArgs* args, FILE* file, const ch
                color = Highlight_translateColor(tokens[3]);
                HighlightContext_addRule(args->context, open, color, false, false);
             }
-            args->context = Highlight_addContext(this, open, close, Stack_peek(args->contexts, NULL), color);
+            args->context = Highlight_addContext(this, open, close, Stack_peek(args->contexts), color);
             if (close) {
                color = (ntokens == 6 ? Highlight_translateColor(tokens[4]) : color);
                HighlightContext_addRule(args->context, close, color, false, false);
             }
-            Stack_push(args->contexts, args->context, 0);
+            Stack_push(args->contexts, args->context);
          } else if (String_eq(tokens[0], "/context") && ntokens == 1) {
             if (args->contexts->size > 1) {
-               Stack_pop(args->contexts, NULL);
-               args->context = Stack_peek(args->contexts, NULL);
+               Stack_pop(args->contexts);
+               args->context = Stack_peek(args->contexts);
             }
          } else if (String_eq(tokens[0], "rule") && ntokens == 3) {
             HighlightContext_addRule(args->context, tokens[1], Highlight_translateColor(tokens[2]), false, false);
@@ -310,7 +310,7 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
    args->context = this->mainContext;
    args->contexts = Stack_new(ClassAs(HighlightContext, Object), false);
    
-   Stack_push(args->contexts, args->context, 0);
+   Stack_push(args->contexts, args->context);
 
    HighlightParserState state = parseFile(args, fopen(name, "r"), name, HPS_START);
 

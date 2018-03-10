@@ -121,7 +121,7 @@ void Undo_delete(Undo* this) {
 inline void Undo_char(Undo* this, UndoActionKind kind, int x, int y, wchar_t ch) {
    UndoAction* action = UndoAction_new(kind, x, y);
    action->data.ch = ch;
-   Stack_push(this->actions, action, 0);
+   Stack_push(this->actions, action);
 }
 
 void Undo_deleteCharAt(Undo* this, int x, int y, wchar_t ch) {
@@ -133,7 +133,7 @@ void Undo_backwardDeleteCharAt(Undo* this, int x, int y, wchar_t ch) {
 }
 
 void Undo_insertCharAt(Undo* this, int x, int y, wchar_t ch) {
-   UndoAction* top = (UndoAction*) Stack_peek(this->actions, NULL);
+   UndoAction* top = (UndoAction*) Stack_peek(this->actions);
    /* is this `ch != 't'` still valid? */
    if (top && ch != '\t') {
       if ((top->kind == UndoInsertChar && top->y == y && top->x == x-1)
@@ -150,13 +150,13 @@ void Undo_insertCharAt(Undo* this, int x, int y, wchar_t ch) {
 void Undo_breakAt(Undo* this, int x, int y, int indent) {
    UndoAction* action = UndoAction_new(UndoBreak, x, y);
    action->data.size = indent;
-   Stack_push(this->actions, action, 0);
+   Stack_push(this->actions, action);
 }
 
 void Undo_joinNext(Undo* this, int x, int y, bool backspace) {
    UndoAction* action = UndoAction_new(UndoJoinNext, x, y);
    action->data.backspace = backspace;
-   Stack_push(this->actions, action, 0);
+   Stack_push(this->actions, action);
 }
 
 void Undo_deleteBlock(Undo* this, int x, int y, char* block, int len) {
@@ -164,14 +164,14 @@ void Undo_deleteBlock(Undo* this, int x, int y, char* block, int len) {
    UndoAction* action = UndoAction_new(UndoDeleteBlock, x, y);
    action->data.str.buf = block;
    action->data.str.len = len;
-   Stack_push(this->actions, action, 0);
+   Stack_push(this->actions, action);
 }
 
 void Undo_indent(Undo* this, int x, int y, int lines, int width) {
    UndoAction* action = UndoAction_new(UndoIndent, x, y);
    action->data.indent.lines = lines;
    action->data.indent.width = width;
-   Stack_push(this->actions, action, 0);
+   Stack_push(this->actions, action);
 }
 
 void Undo_unindent(Undo* this, int x, int y, int* counts, int lines, int tabul) {
@@ -179,17 +179,17 @@ void Undo_unindent(Undo* this, int x, int y, int* counts, int lines, int tabul) 
    action->data.unindent.buf = counts;
    action->data.unindent.len = lines;
    action->data.unindent.tabul = tabul;
-   Stack_push(this->actions, action, 0);
+   Stack_push(this->actions, action);
 }
 
 void Undo_beginGroup(Undo* this, int x, int y) {
    UndoAction* action = UndoAction_new(UndoBeginGroup, x, y);
-   Stack_push(this->actions, action, 0);
+   Stack_push(this->actions, action);
 }
 
 void Undo_endGroup(Undo* this, int x, int y) {
    UndoAction* action = UndoAction_new(UndoEndGroup, x, y);
-   Stack_push(this->actions, action, 0);
+   Stack_push(this->actions, action);
 }
 
 void Undo_insertBlock(Undo* this, int x, int y, Text block) {
@@ -211,14 +211,14 @@ void Undo_insertBlock(Undo* this, int x, int y, Text block) {
    }
    action->data.coord.xTo = xTo;
    action->data.coord.yTo = yTo;
-   Stack_push(this->actions, action, 0);
+   Stack_push(this->actions, action);
 }
 
 void Undo_insertBlanks(Undo* this, int x, int y, int len) {
    UndoAction* action = UndoAction_new(UndoInsertBlock, x, y);
    action->data.coord.xTo = x + len;
    action->data.coord.yTo = y;
-   Stack_push(this->actions, action, 0);
+   Stack_push(this->actions, action);
 }
 
 void Undo_diskState(Undo* this, int x, int y, char* md5, char* fileName) {
@@ -237,11 +237,11 @@ void Undo_diskState(Undo* this, int x, int y, char* md5, char* fileName) {
    action->data.diskState.md5 = malloc(16);
    action->data.diskState.fileName = strdup(fileName);
    memcpy(action->data.diskState.md5, md5, 16);
-   Stack_push(this->actions, action, 0);
+   Stack_push(this->actions, action);
 }
 
 bool Undo_checkDiskState(Undo* this) {
-   UndoAction* action = (UndoAction*) Stack_peek(this->actions, NULL);
+   UndoAction* action = (UndoAction*) Stack_peek(this->actions);
    if (!action)
       return false;
    return (action->kind == UndoDiskState);
@@ -250,7 +250,7 @@ bool Undo_checkDiskState(Undo* this) {
 bool Undo_undo(Undo* this, int* x, int* y) {
    assert(x); assert(y);
    bool modified = true;
-   UndoAction* action = (UndoAction*) Stack_pop(this->actions, NULL);
+   UndoAction* action = (UndoAction*) Stack_pop(this->actions);
    if (!action)
       return false;
    *x = action->x;
@@ -335,7 +335,7 @@ bool Undo_undo(Undo* this, int* x, int* y) {
    }
    }
    UndoAction_delete((Object*)action);
-   action = (UndoAction*) Stack_peek(this->actions, NULL);
+   action = (UndoAction*) Stack_peek(this->actions);
    if (action && action->kind == UndoDiskState && action->data.diskState.fileName) {
       FILE* fd = fopen(action->data.diskState.fileName, "r");
       if (fd) {
@@ -363,14 +363,14 @@ void Undo_store(Undo* this, char* fileName) {
       return;
    fwrite(md5buf, 16, 1, ufd);
    if (Undo_checkDiskState(this))
-      UndoAction_delete(Stack_pop(this->actions, NULL));
+      UndoAction_delete(Stack_pop(this->actions));
    int items = this->actions->size;
    items = MIN(items, 1000);
    fwrite(&items, sizeof(int), 1, ufd);
    int x = -1;
    int y = -1;
    for (int i = items - 1; i >= 0; i--) {
-      UndoAction* action = (UndoAction*) Stack_peekAt(this->actions, i, NULL);
+      UndoAction* action = (UndoAction*) Stack_peekAt(this->actions, i);
       fwrite(&action->kind, sizeof(UndoActionKind), 1, ufd);
       fwrite(&action->x, sizeof(int), 1, ufd);
       fwrite(&action->y, sizeof(int), 1, ufd);
@@ -500,7 +500,7 @@ void Undo_restore(Undo* this, char* fileName) {
          if (read < 1) { fclose(ufd); return; }
          break;
       }
-      Stack_push(this->actions, action, 0);
+      Stack_push(this->actions, action);
    }
    Undo_diskState(this, x, y, md5curr, fileName);
    assert(Undo_checkDiskState(this));
