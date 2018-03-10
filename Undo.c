@@ -9,7 +9,7 @@
 
 #include "md5.h"
 
-#define DIT_UNDO_MAGIC "XDIT1"
+#define DIT_UNDO_MAGIC "XDIT2"
 
 /*{
 
@@ -131,7 +131,7 @@ static inline void Undo_char(Undo* this, UndoActionKind kind, int x, int y, wcha
 
 static inline void Undo_block(Undo* this, UndoActionKind kind, int x, int y, Text text) {
    assert(len > 0);
-   UndoAction* action = UndoAction_new(UndoDeleteBlock, x, y);
+   UndoAction* action = UndoAction_new(kind, x, y);
    action->data.block.text = text;
 
    /* calculate block coordinates */
@@ -215,7 +215,7 @@ void Undo_deleteBlock(Undo* this, int x, int y, char* block, int len) {
 }
 
 void Undo_insertBlock(Undo* this, int x, int y, Text text) {
-   Undo_block(this, UndoInsertBlock, x, y, text);
+   Undo_block(this, UndoInsertBlock, x, y, Text_copy(text));
 }
 
 void Undo_indent(Undo* this, int x, int y, int lines, int size) {
@@ -263,7 +263,7 @@ void Undo_diskState(Undo* this, int x, int y, char* md5, char* fileName) {
    action->data.diskState.md5 = malloc(16);
    action->data.diskState.fileName = strdup(fileName);
    memcpy(action->data.diskState.md5, md5, 16);
-   pushUndo(this, action);
+   Stack_push(this->actions, action);
 }
 
 bool Undo_checkDiskState(Undo* this) {
@@ -483,35 +483,15 @@ bool Undo_redo(Undo* this, int* x, int* y) {
    return modified;
 }
 
-void Undo_store(Undo* this, char* fileName) {
-   char* undoFileName = Files_encodePathAsFileName(fileName);
-   FILE* fd = fopen(fileName, "r");
-   char md5buf[32];
-   md5_stream(fd, &md5buf);
-   fclose(fd);
-   FILE* ufd = Files_openHome("w", "undo/%s", undoFileName);
-   free(undoFileName);
-   if (!ufd)
-      return;
-
-   char* magic = DIT_UNDO_MAGIC;
-   fwrite(magic, 5, 1, ufd);
-
-   fwrite(md5buf, 16, 1, ufd);
-   if (Undo_checkDiskState(this))
-      UndoAction_delete(Stack_pop(this->actions));
-   int items = this->actions->size;
+static void storeStack(FILE* ufd, Stack* stack) {
+   int items = stack->size;
    items = MIN(items, 1000);
    fwrite(&items, sizeof(int), 1, ufd);
-   int x = -1;
-   int y = -1;
    for (int i = items - 1; i >= 0; i--) {
-      UndoAction* action = (UndoAction*) Stack_peekAt(this->actions, i);
+      UndoAction* action = (UndoAction*) Stack_peekAt(stack, i);
       fwrite(&action->kind, sizeof(UndoActionKind), 1, ufd);
       fwrite(&action->x, sizeof(int), 1, ufd);
       fwrite(&action->y, sizeof(int), 1, ufd);
-      x = action->x; 
-      y = action->y;
       switch(action->kind) {
       case UndoBeginGroup:
       case UndoEndGroup:
@@ -544,37 +524,51 @@ void Undo_store(Undo* this, char* fileName) {
          break;
       }
    }
-   assert(x != -1 && y != -1);
-   fclose(ufd);
-   Undo_diskState(this, x, y, NULL, fileName);
 }
 
-void Undo_restore(Undo* this, char* fileName) {
-   FILE* fd = fopen(fileName, "r");
-   if (!fd)
-      return;
+static inline void getXY(Stack* stack, int* x, int* y) {
+   *x = -1;
+   *y = -1;
+   
+   UndoAction* action = Stack_peek(stack);
+   if (action) {
+      *x = action->x;
+      *y = action->y;
+   }
+   assert(*x != -1 && *y != -1);
+}
+
+void Undo_store(Undo* this, char* fileName) {
    char* undoFileName = Files_encodePathAsFileName(fileName);
-   char md5curr[32], md5saved[32];
-   md5_stream(fd, md5curr);
+   FILE* fd = fopen(fileName, "r");
+   char md5buf[32];
+   md5_stream(fd, &md5buf);
    fclose(fd);
-   FILE* ufd = Files_openHome("r", "undo/%s", undoFileName);
+   FILE* ufd = Files_openHome("w", "undo/%s", undoFileName);
    free(undoFileName);
    if (!ufd)
       return;
 
-   char magic[6]; magic[5] = '\0';
-   int read = fread(magic, 5, 1, ufd);
-   if (read < 1) { fclose(ufd); return; }
-   if (strcmp(magic, DIT_UNDO_MAGIC) != 0) { fclose(ufd); return; }
+   char* magic = DIT_UNDO_MAGIC;
+   fwrite(magic, 5, 1, ufd);
 
-   read = fread(md5saved, 16, 1, ufd);
-   if (read < 1) { fclose(ufd); return; }
-   if (memcmp(md5curr, md5saved, 16) != 0) {
-      fclose(ufd);
-      return;
-   }
+   fwrite(md5buf, 16, 1, ufd);
+   if (Undo_checkDiskState(this))
+      UndoAction_delete(Stack_pop(this->actions));
+
+   storeStack(ufd, this->actions);
+   storeStack(ufd, this->redoActions);
+   
+   int x, y;
+   getXY(this->actions, &x, &y);
+
+   Undo_diskState(this, x, y, NULL, fileName);
+   fclose(ufd);
+}
+
+void restoreStack(FILE* ufd, Stack* stack) {
    int items;
-   read = fread(&items, sizeof(int), 1, ufd);
+   int read = fread(&items, sizeof(int), 1, ufd);
    if (read < 1) { fclose(ufd); return; }
    int x, y;
    for (int i = items - 1; i >= 0; i--) {
@@ -636,8 +630,40 @@ void Undo_restore(Undo* this, char* fileName) {
          if (read < 1) { fclose(ufd); return; }
          break;
       }
-      Stack_push(this->actions, action);
+      Stack_push(stack, action);
    }
+}
+
+void Undo_restore(Undo* this, char* fileName) {
+   FILE* fd = fopen(fileName, "r");
+   if (!fd)
+      return;
+   char* undoFileName = Files_encodePathAsFileName(fileName);
+   char md5curr[32], md5saved[32];
+   md5_stream(fd, md5curr);
+   fclose(fd);
+   FILE* ufd = Files_openHome("r", "undo/%s", undoFileName);
+   free(undoFileName);
+   if (!ufd)
+      return;
+
+   char magic[6]; magic[5] = '\0';
+   int read = fread(magic, 5, 1, ufd);
+   if (read < 1) { fclose(ufd); return; }
+   if (strcmp(magic, DIT_UNDO_MAGIC) != 0) { fclose(ufd); return; }
+
+   read = fread(md5saved, 16, 1, ufd);
+   if (read < 1) { fclose(ufd); return; }
+   if (memcmp(md5curr, md5saved, 16) != 0) {
+      fclose(ufd);
+      return;
+   }
+   
+   restoreStack(ufd, this->actions);
+   restoreStack(ufd, this->redoActions);
+
+   int x, y;
+   getXY(this->actions, &x, &y);
 
    Undo_diskState(this, x, y, md5curr, fileName);
    assert(Undo_checkDiskState(this));

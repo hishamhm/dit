@@ -436,6 +436,7 @@ bool Undo_checkDiskState(Undo* this);
 bool Undo_undo(Undo* this, int* x, int* y);
 bool Undo_redo(Undo* this, int* x, int* y);
 void Undo_store(Undo* this, char* fileName);
+void restoreStack(FILE* ufd, Stack* stack);
 void Undo_restore(Undo* this, char* fileName);
 Vector* Vector_new(ObjectClass* type, bool owner, int size);
 void Vector_delete(Vector* this);
