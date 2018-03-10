@@ -1,3 +1,4 @@
+require("compat53")
 
 local cscope = require("cscope")
 local tmux = require("tmux")
@@ -86,6 +87,9 @@ function on_change()
 end
 
 function on_save()
+   if not current_file then
+      return true
+   end
    local cmd = io.popen("LANG=C gcc -I. -Ieditorconfig/include -c "..current_file.." --std=c99 2>&1")
    local cmdout = cmd:read("*a")
    cmd:close()
