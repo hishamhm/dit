@@ -1,0 +1,112 @@
+FILES
+name suffix .go
+RULES
+
+rule := brightdiff
+
+rule func diff
+rule package diff
+rule import diff
+
+rule auto diff
+rule char diff
+rule void diff
+rule bool diff
+rule unsigned diff
+rule const diff
+rule double diff
+rule signed diff
+rule typedef diff
+rule union diff
+rule volatile diff
+rule enum diff
+rule extern diff
+rule float diff
+rule long diff
+rule register diff
+rule short diff
+rule int diff
+rule static diff
+rule struct diff
+rule class diff
+rule private diff
+rule protected diff
+rule public diff
+rule inline diff
+
+rule defer bright
+
+rule if bright
+rule else bright
+rule default bright
+rule while bright
+rule switch bright
+rule case bright
+rule break bright
+rule continue bright
+rule return bright
+rule for bright
+rule do bright
+rule goto bright
+rule sizeof bright
+
+rule -> symbol
+rule ! brightsymbol
+rule < brightsymbol
+rule > brightsymbol
+rule = brightsymbol
+rule + brightsymbol
+rule - brightsymbol
+rule * brightsymbol
+rule / brightsymbol
+rule [ symbol
+rule ] symbol
+rule { symbol
+rule } symbol
+rule ( symbol
+rule ) symbol
+rule : symbol
+rule , symbol
+rule | symbol
+rule & symbol
+rule ; brightsymbol
+rule TODO veryspecial
+rule XXX veryspecial
+rule FIXME veryspecial
+context /* */ dim
+   rule TODO veryspecial
+   rule XXX veryspecial
+   rule FIXME veryspecial
+
+   context #cgo `$ brightalt special special
+   /context
+   context #include `$ brightalt
+      context " " special
+      /context
+      context < > special
+      /context
+   /context
+/context
+context //export `$ brightdiff brightdiff alt
+   rule TODO veryspecial
+   rule XXX veryspecial
+   rule FIXME veryspecial
+/context
+context // `$ dim
+   rule TODO veryspecial
+   rule XXX veryspecial
+   rule FIXME veryspecial
+/context
+context " " alt
+   eager_rule \\ brightalt
+   eager_rule \" brightalt
+   eager_rule \`[abcfnrtv`] brightalt
+   eager_rule \`[0`-3`]`[0`-7`]`[0`-7`] brightalt
+/context
+context ' ' brightalt
+   eager_rule \\ brightalt
+   eager_rule \' brightalt
+/context
+
+
+include gitconflict.dithlinc
