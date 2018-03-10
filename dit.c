@@ -1,4 +1,4 @@
-   
+
 #define _GNU_SOURCE
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -201,8 +201,9 @@ static Clipboard* Dit_multipleClipboards[100] = { NULL };
 static int xclipOk = 1;
 
 static void copy(Buffer* buffer, bool x11copy) {
-   if (!Dit_clipboard)
+   if (!Dit_clipboard) {
       Dit_clipboard = Clipboard_new(true);
+   }
    int blockLen;
    char* block = Buffer_copyBlock(buffer, &blockLen);
    if (block) {
@@ -963,7 +964,11 @@ static void Dit_undo(Buffer* buffer, TabManager* tabs) {
       if (answer == 1)
          return;
    }
-   Buffer_undo(buffer);
+   Buffer_undo(buffer, UNDO);
+}
+
+static void Dit_redo(Buffer* buffer, TabManager* tabs) {
+   Buffer_undo(buffer, REDO);
 }
 
 static void Dit_closeCurrent(Buffer* buffer, TabManager* tabs) {
@@ -1184,6 +1189,7 @@ static void Dit_registerActions() {
    Hashtable_putString(Dit_actions, "Dit_selectSlideUpLine", (void*)(long) Dit_selectSlideUpLine);
    Hashtable_putString(Dit_actions, "Dit_selectUpLine", (void*)(long) Dit_selectUpLine);
    Hashtable_putString(Dit_actions, "Dit_undo", (void*)(long) Dit_undo);
+   Hashtable_putString(Dit_actions, "Dit_redo", (void*)(long) Dit_redo);
    Hashtable_putString(Dit_actions, "Dit_wordWrap", (void*)(long) Dit_wordWrap);
    Hashtable_putString(Dit_actions, "Dit_multipleCursors", (void*)(long) Dit_multipleCursors);
    Hashtable_putString(Dit_actions, "Dit_decreaseMultipleCursors", (void*)(long) Dit_decreaseMultipleCursors);
@@ -1214,7 +1220,7 @@ static void Dit_loadHardcodedBindings(Dit_Action* keys) {
    keys[KEY_CTRL('V')] = (Dit_Action) Dit_paste;
    keys[KEY_CTRL('W')] = (Dit_Action) Dit_closeCurrent;
    keys[KEY_CTRL('X')] = (Dit_Action) Dit_cut;
-   /* Ctrl Y is FREE */
+   keys[KEY_CTRL('Y')] = (Dit_Action) Dit_redo;
    /* Ctrl Z is FREE */
    keys[KEY_C_INSERT]  = (Dit_Action) Dit_copy;
    keys[KEY_F(3)]      = (Dit_Action) Dit_find;

@@ -9,6 +9,8 @@
 
 #include "md5.h"
 
+#define DIT_UNDO_MAGIC "XDIT1"
+
 /*{
 
 typedef enum UndoActionKind_ {
@@ -42,23 +44,18 @@ struct UndoAction_ {
          char* md5;
       } diskState;
       struct {
-         char* buf;
-         int len;
-      } str;
-      struct {
-         int xTo;
-         int yTo;
-      } coord;
-      struct {
-         int lines;
-         char width;
-      } indent;
+         Text text;
+         struct {
+            int xTo;
+            int yTo;
+         } coord;
+      } block;
       int size;
       struct {
          int* buf;
          int len;
-         int tabul;
-      } unindent;
+         int size;
+      } tab;
       bool backspace;
    } data;
 };
@@ -68,6 +65,7 @@ extern UndoActionClass UndoActionType;
 struct Undo_ {
    List* list;
    Stack* actions;
+   Stack* redoActions;
    int group;
 };
 
@@ -94,10 +92,10 @@ inline UndoAction* UndoAction_new(UndoActionKind kind, int x, int y) {
 
 void UndoAction_delete(Object* cast) {
    UndoAction* this = (UndoAction*) cast;
-   if (this->kind == UndoDeleteBlock) {
-      free(this->data.str.buf);
-   } else if (this->kind == UndoUnindent) {
-      free(this->data.unindent.buf);
+   if (this->kind == UndoDeleteBlock || this->kind == UndoInsertBlock) {
+      Text_prune(&(this->data.block.text));
+   } else if (this->kind == UndoUnindent || this->kind == UndoIndent) {
+      free(this->data.tab.buf);
    } else if (this->kind == UndoDiskState) {
       free(this->data.diskState.fileName);
       free(this->data.diskState.md5);
@@ -109,19 +107,60 @@ Undo* Undo_new(List* list) {
    Undo* this = (Undo*) malloc(sizeof(Undo));
    this->list = list;
    this->actions = Stack_new(ClassAs(UndoAction, Object), true);
+   this->redoActions = Stack_new(ClassAs(UndoAction, Object), true);
    this->group = 0;
    return this;
 }
 
 void Undo_delete(Undo* this) {
    Stack_delete(this->actions);
+   Stack_delete(this->redoActions);
    free(this);
 }
 
-inline void Undo_char(Undo* this, UndoActionKind kind, int x, int y, wchar_t ch) {
+static inline void pushUndo(Undo* this, UndoAction* action) {
+   Stack_empty(this->redoActions);
+   Stack_push(this->actions, action);
+}
+
+static inline void Undo_char(Undo* this, UndoActionKind kind, int x, int y, wchar_t ch) {
    UndoAction* action = UndoAction_new(kind, x, y);
    action->data.ch = ch;
-   Stack_push(this->actions, action);
+   pushUndo(this, action);
+}
+
+static inline void Undo_block(Undo* this, UndoActionKind kind, int x, int y, Text text) {
+   assert(len > 0);
+   UndoAction* action = UndoAction_new(UndoDeleteBlock, x, y);
+   action->data.block.text = text;
+
+   /* calculate block coordinates */
+   const char* walk = text.data;
+   int len = text.bytes;
+   int yTo = y;
+   int xTo = 0;
+   while (walk - text.data < len) {
+      char* at = memchr(walk, '\n', len - (walk - text.data));
+      if (at) {
+         yTo++;
+         walk = at + 1;
+      } else {
+         xTo += Text_chars(Text_new((char*)walk)) + (yTo == y ? x : 0);
+         break;
+      }
+   }
+   action->data.block.coord.xTo = xTo;
+   action->data.block.coord.yTo = yTo;
+
+   pushUndo(this, action);
+}
+
+static inline void Undo_tab(Undo* this, UndoActionKind kind, int x, int y, int* counts, int lines, int size) {
+   UndoAction* action = UndoAction_new(kind, x, y);
+   action->data.tab.buf = counts;
+   action->data.tab.len = lines;
+   action->data.tab.size = size;
+   pushUndo(this, action);
 }
 
 void Undo_deleteCharAt(Undo* this, int x, int y, wchar_t ch) {
@@ -132,93 +171,80 @@ void Undo_backwardDeleteCharAt(Undo* this, int x, int y, wchar_t ch) {
    Undo_char(this, UndoBackwardDeleteChar, x, y, ch);
 }
 
+static inline void convertToBlock(UndoAction* top) {
+   wchar_t first = top->data.ch;
+   top->kind = UndoInsertBlock;
+   top->data.block.text = Text_new(strdup(""));
+   Text_appendChar(&(top->data.block.text), first);
+}
+
+static inline void addToBlock(UndoAction* top, int x, int y, wchar_t ch) {
+   Text_appendChar(&(top->data.block.text), ch);
+   top->data.block.coord.xTo = x+1;
+   top->data.block.coord.yTo = y;
+}
+
 void Undo_insertCharAt(Undo* this, int x, int y, wchar_t ch) {
    UndoAction* top = (UndoAction*) Stack_peek(this->actions);
-   /* is this `ch != 't'` still valid? */
-   if (top && ch != '\t') {
-      if ((top->kind == UndoInsertChar && top->y == y && top->x == x-1)
-       || (top->kind == UndoInsertBlock && top->data.coord.yTo == y && top->data.coord.xTo == x)) {
-         top->kind = UndoInsertBlock;
-         top->data.coord.xTo = x+1;
-         top->data.coord.yTo = y;
-         return;
-      }
+   if (ch == '\t' || !top) { // is this case for '\t' still valid?
+      Undo_char(this, UndoInsertChar, x, y, ch);
+   } else if (top->kind == UndoInsertChar && top->y == y && top->x == x-1) {
+      convertToBlock(top);
+      addToBlock(top, x, y, ch);
+   } else if (top->kind == UndoInsertBlock && top->data.block.coord.yTo == y && top->data.block.coord.xTo == x) {
+      addToBlock(top, x, y, ch);
+   } else {
+      Undo_char(this, UndoInsertChar, x, y, ch);
    }
-   Undo_char(this, UndoInsertChar, x, y, ch);
 }
 
 void Undo_breakAt(Undo* this, int x, int y, int indent) {
    UndoAction* action = UndoAction_new(UndoBreak, x, y);
    action->data.size = indent;
-   Stack_push(this->actions, action);
+   pushUndo(this, action);
 }
 
 void Undo_joinNext(Undo* this, int x, int y, bool backspace) {
    UndoAction* action = UndoAction_new(UndoJoinNext, x, y);
    action->data.backspace = backspace;
-   Stack_push(this->actions, action);
+   pushUndo(this, action);
 }
 
 void Undo_deleteBlock(Undo* this, int x, int y, char* block, int len) {
-   assert(len > 0);
-   UndoAction* action = UndoAction_new(UndoDeleteBlock, x, y);
-   action->data.str.buf = block;
-   action->data.str.len = len;
-   Stack_push(this->actions, action);
+   Undo_block(this, UndoDeleteBlock, x, y, Text_newWithSize(block, len));
 }
 
-void Undo_indent(Undo* this, int x, int y, int lines, int width) {
-   UndoAction* action = UndoAction_new(UndoIndent, x, y);
-   action->data.indent.lines = lines;
-   action->data.indent.width = width;
-   Stack_push(this->actions, action);
+void Undo_insertBlock(Undo* this, int x, int y, Text text) {
+   Undo_block(this, UndoInsertBlock, x, y, text);
 }
 
-void Undo_unindent(Undo* this, int x, int y, int* counts, int lines, int tabul) {
-   UndoAction* action = UndoAction_new(UndoUnindent, x, y);
-   action->data.unindent.buf = counts;
-   action->data.unindent.len = lines;
-   action->data.unindent.tabul = tabul;
-   Stack_push(this->actions, action);
+void Undo_indent(Undo* this, int x, int y, int lines, int size) {
+   int* counts = malloc(sizeof(int) * lines);
+   for (int i = 0; i < lines; i++) {
+      counts[i] = size;
+   }
+   Undo_tab(this, UndoIndent, x, y, counts, lines, size);
+}
+
+void Undo_unindent(Undo* this, int x, int y, int* counts, int lines, int size) {
+   Undo_tab(this, UndoUnindent, x, y, counts, lines, size);
 }
 
 void Undo_beginGroup(Undo* this, int x, int y) {
    UndoAction* action = UndoAction_new(UndoBeginGroup, x, y);
-   Stack_push(this->actions, action);
+   pushUndo(this, action);
 }
 
 void Undo_endGroup(Undo* this, int x, int y) {
    UndoAction* action = UndoAction_new(UndoEndGroup, x, y);
-   Stack_push(this->actions, action);
-}
-
-void Undo_insertBlock(Undo* this, int x, int y, Text block) {
-   UndoAction* action = UndoAction_new(UndoInsertBlock, x, y);
-   // Don't keep block in undo structure. Just calculate its size.
-   const char* walk = block.data;
-   int len = block.bytes;
-   int yTo = y;
-   int xTo = 0;
-   while (walk - block.data < len) {
-      char* at = memchr(walk, '\n', len - (walk - block.data));
-      if (at) {
-         yTo++;
-         walk = at + 1;
-      } else {
-         xTo += Text_chars(Text_new((char*)walk)) + (yTo == y ? x : 0);
-         break;
-      }
-   }
-   action->data.coord.xTo = xTo;
-   action->data.coord.yTo = yTo;
-   Stack_push(this->actions, action);
+   pushUndo(this, action);
 }
 
 void Undo_insertBlanks(Undo* this, int x, int y, int len) {
    UndoAction* action = UndoAction_new(UndoInsertBlock, x, y);
-   action->data.coord.xTo = x + len;
-   action->data.coord.yTo = y;
-   Stack_push(this->actions, action);
+   action->data.block.coord.xTo = x + len;
+   action->data.block.coord.yTo = y;
+   pushUndo(this, action);
 }
 
 void Undo_diskState(Undo* this, int x, int y, char* md5, char* fileName) {
@@ -237,7 +263,7 @@ void Undo_diskState(Undo* this, int x, int y, char* md5, char* fileName) {
    action->data.diskState.md5 = malloc(16);
    action->data.diskState.fileName = strdup(fileName);
    memcpy(action->data.diskState.md5, md5, 16);
-   Stack_push(this->actions, action);
+   pushUndo(this, action);
 }
 
 bool Undo_checkDiskState(Undo* this) {
@@ -259,7 +285,7 @@ bool Undo_undo(Undo* this, int* x, int* y) {
    switch (action->kind) {
    case UndoDiskState:
    {
-      UndoAction_delete((Object*)action);
+      Stack_push(this->redoActions, action);
       return Undo_undo(this, x, y);
    }
    case UndoBeginGroup:
@@ -307,34 +333,35 @@ bool Undo_undo(Undo* this, int* x, int* y) {
    }
    case UndoInsertBlock:
    {
-      int lines = (action->data.coord.yTo - action->y) + 1;
-      StringBuffer_delete(Line_deleteBlock(line, lines, action->x, action->data.coord.xTo));
+      int lines = (action->data.block.coord.yTo - action->y) + 1;
+      StringBuffer_delete(Line_deleteBlock(line, lines, action->x, action->data.block.coord.xTo));
       break;
    }
    case UndoDeleteBlock:
    {
       int newX, newY;
-      assert(action->data.str.len > 0);
-      Line_insertBlock(line, action->x, Text_new(action->data.str.buf), &newX, &newY);
+      assert(Text_chars(action->data.block.text) > 0);
+      Line_insertBlock(line, action->x, action->data.block.text, &newX, &newY);
       break;
    }
    case UndoIndent:
    {
-      Line_unindent(line, action->data.indent.lines, action->data.indent.width);
+      int* lines = Line_unindent(line, action->data.tab.len, action->data.tab.size);
+      free(lines);
       break;
    }
    case UndoUnindent:
    {
-      for (int i = 0; i < action->data.unindent.len; i++) {
-         for (int j = 0; j < action->data.unindent.buf[i]; j++)
-            Line_insertChar(line, 0, action->data.unindent.tabul == 0 ? '\t' : ' ');
+      for (int i = 0; i < action->data.tab.len; i++) {
+         for (int j = 0; j < action->data.tab.buf[i]; j++)
+            Line_insertChar(line, 0, action->data.tab.size == 0 ? '\t' : ' ');
          line = (Line*) line->super.next;
          assert(line);
       }
       break;
    }
    }
-   UndoAction_delete((Object*)action);
+   Stack_push(this->redoActions, action);
    action = (UndoAction*) Stack_peek(this->actions);
    if (action && action->kind == UndoDiskState && action->data.diskState.fileName) {
       FILE* fd = fopen(action->data.diskState.fileName, "r");
@@ -351,6 +378,111 @@ bool Undo_undo(Undo* this, int* x, int* y) {
    return modified;
 }
 
+bool Undo_redo(Undo* this, int* x, int* y) {
+   assert(x); assert(y);
+   bool modified = true;
+   UndoAction* action = (UndoAction*) Stack_pop(this->redoActions);
+   if (!action)
+      return false;
+   *x = action->x;
+   *y = action->y;
+   Line* line = (Line*) List_get(this->list, action->y);
+   switch (action->kind) {
+   case UndoDiskState:
+   {
+      Stack_push(this->actions, action);
+      return Undo_redo(this, x, y);
+   }
+   case UndoBeginGroup:
+   {
+      this->group--;
+      break;
+   }
+   case UndoEndGroup:
+   {
+      this->group++;
+      break;
+   }
+   case UndoBreak:
+   {
+      Line_breakAt(line, action->x, action->data.size);
+      *y = action->y + 1;
+      *x = action->data.size;
+      break;
+   }
+   case UndoJoinNext:
+   {
+      Line_joinNext(line);
+      break;
+   }
+   case UndoBackwardDeleteChar:
+   {
+      Line_deleteChars(line, action->x, 1);
+      break;
+   }
+   case UndoDeleteChar:
+   {
+      Line_deleteChars(line, action->x, 1);
+      break;
+   }
+   case UndoInsertChar:
+   {
+      Line_insertChar(line, action->x, action->data.ch);
+      *x = action->x + 1;
+      break;
+   }
+   case UndoInsertBlock:
+   {
+      int newX, newY;
+      if (Text_chars(action->data.block.text) > 0) {
+         Line_insertBlock(line, action->x, action->data.block.text, &newX, &newY);
+         *x = action->data.block.coord.xTo;
+         *y = action->data.block.coord.yTo;
+      }
+      break;
+   }
+   case UndoDeleteBlock:
+   {
+      int lines = (action->data.block.coord.yTo - action->y) + 1;
+      StringBuffer_delete(Line_deleteBlock(line, lines, action->x, action->data.block.coord.xTo));
+      break;
+   }
+   case UndoIndent:
+   {
+      for (int i = 0; i < action->data.tab.len; i++) {
+         for (int j = 0; j < action->data.tab.buf[i]; j++)
+            Line_insertChar(line, 0, action->data.tab.size == 0 ? '\t' : ' ');
+         line = (Line*) line->super.next;
+         assert(line);
+      }
+      *x = action->x + (action->data.tab.size == 0 ? 1 : action->data.tab.size);
+      break;
+   }
+   case UndoUnindent:
+   {
+      int* lines = Line_unindent(line, action->data.tab.len, action->data.tab.size);
+      free(lines);
+      *x = action->x - (action->data.tab.size == 0 ? 1 : action->data.tab.size);
+      break;
+   }
+   }
+   Stack_push(this->actions, action);
+   action = (UndoAction*) Stack_peek(this->actions);
+   if (action && action->kind == UndoDiskState && action->data.diskState.fileName) {
+      FILE* fd = fopen(action->data.diskState.fileName, "r");
+      if (fd) {
+         char md5[32];
+         md5_stream(fd, md5);
+         fclose(fd);
+         if (memcmp(md5, action->data.diskState.md5, 16) == 0)
+            modified = false;
+      }
+   }
+   if (this->group)
+      return Undo_redo(this, x, y);
+   return modified;
+}
+
 void Undo_store(Undo* this, char* fileName) {
    char* undoFileName = Files_encodePathAsFileName(fileName);
    FILE* fd = fopen(fileName, "r");
@@ -361,6 +493,10 @@ void Undo_store(Undo* this, char* fileName) {
    free(undoFileName);
    if (!ufd)
       return;
+
+   char* magic = DIT_UNDO_MAGIC;
+   fwrite(magic, 5, 1, ufd);
+
    fwrite(md5buf, 16, 1, ufd);
    if (Undo_checkDiskState(this))
       UndoAction_delete(Stack_pop(this->actions));
@@ -381,10 +517,6 @@ void Undo_store(Undo* this, char* fileName) {
       case UndoEndGroup:
       case UndoDiskState:
          break;
-      case UndoIndent:
-         fwrite(&action->data.indent.lines, sizeof(int), 1, ufd);
-         fwrite(&action->data.indent.width, sizeof(int), 1, ufd);
-         break;
       case UndoBreak:
          fwrite(&action->data.size, sizeof(int), 1, ufd);
          break;
@@ -396,19 +528,19 @@ void Undo_store(Undo* this, char* fileName) {
       case UndoInsertChar:
          fwrite(&action->data.ch, sizeof(wchar_t), 1, ufd);
          break;
-      case UndoDeleteBlock:
-         assert(action->data.str.len > 0);
-         fwrite(&action->data.str.len, sizeof(int), 1, ufd);
-         fwrite(action->data.str.buf, sizeof(char), action->data.str.len, ufd);
-         break;
       case UndoInsertBlock:
-         fwrite(&action->data.coord.xTo, sizeof(int), 1, ufd);
-         fwrite(&action->data.coord.yTo, sizeof(int), 1, ufd);
+      case UndoDeleteBlock:
+         assert(Text_chars(action->data.block.text) > 0);
+         fwrite(&(Text_bytes(action->data.block.text)), sizeof(int), 1, ufd);
+         fwrite(Text_toString(action->data.block.text), sizeof(char), Text_bytes(action->data.block.text), ufd);
+         fwrite(&action->data.block.coord.xTo, sizeof(int), 1, ufd);
+         fwrite(&action->data.block.coord.yTo, sizeof(int), 1, ufd);
          break;
+      case UndoIndent:
       case UndoUnindent:
-         fwrite(&action->data.unindent.len, sizeof(int), 1, ufd);
-         fwrite(action->data.unindent.buf, sizeof(int), action->data.unindent.len, ufd);
-         fwrite(&action->data.unindent.tabul, sizeof(bool), 1, ufd);
+         fwrite(&action->data.tab.len, sizeof(int), 1, ufd);
+         fwrite(action->data.tab.buf, sizeof(int), action->data.tab.len, ufd);
+         fwrite(&action->data.tab.size, sizeof(bool), 1, ufd);
          break;
       }
    }
@@ -429,7 +561,13 @@ void Undo_restore(Undo* this, char* fileName) {
    free(undoFileName);
    if (!ufd)
       return;
-   int read = fread(md5saved, 16, 1, ufd);
+
+   char magic[6]; magic[5] = '\0';
+   int read = fread(magic, 5, 1, ufd);
+   if (read < 1) { fclose(ufd); return; }
+   if (strcmp(magic, DIT_UNDO_MAGIC) != 0) { fclose(ufd); return; }
+
+   read = fread(md5saved, 16, 1, ufd);
    if (read < 1) { fclose(ufd); return; }
    if (memcmp(md5curr, md5saved, 16) != 0) {
       fclose(ufd);
@@ -456,12 +594,6 @@ void Undo_restore(Undo* this, char* fileName) {
          action->data.diskState.fileName = NULL;
          action->data.diskState.md5 = NULL;
          break;
-      case UndoIndent:
-         read = fread(&action->data.indent.lines, sizeof(int), 1, ufd);
-         if (read < 1) { fclose(ufd); return; }
-         read = fread(&action->data.indent.width, sizeof(int), 1, ufd);
-         if (read < 1) { fclose(ufd); return; }
-         break;
       case UndoBreak:
          read = fread(&action->data.size, sizeof(int), 1, ufd);
          if (read < 1) { fclose(ufd); return; }
@@ -476,32 +608,37 @@ void Undo_restore(Undo* this, char* fileName) {
          read = fread(&action->data.ch, sizeof(wchar_t), 1, ufd);
          if (read < 1) { fclose(ufd); return; }
          break;
-      case UndoDeleteBlock:
-         read = fread(&action->data.str.len, sizeof(int), 1, ufd);
-         if (read < 1) { fclose(ufd); return; }
-         action->data.str.buf = malloc(sizeof(char) * (action->data.str.len + 1));
-         read = fread(action->data.str.buf, sizeof(char), action->data.str.len, ufd);
-         action->data.str.buf[action->data.str.len] = '\0';
-         if (read < action->data.str.len) { fclose(ufd); return; }
-         break;
       case UndoInsertBlock:
-         read = fread(&action->data.coord.xTo, sizeof(int), 1, ufd);
-         if (read < 1) { fclose(ufd); return; }
-         read = fread(&action->data.coord.yTo, sizeof(int), 1, ufd);
-         if (read < 1) { fclose(ufd); return; }
-         break;
+      case UndoDeleteBlock:
+         {
+            int len;
+            read = fread(&len, sizeof(int), 1, ufd);
+            if (read < 1) { fclose(ufd); return; }
+            char* buf = malloc(sizeof(char) * (len + 1));
+            read = fread(buf, sizeof(char), len, ufd);
+            buf[len] = '\0';
+            if (read < len) { fclose(ufd); return; }
+            action->data.block.text = Text_newWithSize(buf, len);
+            read = fread(&action->data.block.coord.xTo, sizeof(int), 1, ufd);
+            if (read < 1) { fclose(ufd); return; }
+            read = fread(&action->data.block.coord.yTo, sizeof(int), 1, ufd);
+            if (read < 1) { fclose(ufd); return; }
+            break;
+         }
+      case UndoIndent:
       case UndoUnindent:
-         read = fread(&action->data.unindent.len, sizeof(int), 1, ufd);
+         read = fread(&action->data.tab.len, sizeof(int), 1, ufd);
          if (read < 1) { fclose(ufd); return; }
-         action->data.unindent.buf = malloc(sizeof(int) * action->data.unindent.len);
-         read = fread(action->data.unindent.buf, sizeof(int), action->data.unindent.len, ufd);
-         if (read < action->data.unindent.len) { fclose(ufd); return; }
-         read = fread(&action->data.unindent.tabul, sizeof(bool), 1, ufd);
+         action->data.tab.buf = malloc(sizeof(int) * action->data.tab.len);
+         read = fread(action->data.tab.buf, sizeof(int), action->data.tab.len, ufd);
+         if (read < action->data.tab.len) { fclose(ufd); return; }
+         read = fread(&action->data.tab.size, sizeof(bool), 1, ufd);
          if (read < 1) { fclose(ufd); return; }
          break;
       }
       Stack_push(this->actions, action);
    }
+
    Undo_diskState(this, x, y, md5curr, fileName);
    assert(Undo_checkDiskState(this));
    fclose(ufd);

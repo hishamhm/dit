@@ -18,6 +18,8 @@ struct Text_ {
 #define Text_bytes(this) ((this).bytes)
 #define Text_toString(this) ((this).data)
 
+#define Text_appendChar(_this, _ch) (Text_insertChar((_this), (_this)->chars, (_ch)))
+
 }*/
 
 bool UTF8_isValid(const char* text) {
@@ -171,12 +173,18 @@ Text Text_new(char* data) {
    return t;
 }
 
+Text Text_newWithSize(char* data, int bytes) {
+   Text t;
+   t.data = data;
+   t.dataSize = bytes + 1;
+   t.bytes = bytes;
+   t.chars = UTF8_chars(data);
+   return t;
+}
+
 Text* Text_replace(Text* t, char* data, int bytes) {
    free(t->data);
-   t->data = data;
-   t->dataSize = bytes + 1;
-   t->bytes = bytes;
-   t->chars = UTF8_chars(data);
+   *t = Text_newWithSize(data, bytes);
    return t;
 }
 
@@ -416,7 +424,7 @@ void Text_clear(Text* t) {
 
 static inline void insert(Text* t, int at, const char* data, int bytes, int chars) {
    if (t->bytes + bytes >= t->dataSize) {
-      t->dataSize += MAX(bytes, t->dataSize) + 1;
+      t->dataSize += MAX(bytes, t->dataSize) + 16;
       t->data = realloc(t->data, t->dataSize);
       t->data[t->bytes] = '\0';
    }

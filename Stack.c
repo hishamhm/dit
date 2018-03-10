@@ -29,7 +29,7 @@ Stack* Stack_new(ObjectClass* type, bool owner) {
    return this;
 }
 
-void Stack_delete(Stack* this) {
+void Stack_empty(Stack* this) {
    StackItem* item = this->head;
    while (item) {
       StackItem* saved = item;
@@ -45,6 +45,12 @@ void Stack_delete(Stack* this) {
       item = item->next;
       free(saved);
    }
+   this->head = NULL;
+   this->size = 0;
+}
+
+void Stack_delete(Stack* this) {
+   Stack_empty(this);
    free(this);
 }
 

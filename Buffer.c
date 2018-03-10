@@ -40,6 +40,11 @@
 typedef int chars;
 typedef int cells;
 
+typedef enum UndoMode_ {
+   UNDO,
+   REDO,
+} UndoMode;
+
 struct Buffer_ {
    char* fileName;
    bool modified;
@@ -692,10 +697,15 @@ bool Buffer_checkDiskState(Buffer* this) {
    return Undo_checkDiskState(this->undo);
 }
 
-void Buffer_undo(Buffer* this) {
+void Buffer_undo(Buffer* this, UndoMode mode) {
    int ux = this->x;
    int uy = this->y;
-   bool modified = Undo_undo(this->undo, &ux, &uy);
+   bool modified;
+   if (mode == UNDO) {
+      modified = Undo_undo(this->undo, &ux, &uy);
+   } else {
+      modified = Undo_redo(this->undo, &ux, &uy);
+   }
    this->x = ux;
    Panel_setSelected(this->panel, uy);
    this->line = (Line*) Panel_getSelected(this->panel);

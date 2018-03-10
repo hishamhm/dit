@@ -114,6 +114,8 @@ struct Text_ {
 #define Text_bytes(this) ((this).bytes)
 #define Text_toString(this) ((this).data)
 
+#define Text_appendChar(_this, _ch) (Text_insertChar((_this), (_this)->chars, (_ch)))
+
 
 struct LineClass_ {
    ListItemClass super;
@@ -171,6 +173,11 @@ typedef struct Proxy_ {
 
 typedef int chars;
 typedef int cells;
+
+typedef enum UndoMode_ {
+   UNDO,
+   REDO,
+} UndoMode;
 
 struct Buffer_ {
    char* fileName;
@@ -952,23 +959,18 @@ struct UndoAction_ {
          char* md5;
       } diskState;
       struct {
-         char* buf;
-         int len;
-      } str;
-      struct {
-         int xTo;
-         int yTo;
-      } coord;
-      struct {
-         int lines;
-         char width;
-      } indent;
+         Text text;
+         struct {
+            int xTo;
+            int yTo;
+         } coord;
+      } block;
       int size;
       struct {
          int* buf;
          int len;
-         int tabul;
-      } unindent;
+         int size;
+      } tab;
       bool backspace;
    } data;
 };
@@ -978,6 +980,7 @@ extern UndoActionClass UndoActionType;
 struct Undo_ {
    List* list;
    Stack* actions;
+   Stack* redoActions;
    int group;
 };
 
