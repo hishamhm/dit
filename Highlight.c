@@ -28,15 +28,29 @@ struct HighlightContextClass_ {
    ObjectClass super;
 };
 
+typedef enum {
+   CLOSE_TOKEN,
+   CLOSE_EOL,
+   CLOSE_BLANKLINE,
+} HighlightCloseMode;
+
 struct HighlightContext_ {
    Object super;
    PatternMatcher* follows;
    HighlightContext* parent;
-   HighlightContext* nextLine;
+   HighlightContext* next;
+   HighlightCloseMode mode;
    PatternMatcher* rules;
    int id;
    Color defaultColor;
 };
+
+typedef struct HighlightClose_ {
+   HighlightCloseMode mode;
+   union {
+      char* token;
+   };
+} HighlightClose;
 
 extern HighlightContextClass HighlightContextType;
 
@@ -133,7 +147,7 @@ Highlight* Highlight_new(const char* fileName, Text firstLine, ScriptState* scri
    args.firstLine = firstLine;
    Files_forEachInDir("highlight", (Method_Files_fileHandler)Highlight_readHighlightFile, &args);
    if (!this->currentContext) {
-      this->mainContext = Highlight_addContext(this, NULL, NULL, NULL, NormalColor);
+      this->mainContext = Highlight_addContext(this, NULL, (HighlightClose){ .mode = CLOSE_EOL }, NULL, NormalColor);
       this->currentContext = this->mainContext;
    }
    return this;
@@ -249,7 +263,15 @@ HighlightParserState parseFile(ReadHighlightFileArgs* args, FILE* file, const ch
          // Read RULES section
          if (String_eq(tokens[0], "context") && (ntokens == 4 || ntokens == 6)) {
             char* open = tokens[1];
-            char* close = (String_eq(tokens[2], "`$") ? NULL : tokens[2]);
+            HighlightClose close;
+            if (String_eq(tokens[2], "`$")) {
+               close.mode = CLOSE_EOL;
+            } else if (String_eq(tokens[2], "`^`$")) {
+               close.mode = CLOSE_BLANKLINE;
+            } else {
+               close.mode = CLOSE_TOKEN;
+               close.token = tokens[2];
+            }
             Color color;
             if (ntokens == 6) {
                HighlightContext_addRule(args->context, open, Highlight_translateColor(tokens[3]), false, false);
@@ -259,9 +281,9 @@ HighlightParserState parseFile(ReadHighlightFileArgs* args, FILE* file, const ch
                HighlightContext_addRule(args->context, open, color, false, false);
             }
             args->context = Highlight_addContext(this, open, close, Stack_peek(args->contexts), color);
-            if (close) {
+            if (close.mode == CLOSE_TOKEN) {
                color = (ntokens == 6 ? Highlight_translateColor(tokens[4]) : color);
-               HighlightContext_addRule(args->context, close, color, false, false);
+               HighlightContext_addRule(args->context, close.token, color, false, false);
             }
             Stack_push(args->contexts, args->context);
          } else if (String_eq(tokens[0], "/context") && ntokens == 1) {
@@ -305,7 +327,7 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
    }
 
    this->toLower = false;
-   this->mainContext = Highlight_addContext(this, NULL, NULL, NULL, NormalColor);
+   this->mainContext = Highlight_addContext(this, NULL, (HighlightClose){ .mode = CLOSE_EOL }, NULL, NormalColor);
    
    args->context = this->mainContext;
    args->contexts = Stack_new(ClassAs(HighlightContext, Object), false);
@@ -327,25 +349,25 @@ bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name) {
    return false;
 }
 
-HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close, HighlightContext* parent, Color color) {
+HighlightContext* Highlight_addContext(Highlight* this, char* open, HighlightClose close, HighlightContext* parent, Color color) {
    int id = Vector_size(this->contexts);
-   HighlightContext* ctx = HighlightContext_new(id, color, parent);
+   HighlightContext* ctx = HighlightContext_new(id, color, parent, close.mode);
    Vector_add(this->contexts, ctx);
    if (open) {
       assert(parent);
       PatternMatcher_add(parent->follows, (unsigned char*) open, (intptr_t) ctx, false, false);
    }
-   if (close) {
+   if (close.mode == CLOSE_TOKEN) {
       assert(parent);
-      PatternMatcher_add(ctx->follows, (unsigned char*) close, (intptr_t) parent, false, false);
-   } else {
+      PatternMatcher_add(ctx->follows, (unsigned char*) close.token, (intptr_t) parent, false, false);
+   } else if (close.mode == CLOSE_EOL || close.mode == CLOSE_BLANKLINE) {
       if (parent) {
          // When multiple contexts ending with `$ are nested,
          // they should jump out to the outermost context.
-         while (parent && parent->nextLine && parent->nextLine != parent) {
-            parent = parent->nextLine;
+         while (parent && parent->next && parent->next != parent) {
+            parent = parent->next;
          }
-         ctx->nextLine = parent;
+         ctx->next = parent;
       }
    }
    return ctx;
@@ -424,7 +446,9 @@ void Highlight_setAttrs(Highlight* this, const char* buffer, int* attrs, int len
       Highlight_tryMatch(this, &args, true);
    }
    Script_highlightLine(this, buffer, attrs, len, y);
-   this->currentContext = args.ctx->nextLine;
+   this->currentContext = (args.ctx->mode == CLOSE_BLANKLINE && len != 0)
+                        ? args.ctx
+                        : args.ctx->next;
 }
 
 inline HighlightContext* Highlight_getContext(Highlight* this) {
@@ -435,13 +459,14 @@ inline void Highlight_setContext(Highlight* this, HighlightContext* context) {
    this->currentContext = (HighlightContext*) context;
 }
 
-HighlightContext* HighlightContext_new(int id, Color defaultColor, HighlightContext* parent) {
+HighlightContext* HighlightContext_new(int id, Color defaultColor, HighlightContext* parent, HighlightCloseMode mode) {
    HighlightContext* this = Alloc(HighlightContext);
    this->id = id;
    this->follows = PatternMatcher_new();
    this->defaultColor = defaultColor;
    this->rules = PatternMatcher_new();
-   this->nextLine = this;
+   this->next = this;
+   this->mode = mode;
    this->parent = parent;
    return this;
 }

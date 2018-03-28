@@ -304,11 +304,11 @@ Highlight* Highlight_new(const char* fileName, Text firstLine, ScriptState* scri
 void Highlight_delete(Highlight* this);
 HighlightParserState parseFile(ReadHighlightFileArgs* args, FILE* file, const char* name, HighlightParserState state);
 bool Highlight_readHighlightFile(ReadHighlightFileArgs* args, char* name);
-HighlightContext* Highlight_addContext(Highlight* this, char* open, char* close, HighlightContext* parent, Color color);
+HighlightContext* Highlight_addContext(Highlight* this, char* open, HighlightClose close, HighlightContext* parent, Color color);
 void Highlight_setAttrs(Highlight* this, const char* buffer, int* attrs, int len, int y);
  HighlightContext* Highlight_getContext(Highlight* this);
  void Highlight_setContext(Highlight* this, HighlightContext* context);
-HighlightContext* HighlightContext_new(int id, Color defaultColor, HighlightContext* parent);
+HighlightContext* HighlightContext_new(int id, Color defaultColor, HighlightContext* parent, HighlightCloseMode mode);
 void HighlightContext_delete(Object* cast);
 void HighlightContext_addRule(HighlightContext* this, char* rule, Color color, bool eager, bool handOver);
 void RichString_setAttrn(RichString* this, int attrs, int start, int finish);

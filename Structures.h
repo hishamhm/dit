@@ -720,15 +720,29 @@ struct HighlightContextClass_ {
    ObjectClass super;
 };
 
+typedef enum {
+   CLOSE_TOKEN,
+   CLOSE_EOL,
+   CLOSE_BLANKLINE,
+} HighlightCloseMode;
+
 struct HighlightContext_ {
    Object super;
    PatternMatcher* follows;
    HighlightContext* parent;
-   HighlightContext* nextLine;
+   HighlightContext* next;
+   HighlightCloseMode mode;
    PatternMatcher* rules;
    int id;
    Color defaultColor;
 };
+
+typedef struct HighlightClose_ {
+   HighlightCloseMode mode;
+   union {
+      char* token;
+   };
+} HighlightClose;
 
 extern HighlightContextClass HighlightContextType;
 
