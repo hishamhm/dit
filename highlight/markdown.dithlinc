@@ -16,11 +16,25 @@ context `^# `$ brightdiff
 context [ ] diff diff bright
 /context
 
+context `^`````` `^`````` dim
+/context
+
 context `` `` bright
 /context
 
-context `^`s`s`s`s `$ dim
+context `^> `^`$ brightdiff brightdiff alt
+   context `` `` bright
+   /context
+   rule *`[`^`s*`]`+* bright
+   context ** ** brightspecialdiff brightspecialdiff brightspecial
+   /context
 /context
+
+#context `^`$ `^`$ normal
+#   context `^`s`s`s`s `$ dim
+#   /context
+#/context
+
 context `^`t `$ dim
 /context
 
