@@ -125,7 +125,15 @@ are.
 Comments
 --------
 
-A line starting with `#` is a comment. It must be the very first character.
+A line starting with `#` is a comment. Comments may be indented, but they must be
+at the beginning of the line (i.e. only spaces are allowed before comments).
+
+```
+# this is a comment
+   # this is a comment too
+
+rule #not_a_comment bright
+```
 
 Grammar
 -------
