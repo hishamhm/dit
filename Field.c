@@ -180,10 +180,10 @@ int Field_run(Field* this, bool setCursor, bool* handled, bool* code) {
          }
          break;
       case KEY_C_RIGHT:
-         this->cursor = Text_forwardWord(curr->text, this->cursor);
+         this->cursor = Text_forwardWord(curr->text, this->cursor, false);
          break;
       case KEY_C_LEFT:
-         this->cursor = Text_backwardWord(curr->text, this->cursor);
+         this->cursor = Text_backwardWord(curr->text, this->cursor, false);
          break;
       case KEY_HOME:
          this->cursor = 0;

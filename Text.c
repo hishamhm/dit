@@ -244,18 +244,22 @@ const Text Text_textAt(Text t, int n) {
    return s;
 }
 
-int Text_forwardWord(Text this, int cursor) {
+#ifndef iswword2
+#define iswword2(c, u) ( (u) ? (iswalnum(c) || (c) == '_') : (iswalnum(c)) )
+#endif
+
+int Text_forwardWord(Text this, int cursor, bool u) {
    if (this.chars == 0 || cursor >= this.chars) return this.chars;
    const char* s = UTF8_forward(this.data, cursor);
    wchar_t curr = UTF8_stringToCodePoint(s);
-   if (iswalnum(curr)) {
-      while (iswalnum(curr) && cursor < this.chars) {
+   if (iswword2(curr, u)) {
+      while (iswword2(curr, u) && cursor < this.chars) {
          s = UTF8_forward(s, 1);
          curr = UTF8_stringToCodePoint(s);
          cursor++;
       }
-   } else if (!iswalnum(curr) && !iswblank(curr)) {
-      while (!iswalnum(curr) && !iswblank(curr) && cursor < this.chars) {
+   } else if (!iswword2(curr, u) && !iswblank(curr)) {
+      while (!iswword2(curr, u) && !iswblank(curr) && cursor < this.chars) {
          s = UTF8_forward(s, 1);
          curr = UTF8_stringToCodePoint(s);
          cursor++;
@@ -270,22 +274,22 @@ int Text_forwardWord(Text this, int cursor) {
    return cursor;
 }
 
-int Text_backwardWord(Text this, int cursor) {
+int Text_backwardWord(Text this, int cursor, bool u) {
    if (this.chars == 0 || cursor == 0) return 0;
    cursor--;
    const char* s = UTF8_forward(this.data, cursor);
    wchar_t curr = UTF8_stringToCodePoint(s);
-   if (iswalnum(curr)) {
+   if (iswword2(curr, u)) {
       for (; cursor > 0; cursor--) {
          s = UTF8_backward(s);
          curr = UTF8_stringToCodePoint(s);
-         if (!iswalnum(curr)) break;
+         if (!iswword2(curr, u)) break;
       }
-   } else if (!iswalnum(curr) && !iswblank(curr)) {
+   } else if (!iswword2(curr, u) && !iswblank(curr)) {
       for (; cursor > 0; cursor--) {
          s = UTF8_backward(s);
          curr = UTF8_stringToCodePoint(s);
-         if (iswalnum(curr) || iswblank(curr)) break;
+         if (iswword2(curr, u) || iswblank(curr)) break;
       }
    } else {
       for (; cursor > 0; cursor--) {

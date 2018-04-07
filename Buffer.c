@@ -771,7 +771,7 @@ void Buffer_forwardChar(Buffer* this) {
 
 void Buffer_forwardWord(Buffer* this) {
    if (this->x < last_x(this)) {
-      this->x = Text_forwardWord(this->line->text, this->x);
+      this->x = Text_forwardWord(this->line->text, this->x, this->nCursors > 1);
    } else if (this->line->super.next) {
       this->x = 0;
       Panel_onKey(this->panel, KEY_DOWN);
@@ -783,7 +783,7 @@ void Buffer_forwardWord(Buffer* this) {
 
 void Buffer_backwardWord(Buffer* this) {
    if (this->x > 0) {
-      this->x = Text_backwardWord(this->line->text, this->x);
+      this->x = Text_backwardWord(this->line->text, this->x, this->nCursors > 1);
    } else if (this->y > 0) {
       Panel_onKey(this->panel, KEY_UP);
       this->line = (Line*) Panel_getSelected(this->panel);
