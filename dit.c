@@ -38,8 +38,8 @@ static int lines, cols;
 
 static void printVersionFlag() {
    Display_clear();
-   printf("dit " VERSION " - (C) 2005-2006 Hisham Muhammad.\n");
-   printf("Released under the GNU GPL.\n\n");
+   printf("dit " VERSION " - (C) 2005-2018 Hisham Muhammad\n");
+   printf("Released under the GNU GPL 2.0\n");
    exit(0);
 }
 
