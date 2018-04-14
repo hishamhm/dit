@@ -1,0 +1,75 @@
+* {
+font-family: "bitstream vera sans", "verdana", "arial", sans;
+}
+tt {
+font-family: "bitstream vera sans mono", "andale mono", "courier new", mono;
+}
+body {
+background-color: black;
+color: white;
+}
+a {
+color: #aaaabb;
+font-weight: bold;
+}
+a.menu {
+color: #aaaabb;
+font-weight: bold;
+text-decoration: none;
+}
+a.code {
+font-family: "bitstream vera sans mono", "andale mono", "courier new", mono;
+text-decoration: underline;
+color: white;
+font-weight: normal;
+}
+:hover {
+text-decoration: underline;
+}
+.title {
+text-align: center;
+}
+.intro {
+text-align: center;
+}
+.shot {
+text-align: center;
+}
+.left {
+text-align: right;
+}
+.right {
+text-align: left;
+}
+.middle {
+text-align: left;
+vertical-align: top;
+}
+td.menu {
+vertical-align: top;
+width: 20%;
+}
+ul.menu {
+padding: 10px;
+}
+li.menu {
+list-style-type: none;
+font-size: larger;
+margin-bottom: 10px;
+}
+.maintable {
+text-align: center;
+padding: 0px;
+}
+.footer {
+text-align: center;
+}
+hr {
+height: 1px;
+background-color: #aaaaaa;
+border: 0px;
+}
+.question {
+font-weight: bold;
+padding-top: 10px;
+}

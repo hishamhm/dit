@@ -1,0 +1,116 @@
+<html>
+<head>
+<title>dit editor</title>
+<link rel="stylesheet" type="text/css" href="dit.css"/>
+</head>
+<body>
+<div class="title">
+<img src="dit.jpg" alt="dit editor" title="dit editor"/>
+</div>
+<p class="intro">
+A console text editor for Unix that you already know how to use.
+</p>
+<p class="intro">
+<table class="maintable" width="100%">
+<tr>
+<td class="left menu" width="*">
+<div>
+<ul class="menu">
+<li class="menu"><a class="menu" href="home.html">home</a></li><li class="menu"><a class="menu" href="screenshots.html">screenshots</a></li><li class="menu"><a class="menu" href="downloads.html">downloads & git</a></li>                   </ul>
+</div>
+</td>
+<td class="middle">
+<h2>Downloads</h2>
+
+<h3>Get dit!</h3>
+
+<p>
+<font size="+1">
+&gt;&gt;&gt; <b><a href="releases/0.4/dit-0.4.tar.gz">dit-0.4.tar.gz</a></b> &lt;&lt;&lt;
+</font>
+</p>
+
+<h3>Dit from git</h3>
+
+<p>
+You can keep track of the ongoing development by checking out
+the current state of the Git repository. You can do so
+issuing the following command: 
+</p>
+
+<p><tt>
+git clone <a class="code" href="https://github.com/hishamhm/dit">https://github.com/hishamhm/dit</a>
+</tt></p>
+
+<p>
+It will download the sources in the "dit" directory. Run the script "autogen.sh"
+to build the configure file, and then proceed with the usual "configure",
+"make", "make install" sequence. As usual, free software is distributed with
+NO WARRANTY, so use it at your own risk!
+</p>
+
+<p>
+You can also <a href="https://github.com/hishamhm/dit">browse the Git repository</a> online.
+</p>
+
+<p><b>Quick reference:</b></p>
+
+<ul>
+<li>Ctrl+Q or F10 - quit</li>
+<li>Ctrl+S - save</li>
+<li>Ctrl+X - cut</li>
+<li>Ctrl+C - copy</li>
+<li>Ctrl+V - paste</li>
+<li>Shift-arrows or Alt-arrows - select
+<ul>
+<li>NOTE! Some terminals "capture" shift-arrow movement
+for other purposes (switching tabs, etc) and Dit never gets the keys,
+that's why Dit also tries to support Alt-arrows. Try both and see which
+one works. If Shift-arrows don't work recommend you reconfigure them
+(you can do this in Konsole setting "Previous Tab" and "Next Tab" to
+alt-left and alt-right, for example). RXVT-Unicode and Terminology are
+some terminals that work well out-of-the-box.</li>
+</ul>
+<li>Ctrl+F or F3 - find. Inside Find:<br/>
+<ul>
+<li>Ctrl+C - toggle case sensitive</li>
+<li>Ctrl+W - toggle whole word</li>
+<li>Ctrl+N - next</li>
+<li>Ctrl+P - previous</li>
+<li>Ctrl+R - replace</li>
+<li>Enter - "confirm": exit Find staying where you are</li>
+<li>Esc - "cancel": exit Find returning to where you started
+<ul><li>This is useful for "peeking into another part of the file": just Ctrl+F, type something to look, and then Esc to go back to where you were.</li></ul>
+</li>
+</ul>
+</li>
+<li>Ctrl+G - go to...</li>
+<ul><li>...line number - Type a number to go to a line.</li></ul>
+<ul><li>...tab - Type text to go to the open tab that matches that substring.</li></ul>
+<li>Ctrl+B - back (to previous location, before last find, go-to-line, tab-switch, etc.)
+<ul><li>You can press Ctrl+B multiple times to go back various levels.</li></ul>
+</li>
+<li>Tabs of open files:
+<ul>
+<li>Ctrl+J - previous tab</li>
+<li>Ctrl+K - next tab</li>
+<li>Ctrl+W - close tab</li>
+</ul>
+</li>
+<li>Ctrl+N - word wrap paragraph</li>
+<li>Ctrl+T - toggle tab mode (Tabs, 2, 3, 4 or 8 spaces - it tries to autodetect based on file contents)</li>
+</ul>
+
+<p>This documentation is incomplete... there are <a href="https://github.com/hishamhm/dit/blob/master/bindings/default">more keys</a>! Try around!</p>
+</td>
+<td class="right menu" width="*">
+<div>
+<ul class="menu">
+<li class="menu"><a class="menu" href="faq.html">faq</a></li><li class="menu"><a class="menu" href="mailinglist.html">mailing list</a></li><li class="menu"><a class="menu" href="author.html">author & thanks</a></li>                    </ul>
+</div>
+</td>
+</tr>
+</table>
+</p>
+</body>
+</html>
