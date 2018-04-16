@@ -4,6 +4,22 @@ A console text editor for Unix systems that you already know how to use.
 
 http://hisham.hm/dit
 
+Dependencies
+------------
+
+Dit is designed to be light on dependencies. It is developed on Linux,
+but it should also be portable to other Unix-like platforms.
+Everything you need should be already installed by default in a typical
+Linux system.
+
+* ncurses: preferrably newer versions, with Unicode and mouse support
+* libiconv: optional, needed for Unicode
+* librt: needed for `clock_gettime` on Linux
+* bash: used for generating header files at build-time only
+* Lua: it bundles Lua 5.3 for scripting so you don't have to worry about
+  this dependency, but it can also use the system-installed Lua if
+  you have one.
+
 Quick reference
 ---------------
 
