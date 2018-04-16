@@ -62,11 +62,18 @@ else
             [AC_CHECK_HEADERS([ncurses.h],[:],[missing_headers="$missing_headers $ac_header"])])])])
 fi
 
-AC_CHECK_LIB([c], [clock_gettime], [], [
-  AC_CHECK_LIB([rt], [clock_gettime], [], [
-     missing_libraries="$missing_libraries librt"
-  ])
-])
+case "$target_os" in
+darwin*)
+   : # no support for clock_gettime, internal workaround implemented
+   ;;
+*)
+   AC_CHECK_LIB([c], [clock_gettime], [], [
+     AC_CHECK_LIB([rt], [clock_gettime], [], [
+        missing_libraries="$missing_libraries librt"
+     ])
+   ])
+   ;;
+esac
 
 if test ! -z "$missing_libraries"; then
   AC_MSG_ERROR([missing libraries: $missing_libraries])

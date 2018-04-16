@@ -426,6 +426,21 @@ void Display_getyx(int* y, int* x) {
 }
 #endif
 
+static inline void getTime(struct timespec* now) {
+   #ifdef __MACH__
+      // Workaround for macOS
+      clock_serv_t cclock;
+      mach_timespec_t mts;
+      host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+      clock_get_time(cclock, &mts);
+      mach_port_deallocate(mach_task_self(), cclock);
+      now.tv_sec = mts.tv_sec;
+      now.tv_nsec = mts.tv_nsec;
+   #else
+      clock_gettime(CLOCK_REALTIME, now);
+   #endif
+}
+
 static struct timespec Display_lastEsc;
 
 int Display_getch(bool* code) {
@@ -440,10 +455,10 @@ int Display_getch(bool* code) {
          *code = (ch > 0xff || ch == ERR);
       #endif
       if (*code == 0 && ch == 27) {
-         clock_gettime(CLOCK_REALTIME, &Display_lastEsc);
+         getTime(&Display_lastEsc);
       } else {
          struct timespec now;
-         clock_gettime(CLOCK_REALTIME, &now);
+         getTime(&now);
          double diffTime = ((double)now.tv_sec + 1.0e-9*now.tv_nsec) - ((double)Display_lastEsc.tv_sec + 1.0e-9*Display_lastEsc.tv_nsec);
          if ( diffTime < 0.1 ) {
             switch (ch) {
