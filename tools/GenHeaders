@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
 
-which tac &> /dev/null || tac() { tail -r "$@"; }
+which tac &> /dev/null || tac() {
+   local a=()
+   local i=0
+   while read line
+   do
+      a[i]="$line"
+      i=$[i+1]
+   done < "$1"
+   for ((j = i - 1; j >= 0; j--))
+   do
+      echo "${a[$j]}"
+   done
+}
 
 process() {
    for proc in "${processed[@]}"
