@@ -15,8 +15,8 @@ Dit highlighting files consist of two parts:
 
 The filename of the .dithl file itself is irrelevant.
 
-The FILES section
------------------
+The `FILES` section
+-------------------
 
 Dit runs through the .dithl files trying to find a `FILES` entry that matches the file open in
 the current buffer. The order in which .dithl files are searched is not specified. This means
@@ -80,8 +80,8 @@ rules followed by one or three colors:
 * the opening pattern rule, which indicates how to enter the context
 * the closing pattern rule, which indicates when to exit the context
   * two special pattern rules are recognized only in closing pattern rules:
-    * ```$` - meaning the context closes at the end of the line
-    * ```^``$` - meaning the context closes in a blank line (which is useful for paragraphs of text)
+    * `` `$ `` - meaning the context closes at the end of the line
+    * `` `^`$ `` - meaning the context closes in a blank line (which is useful for paragraphs of text)
 
 If one color is listed in the `context` directive, it will be the default color for
 the entire context. For example:
