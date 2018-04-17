@@ -20,6 +20,31 @@ Linux system.
   this dependency, but it can also use the system-installed Lua if
   you have one.
 
+Installing
+----------
+
+For stable releases, get the latest version at http://hisham.hm/dit/releases/
+-- unpack the `.tar.gz` file, enter its directory then run:
+
+* `./configure`
+  * You may want to customize your installation path using `--prefix`
+* `make`
+* `sudo make install`
+  * If you are installing to a custom path where super-user privileges are not needed, use `sudo make install`
+
+For installing the latest work-in-progress code from the Dit repository,
+you need Git, Autoconf and Automake. Then you'll be able to build it
+like this
+
+* `git clone https://github.com/hishamhm/dit`
+* `cd dit`
+* `./autogen.sh`
+* `./configure`
+  * You may want to customize your installation path using `--prefix`
+* `make`
+* `sudo make install`
+  * If you are installing to a custom path where super-user privileges are not needed, use `sudo make install`
+
 Quick reference
 ---------------
 
