@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(dit, 0.4, hisham@gobolinux.org)
+AC_INIT(dit, 0.5, hisham@gobolinux.org)
 AC_CONFIG_SRCDIR([dit.c])
 AM_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE
