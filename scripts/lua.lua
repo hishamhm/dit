@@ -244,6 +244,8 @@ end
 function on_fkey(key)
    if key == "F7" then
       code.expand_selection()
+   elseif key == "F9" then
+      code.pick_merge_conflict_branch()
    end
 end
 

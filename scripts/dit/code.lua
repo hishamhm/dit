@@ -138,4 +138,72 @@ function code.expand_selection()
    buffer:select(startx, starty, stopx, stopy)
 end
 
+local function find_divider(y, direction, topmatch, bottommatch)
+   local at = y + direction
+   while true do
+      local line = buffer[at]
+      if line == nil then
+         return nil
+      end
+      if line:match(topmatch) then
+         return at - direction, true
+      elseif bottommatch and line:match(bottommatch) then
+         return at - direction, false
+      end
+      at = at + direction
+   end
+end
+
+function code.pick_merge_conflict_branch()
+   local line, x, y = buffer:line()
+   local is_top_chunk
+   local chunkfrom, chunkto
+   local otherfrom, otherto
+   local endy
+   if line:match("^<<<<") then
+      is_top_chunk = true
+      chunkfrom = y + 1
+   elseif line:match("^>>>>") then
+      is_top_chunk = false
+      chunkto = y - 1
+   elseif line:match("^====") then
+      return
+   end
+   if chunkfrom == nil then
+      chunkfrom, is_top_chunk = find_divider(y, -1, "^<<<<", "^====")
+      if chunkfrom == nil then
+         return nil
+      end
+   end
+   if chunkto == nil then
+      chunkto = find_divider(y, 1, "^====", "^>>>>")
+      if chunkto == nil then
+         return nil
+      end
+   end
+   if is_top_chunk then
+      otherfrom = chunkto + 2
+      otherto = find_divider(otherfrom, 1, "^>>>>")
+      endy = chunkfrom - 1
+   else
+      otherto = chunkfrom - 2
+      otherfrom = find_divider(otherto, -1, "^<<<<")
+      endy = otherfrom - 1
+   end
+   buffer:begin_undo()
+   if is_top_chunk then
+      buffer:select(1, otherfrom - 1, 1, otherto + 2)
+      buffer:emit("\b")
+      buffer:select(1, chunkfrom - 1, 1, chunkfrom)
+      buffer:emit("\b")
+   else
+      buffer:select(1, chunkto + 1, 1, chunkto + 2)
+      buffer:emit("\b")
+      buffer:select(1, otherfrom - 1, 1, otherto + 2)
+      buffer:emit("\b")
+   end
+   buffer:go_to(1, endy, false)
+   buffer:end_undo()
+end
+
 return code
