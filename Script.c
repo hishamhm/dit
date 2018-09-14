@@ -3,7 +3,7 @@
 
 /*{
 
-#ifdef __linux__
+#ifdef __GLIBC__
  #include <execinfo.h>
 #define STATIC
 #else
@@ -409,7 +409,7 @@ bool Script_load(ScriptState* this, const char* scriptName) {
 }
 
 STATIC int errorHandler(lua_State* L) {
-   #ifdef __linux__
+   #ifdef __GLIBC__
    int nptrs;
    void* buffer[100];
    char** strings;
@@ -421,7 +421,7 @@ STATIC int errorHandler(lua_State* L) {
    lua_getfield(L, -1, "traceback");
    lua_call(L, 0, 1);
    lua_remove(L, -2);
-   #ifdef __linux__
+   #ifdef __GLIBC__
    lua_pushliteral(L, "\nC traceback:");
    lua_checkstack(L, lua_gettop(L) + nptrs);
    for (int i = 0; i < nptrs; i++) {
