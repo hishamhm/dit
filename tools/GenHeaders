@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+if echo "hello" | grep --text "hello" &>/dev/null
+then
+   GREP="grep --text"
+else
+   GREP="grep"
+fi
+
 which tac &> /dev/null || tac() {
    local a=()
    local i=0
@@ -18,7 +25,7 @@ process() {
    for proc in "${processed[@]}"
    do [ "$proc" == "$1" ] && return
    done
-   for need in `cat "$1" | grep --text '//#needs ' | sed 's,//#needs ,,'`
+   for need in `cat "$1" | $GREP '//#needs ' | sed 's,//#needs ,,'`
    do process $need.c "$2"
    done
    "$2" "$1"
@@ -63,16 +70,16 @@ then
    echo >> "$new"
    
    includes() {
-      cat "$1" | grep --text "^#include"
+      cat "$1" | $GREP "^#include"
    }
 
    defines() {
-      cat "$1" | grep --text "^#define Display_.*"
+      cat "$1" | $GREP "^#define Display_.*"
    }
    
    proto() {
       cat "$1" | grep -v "#include" | cpp 2> /dev/null |\
-      grep -i --text -v "^static" | grep '^[^ ].*) {$' |\
+      $GREP -i -v "^static" | grep '^[^ ].*) {$' |\
       sed 's,) {$,);,;s,inline,,' >> "$new"
    }
    
@@ -109,7 +116,7 @@ else
    echo "#include \"config.h\"" >> "$new"
    echo >> "$new"
    
-   cat *.c | awk '
+   cat *.c | gawk '
       BEGIN {
          reading=0
       }
@@ -126,7 +133,7 @@ else
    ' >> "$new"
    
    struct() {
-   cat "$1" | awk '
+   cat "$1" | gawk '
       BEGIN {
          writing=0
       }
