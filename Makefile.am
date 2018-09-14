@@ -9,7 +9,7 @@ my_dit_C_sources = dit.c Buffer.c CRT.c Clipboard.c DebugMemory.c Field.c \
  FileReader.c FunctionBar.c Hashtable.c Highlight.c Line.c List.c Object.c \
  Panel.c PatternMatcher.c Pool.c RichString.c Script.c \
  Stack.c String.c StringBuffer.c TabManager.c Undo.c Vector.c Files.c Display.c \
- Text.c lua-compat-5.3/compat-5.3.c
+ Text.c lua-compat-5.3/compat-5.3.c libeditorconfig.a
 BUILT_SOURCES = Prototypes.h Structures.h
 
 # find bindings terminals highlight scripts -type f -or -type l | tr '\n' ' ' | fold -s -w 70 | sed 's,$,\\,'
