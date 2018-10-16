@@ -2,6 +2,8 @@ FILES
 name suffix .json
 RULES
 
+script json.lua
+
 rule "`[!#`-~`]`+": brightalt
 
 context " " diff
