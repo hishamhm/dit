@@ -27,6 +27,8 @@ then
    LDFLAGS="$LDFLAGS -L/usr/local/lib"
 fi
 
+AC_CHECK_LIB([tinfo], [keypad], [], [])
+
 AC_ARG_ENABLE(unicode, [AC_HELP_STRING([--enable-unicode], [enable Unicode support])], ,enable_unicode="yes")
 if test "x$enable_unicode" = xyes; then
    AC_CHECK_LIB([ncursesw6], [refresh], [
