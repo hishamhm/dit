@@ -1,7 +1,7 @@
 FILES
 name suffix .sh
 name prefix Recipe
-firstline regex ^#!.*/[a-z]*sh($|[[:blank:]].*)
+firstline regex ^#!.*[a-z]*sh($|[[:blank:]].*)
 RULES
 script shell.lua
 include shell.dithlinc

@@ -134,7 +134,7 @@ function on_ctrl(key)
    elseif key == "R" then
       local found, line, i = find_definition()
       if found then
-         tabs:markJump()
+         tabs:mark_jump()
          buffer:go_to(1, i)
       end
    elseif key == "D" then

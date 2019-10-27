@@ -1,6 +1,4 @@
 
-local old_on_ctrl = on_ctrl
-
 local align_by_char
 do
    local function which_char_at_buffer(x, y)
@@ -99,15 +97,17 @@ end
 
 local ctrl_p_latch = false
 
+local old_on_ctrl = on_ctrl
+
 function on_ctrl(key)
    if ctrl_p_latch then
       ctrl_p_latch = false
       if key == "Q" then
          flip_quotes()
-         return
+         return true
       elseif key == "A" then
          align_by_char()
-         return
+         return true
       end
       return
    end

@@ -281,9 +281,9 @@ STATIC int Script_TabManager_getBuffer(lua_State* L) {
 
 STATIC luaL_Reg TabManager_functions[] = {
    { "open", Script_TabManager_open },
-   { "setPage", Script_TabManager_setPage },
-   { "getBuffer", Script_TabManager_getBuffer },
-   { "markJump", Script_TabManager_markJump },
+   { "set_page", Script_TabManager_setPage },
+   { "get_buffer", Script_TabManager_getBuffer },
+   { "mark_jump", Script_TabManager_markJump },
    { NULL, NULL }
 };
 

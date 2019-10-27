@@ -30,9 +30,9 @@ local function go_to_result(decl, word)
    line = tonumber(line)
    if file then
       local page = tabs:open(file)
-      tabs:markJump()
-      tabs:setPage(page)
-      local buf = tabs:getBuffer(page)
+      tabs:mark_jump()
+      tabs:set_page(page)
+      local buf = tabs:get_buffer(page)
       buf:go_to(1, line)
       local text = buf:line()
       if word then

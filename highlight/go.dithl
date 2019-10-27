@@ -2,6 +2,8 @@ FILES
 name suffix .go
 RULES
 
+script go.lua
+
 rule := brightdiff
 
 rule func diff
@@ -33,6 +35,10 @@ rule private diff
 rule protected diff
 rule public diff
 rule inline diff
+
+rule int64 diff
+rule float64 diff
+rule uint64 diff
 
 rule defer bright
 
@@ -107,6 +113,10 @@ context ' ' brightalt
    eager_rule \\ brightalt
    eager_rule \' brightalt
 /context
+context `` `` special
+/context
 
+rule make brightdiff
+rule delete brightdiff
 
 include gitconflict.dithlinc

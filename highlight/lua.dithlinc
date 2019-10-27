@@ -57,6 +57,9 @@ context function ) bright bright brightdiff
       rule , bright
       context : `[,)`] brightdiff bright diff
          handover_rule ) bright
+         context < > diff diff alt
+            rule , diff
+         /context
          context ( ) diff
             context ( ) diff
                context ( ) diff

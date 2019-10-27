@@ -1389,8 +1389,15 @@ int main(int argc, char** argv) {
    CRT_init();
    
    Dit_Action keys[KEY_MAX];
+   char* scripts[KEY_MAX];
+
+   for (int i = 0; i < KEY_MAX; i++) {
+      keys[i] = NULL;
+      scripts[i] = NULL;
+   }
+
    Dit_registerActions();
-   Dit_parseBindings(keys);
+   Dit_parseBindings(keys, scripts);
    Hashtable_delete(Dit_actions);
 
    Display_getScreenSize(&cols, &lines);

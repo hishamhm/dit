@@ -33,6 +33,9 @@ context `t `$ veryspecial normal normal
    context " " diff
       rule $(`[A`-Za`-z_0`-9`]`+) brightdiff
    /context
+   context ' ' diff
+      rule $(`[A`-Za`-z_0`-9`]`+) brightdiff
+   /context
 /context
 
 rule include bright

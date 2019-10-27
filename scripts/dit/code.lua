@@ -139,7 +139,7 @@ function code.expand_selection()
 end
 
 local function find_divider(y, direction, topmatch, bottommatch)
-   local at = y + direction
+   local at = y
    while true do
       local line = buffer[at]
       if line == nil then

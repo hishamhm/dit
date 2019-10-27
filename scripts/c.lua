@@ -19,8 +19,8 @@ local function open_header()
       return
    end
    local page = tabs:open(name)
-   tabs:markJump()
-   tabs:setPage(page)
+   tabs:mark_jump()
+   tabs:set_page(page)
 end
 
 local function popup_error()
