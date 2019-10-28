@@ -1397,7 +1397,7 @@ int main(int argc, char** argv) {
    }
 
    Dit_registerActions();
-   Dit_parseBindings(keys, scripts);
+   Dit_parseBindings(keys);
    Hashtable_delete(Dit_actions);
 
    Display_getScreenSize(&cols, &lines);
