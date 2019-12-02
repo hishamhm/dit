@@ -824,11 +824,6 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                Field_printfLabel(Dit_replaceField, "L:%d C:%d [%c%c] %sReplace with:", buffer->y + 1, buffer->x + 1, caseSensitive ? 'C' : ' ', wholeWord ? 'W' : ' ', wrapped ? "Wrapped " : "");
                Field_start(Dit_replaceField);
                while (true) {
-                  moveIfFound(buffer, tabs, Text_chars(Field_text(Dit_findField)), found, &first, &stopWrap, &failing, &searched, &wrapped);
-                  if (stopWrap) {
-                     quit = 1;
-                     break;
-                  }
                   bool quitMask[256] = {0};
                   quitMask[KEY_CTRL('R')] = true;
                   quitMask[KEY_CTRL('L')] = true;
@@ -907,6 +902,11 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
                      }
                      found = Buffer_find(buffer, Field_text(Dit_findField), true, caseSensitive, wholeWord, true);
                      searched = true;
+                  }
+                  moveIfFound(buffer, tabs, Text_chars(Field_text(Dit_findField)), found, &first, &stopWrap, &failing, &searched, &wrapped);
+                  if (stopWrap) {
+                     quit = 1;
+                     break;
                   }
                }
                break;
