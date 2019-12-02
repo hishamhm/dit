@@ -49,6 +49,10 @@ struct Buffer_ {
    char* fileName;
    bool modified;
    bool readOnly;
+
+   char* autosave;
+   int autosaveCounter;
+
    // logical position of the cursor in the line
    // (character of the line where cursor is.
    chars x;
@@ -135,6 +139,11 @@ struct FilePosition_ {
 };
 
 }*/
+
+static inline void onChange(Buffer* this) {
+   this->autosaveCounter++;
+   Script_onChange(this);
+}
 
 inline void Buffer_restorePosition(Buffer* this) {
    char* rpath = realpath(this->fileName, NULL);
@@ -627,6 +636,10 @@ void Buffer_delete(Buffer* this) {
       Buffer_storePosition(this);
       free(this->fileName);
    }
+   if (this->autosave) {
+      remove(this->autosave);
+      free(this->autosave);
+   }
    Msg0(Object, delete, this->panel);
 
    Undo_delete(this->undo);
@@ -713,7 +726,8 @@ void Buffer_undo(Buffer* this, UndoMode mode) {
    this->savedX = Line_widthUntil(this->line, this->x, this->tabSize);
    this->selecting = false;
    this->modified = modified;
-   Script_onChange(this);
+   
+   onChange(this);
 }
 
 char Buffer_getLastKey(Buffer* this) {
@@ -754,7 +768,8 @@ void Buffer_breakLine(Buffer* this) {
    }
 
    this->lastKey = 0;
-   Script_onChange(this);
+
+   onChange(this);
 }
 
 void Buffer_forwardChar(Buffer* this) {
@@ -893,7 +908,8 @@ void Buffer_wordWrap(Buffer* this, int wrap) {
    this->panel->needsRedraw = true;
    Undo_endGroup(this->undo, this->x, this->y);
    Buffer_endOfLine(this);
-   Script_onChange(this);
+
+   onChange(this);
 }
 
 void Buffer_deleteBlock(Buffer* this) {
@@ -923,7 +939,8 @@ void Buffer_deleteBlock(Buffer* this) {
    this->modified = true;
    if (lines > 1)
       this->panel->needsRedraw = true;
-   Script_onChange(this);
+
+   onChange(this);
 }
 
 /*
@@ -973,7 +990,8 @@ void Buffer_pasteBlock(Buffer* this, Text block) {
    Undo_endGroup(this->undo, this->x, this->y);
    this->selecting = false;
    this->modified = true;
-   Script_onChange(this);
+
+   onChange(this);
 }
 
 bool Buffer_setLine(Buffer* this, int y, const Text text) {
@@ -991,7 +1009,7 @@ bool Buffer_setLine(Buffer* this, int y, const Text text) {
    Line_insertTextAt(line, text, 0);
    Undo_endGroup(this->undo, this->x, this->y);
    this->modified = true;
-   Script_onChange(this);
+   onChange(this);
    return true;
 }
 
@@ -1022,7 +1040,7 @@ void Buffer_deleteChar(Buffer* this) {
    }
    this->savedX = Line_widthUntil(this->line, this->x, this->tabSize);
    this->modified = true;
-   Script_onChange(this);
+   onChange(this);
 }
 
 void Buffer_backwardDeleteChar(Buffer* this) {
@@ -1055,7 +1073,7 @@ void Buffer_backwardDeleteChar(Buffer* this) {
    }
    this->savedX = Line_widthUntil(this->line, this->x, this->tabSize);
    this->modified = true;
-   Script_onChange(this);
+   onChange(this);
 }
 
 void Buffer_upLine(Buffer* this) {
@@ -1144,7 +1162,7 @@ void Buffer_unindent(Buffer* this) {
       this->x = MAX(0, this->x - move);
    this->panel->needsRedraw = true;
    this->modified = true;
-   Script_onChange(this);
+   onChange(this);
 }
 
 void Buffer_indent(Buffer* this) {
@@ -1168,7 +1186,7 @@ void Buffer_indent(Buffer* this) {
       this->x += move;
    this->panel->needsRedraw = true;
    this->modified = true;
-   Script_onChange(this);
+   onChange(this);
 }
       
 void Buffer_defaultKeyHandler(Buffer* this, int ch, bool code) {
@@ -1182,7 +1200,7 @@ void Buffer_defaultKeyHandler(Buffer* this, int ch, bool code) {
       this->savedX = Line_widthUntil(this->line, this->x, this->tabSize);
       this->modified = true;
       this->selecting = false;
-      Script_onChange(this);
+      onChange(this);
    } else if (ch >= 1 && ch <= 31) {
       Script_onCtrl(this, ch);
       Buffer_correctPosition(this);
@@ -1341,8 +1359,7 @@ static int writeLineInFormat(FILE* fd, Line* l, bool utf8, bool trimTrailingWhit
    return size;
 }
 
-void Buffer_saveAndCloseFd(Buffer* this, FILE* fd) {
-   assert(this->fileName);
+static void Buffer_coreSaveAndCloseFd(Buffer* this, FILE* fd) {
    Line* l = (Line*) this->panel->items->head;
    iconv_t cd;
    if (!this->isUTF8) {
@@ -1366,6 +1383,13 @@ void Buffer_saveAndCloseFd(Buffer* this, FILE* fd) {
    if (!this->isUTF8) {
       iconv_close(cd);
    }
+}
+
+void Buffer_saveAndCloseFd(Buffer* this, FILE* fd) {
+   assert(this->fileName);
+
+   Buffer_coreSaveAndCloseFd(this, fd);
+
    Undo_store(this->undo, this->fileName);
    Script_onSave(this, this->fileName);
    this->modified = false;
@@ -1379,6 +1403,47 @@ bool Buffer_save(Buffer* this) {
       return false;
    Buffer_saveAndCloseFd(this, fd);
    return true;
+}
+
+void Buffer_autosave(Buffer* this, bool timeout) {
+   if (timeout && this->autosaveCounter == 0) {
+      return;
+   } else if (this->autosaveCounter < 200) {
+      return;
+   }
+
+   char* autosave;
+   FILE* fd;
+   if (this->autosave) {
+      autosave = this->autosave;
+      fd = fopen(autosave, "w");
+   } else if (this->fileName) {
+      int len = strlen(this->fileName);
+      autosave = malloc(len + 2);
+      strncpy(autosave, this->fileName, len);
+      autosave[len] = '~';
+      autosave[len + 1] = '\0';
+      fd = fopen(autosave, "w");
+   } else {
+      const char* template = "/tmp/dit.autosave.XXXXXX";
+      autosave = strdup(template);
+      int fdesc = mkstemp(autosave);
+      if (fdesc == -1) {
+         free(autosave);
+         return;
+      }
+      fd = fdopen(fdesc, "w");
+   }
+
+   if (!fd) {
+      free(autosave);
+      this->autosave = NULL;
+      return;
+   }
+   this->autosave = autosave;
+   this->autosaveCounter = 0;
+   Buffer_coreSaveAndCloseFd(this, fd);
+   return;
 }
 
 void Buffer_resize(Buffer* this, int w, int h) {

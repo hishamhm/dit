@@ -34,6 +34,8 @@
 
 typedef bool (*Dit_Action)(Buffer*, TabManager*, int*, int*);
 
+static TabManager* tabs;
+
 static int lines, cols;
 
 static void printVersionFlag() {
@@ -1340,6 +1342,13 @@ static void Dit_parseBindings(Dit_Action* keys) {
    fclose(fd);
 }
 
+static void panic(int sig) {
+   TabManager_autosaveAll(tabs);
+   CRT_done();
+   fprintf(stderr, "Crashed with signal %d!\n", sig);
+   exit(1);
+}
+
 int main(int argc, char** argv) {
 
    setlocale(LC_ALL, "");
@@ -1402,8 +1411,11 @@ int main(int argc, char** argv) {
 
    Display_getScreenSize(&cols, &lines);
    
-   TabManager* tabs = TabManager_new(0, 0, cols, lines, 20);
+   tabs = TabManager_new(0, 0, cols, lines, 20);
    if (tabSize > 0) tabs->defaultTabSize = tabSize;
+
+   signal(11, panic);
+   signal(1, panic);
 
    Dit_open(tabs, name);
 
@@ -1456,6 +1468,9 @@ int main(int argc, char** argv) {
       Display_move(y, x);
       
       ch = CRT_getCharacter(&code);
+      
+      Buffer_autosave(buffer, ch == ERR);
+      
       if (dumpCodes) {
          if (ch == KEY_F(12)) {
             dumpCodes = false;

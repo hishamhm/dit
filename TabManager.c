@@ -103,6 +103,14 @@ void TabManager_delete(TabManager* this) {
    free(this);
 }
 
+void TabManager_autosaveAll(TabManager* this) {
+   int items = Vector_size(this->items);
+   for (int i = 0; i < items; i++) {
+      TabPage* page = (TabPage*) Vector_get(this->items, i);
+      Buffer_autosave(page->buffer, true);
+   }
+}
+
 void TabManager_moveTabLeft(TabManager* this) {
    int curr = this->currentPage;
    if (curr > 0) {

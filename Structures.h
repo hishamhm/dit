@@ -183,6 +183,10 @@ struct Buffer_ {
    char* fileName;
    bool modified;
    bool readOnly;
+
+   char* autosave;
+   int autosaveCounter;
+
    // logical position of the cursor in the line
    // (character of the line where cursor is.
    chars x;
