@@ -536,7 +536,7 @@ void Script_onFKey(Buffer* this, int key) {
    if (key <= KEY_F(12)) {
       snprintf(ch, 10, "F%d", key - KEY_F(1) + 1);
    } else {
-      snprintf(ch, 10, "SHIFT_F%d", key - KEY_F(10) + 1);
+      snprintf(ch, 10, "SHIFT_F%d", key - KEY_F(10));
    }
    callFunction(L, &(this->skipOnFKey), "on_fkey", ch);
 }
