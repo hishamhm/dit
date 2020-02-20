@@ -30,6 +30,10 @@ context `t `$ veryspecial normal normal
    rule \ bright
    rule $(`[A`-Za`-z_0`-9`]`+) brightalt
    rule ${`[A`-Za`-z_0`-9`]`+} special
+   context `` `` brightspecial brightspecial special
+      include shellbacktick.dithlinc
+      rule ${`[A`-Za`-z_0`-9`]`+} veryspecial
+   /context
    context " " diff
       rule $(`[A`-Za`-z_0`-9`]`+) brightdiff
    /context
