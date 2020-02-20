@@ -1,10 +1,10 @@
 
 local code = require("dit.code")
 local tab_complete = require("dit.tab_complete")
+local mobdebug = require("dit.lua.mobdebug")
 
 local check = require "luacheck.check"
 local filter = require "luacheck.filter"
-local utils = require "luacheck.utils"
 
 local ok, picotyped = pcall(require, "picotyped")
 if not ok then
@@ -76,6 +76,17 @@ end
 function highlight_line(line, y)
    local ret = {}
    for i = 1, #line do ret[i] = " " end
+
+   if mobdebug.is_debugging() then
+      local filename = buffer:filename()
+      if mobdebug.is_breakpoint(filename, y) then
+         ret[1] = "*"
+      end
+      if mobdebug.file == filename and mobdebug.line == y then
+         return ("*"):rep(#line)
+      end
+   end
+
    for note, fchar, lchar in each_note(y) do
       local key = "*"
       if note.code == "111" then
@@ -230,6 +241,19 @@ function on_ctrl(key)
       controlled_change = true
       code.comment_block("--", "%-%-", lines, commented_lines)
       controlled_change = false
+   elseif key == "O" then
+      local str = buffer:selection()
+      if str == "" then
+         str = buffer:token()
+      end
+      if str and str ~= "" then
+         local out = mobdebug.command("eval " .. str)
+         if type(out) == "table" then
+            buffer:draw_popup(out)
+         end
+      else
+         buffer:draw_popup({ "Select a token to evaluate" })
+      end
    elseif key == "D" then
       local x, y = buffer:xy()
       for note in each_note(y, x) do
@@ -244,6 +268,45 @@ end
 function on_fkey(key)
    if key == "F7" then
       code.expand_selection()
+   elseif key == "F2" then
+      local ok, err = mobdebug.listen()
+      if ok then
+         buffer:draw_popup({
+            "Now debbuging. Press:",
+            "F4 to step-over",
+            "Shift-F4 to step-into",
+            "F6 to toggle breakpoint",
+            "F11 to run until breakpoint",
+         })
+      else
+         buffer:draw_popup({err})
+      end
+   elseif key == "SHIFT_F4" then
+      local ok, err = mobdebug.command("step")
+      if err then
+         buffer:draw_popup({err})
+      end
+   elseif key == "F4" then
+      local ok, err = mobdebug.command("over")
+      if err then
+         buffer:draw_popup({err})
+      end
+   elseif key == "F11" then
+      local ok, err = mobdebug.command("run")
+      if err then
+         buffer:draw_popup({err})
+      end
+   elseif key == "F6" then
+      local filename = buffer:filename()
+      local x, y = buffer:xy()
+      if mobdebug.is_breakpoint(filename, y) then
+         mobdebug.command("delb " .. filename .. " " .. y)
+         mobdebug.set_breakpoint(filename, y, nil)
+      else
+         mobdebug.command("setb " .. filename .. " " .. y)
+         mobdebug.set_breakpoint(filename, y, true)
+      end
+      buffer:go_to(1, y+1)
    elseif key == "F9" then
       code.pick_merge_conflict_branch()
    end
