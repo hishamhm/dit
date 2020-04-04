@@ -167,7 +167,13 @@ context <p > alt
 rule </p> alt
 
 context <script script> alt
-   include javascript.dithlinc
+   context " " diff
+   /context
+   rule = bright
+   rule type brightalt
+   context > </ alt alt normal
+      include javascript.dithlinc
+   /context
 /context
 
 rule <small> alt

@@ -1,52 +1,47 @@
-context " " diff
+rule var diff
+rule let diff
+rule function brightspecial
+rule if bright
+rule else bright
+rule default bright
+rule while bright
+rule switch bright
+rule case bright
+rule break bright
+rule continue bright
+rule return bright
+rule for bright
+rule do bright
+rule null bright
+rule ! brightsymbol
+rule < brightsymbol
+rule > brightsymbol
+rule = brightsymbol
+rule + brightsymbol
+rule - brightsymbol
+rule * brightsymbol
+rule / brightsymbol
+rule [ symbol
+rule ] symbol
+rule { symbol
+rule } symbol
+rule ( symbol
+rule ) symbol
+rule : symbol
+rule , symbol
+rule | symbol
+rule & symbol
+rule ; brightsymbol
+context " " alt
+   rule $`[A`-Z_a`-z`]`[A`-Z_a`-z0`-9`]`* brightalt
+   rule \\ brightalt
+   rule \" brightalt
 /context
-rule = bright
-rule type brightalt
-context > </ alt alt normal
-   rule var diff
-   rule function brightspecial
-   rule if bright
-   rule else bright
-   rule default bright
-   rule while bright
-   rule switch bright
-   rule case bright
-   rule break bright
-   rule continue bright
-   rule return bright
-   rule for bright
-   rule do bright
-   rule null bright
-   rule ! brightsymbol
-   rule < brightsymbol
-   rule > brightsymbol
-   rule = brightsymbol
-   rule + brightsymbol
-   rule - brightsymbol
-   rule * brightsymbol
-   rule / brightsymbol
-   rule [ symbol
-   rule ] symbol
-   rule { symbol
-   rule } symbol
-   rule ( symbol
-   rule ) symbol
-   rule : symbol
-   rule , symbol
-   rule | symbol
-   rule & symbol
-   rule ; brightsymbol
-   context " " alt
-      rule $`[A`-Z_a`-z`]`[A`-Z_a`-z0`-9`]`* brightalt
-      rule \\ brightalt
-      rule \" brightalt
-   /context
-   context ' ' alt
-      rule \\ brightalt
-      rule \' brightalt
-   /context
-   context /* */ dim
-   /context
-   context // `$ dim
-   /context
+context ' ' alt
+   rule \\ brightalt
+   rule \' brightalt
+/context
+context /* */ dim
+/context
+context // `$ dim
 /context
