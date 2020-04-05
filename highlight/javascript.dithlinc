@@ -1,6 +1,8 @@
 rule var diff
 rule let diff
+rule const diff
 rule function brightspecial
+rule => brightspecial
 rule if bright
 rule else bright
 rule default bright
