@@ -162,6 +162,11 @@ fi
 echo
 ####
 
-if ! diff -q "$new" "$old"
-then mv "$new" "$old"
+if [ -e "$old" ]
+then
+   if ! diff -q "$new" "$old"
+   then mv "$new" "$old"
+   fi
+else
+   mv "$new" "$old"
 fi
