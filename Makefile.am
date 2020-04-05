@@ -9,8 +9,8 @@ my_dit_C_sources = dit.c Buffer.c CRT.c Clipboard.c DebugMemory.c Field.c \
  FileReader.c FunctionBar.c Hashtable.c Highlight.c Line.c List.c Object.c \
  Panel.c PatternMatcher.c Pool.c RichString.c Script.c \
  Stack.c String.c StringBuffer.c TabManager.c Undo.c Vector.c Files.c Display.c \
- Text.c lua-compat-5.3/compat-5.3.c libeditorconfig.a
-BUILT_SOURCES = Prototypes.h Structures.h
+ Text.c lua-compat-5.3/compat-5.3.c libeditorconfig.a \
+ Prototypes.h Structures.h
 
 # find bindings terminals highlight scripts -type f -or -type l | tr '\n' ' ' | fold -s -w 70 | sed 's,$,\\,'
 nobase_dist_pkgdata_DATA = \
@@ -60,7 +60,7 @@ EXTRA_DIST = tools/GenHeaders extras/dit.keytab \
    docs/* \
    lua-compat-5.3/compat-5.3.[ch]
 
-dit_SOURCES = Prototypes.h Structures.h $(my_dit_C_sources) config.h debug.h md5.c md5.h
+dit_SOURCES = $(my_dit_C_sources) config.h debug.h md5.c md5.h
 dit_CFLAGS = -std=c99  -DPKGDATADIR=\"$(pkgdatadir)\" -DSYSCONFDIR=\"$(sysconfdir)\" $(LUA_INCLUDE) -rdynamic  -Ieditorconfig/include
 dit_LDADD = $(LUA_LIB) libeditorconfig.a
 dit_DEPENDENCIES = $(LUA_DEP)
@@ -76,12 +76,6 @@ editorconfig/include/editorconfig/editorconfig.h editorconfig/include/editorconf
 editorconfig/src/editorconfig.c editorconfig/src/editorconfig.h editorconfig/src/editorconfig_handle.c \
 editorconfig/src/editorconfig_handle.h editorconfig/src/global.h editorconfig/src/ini.c editorconfig/src/ini.h \
 editorconfig/src/misc.c editorconfig/src/misc.h
-
-Prototypes.h: $(my_dit_C_sources)
-	tools/GenHeaders Prototypes.h
-
-Structures.h: $(my_dit_C_sources)
-	tools/GenHeaders Structures.h
 
 clean-local:
 	rm -f order.txt
