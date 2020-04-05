@@ -22,9 +22,7 @@ which tac &> /dev/null || tac() {
 }
 
 process() {
-   for proc in "${processed[@]}"
-   do [ "$proc" == "$1" ] && return
-   done
+   grep -q "^$1$" order.txt &> /dev/null && return
    for need in `cat "$1" | $GREP '//#needs ' | sed 's,//#needs ,,'`
    do process $need.c "$2"
    done
@@ -165,8 +163,8 @@ echo
 if [ -e "$old" ]
 then
    if ! diff -q "$new" "$old"
-   then mv "$new" "$old"
+   then mv -f "$new" "$old"
    fi
 else
-   mv "$new" "$old"
+   mv -f "$new" "$old"
 fi

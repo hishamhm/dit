@@ -3,6 +3,7 @@
 #include "Structures.h"
 
 #include <stdbool.h>
+#include <time.h>
 
 #if HAVE_CURSES
 
