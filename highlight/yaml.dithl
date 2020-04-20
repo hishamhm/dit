@@ -1,0 +1,17 @@
+FILES
+name suffix .yml
+name suffix .yaml
+RULES
+script shell.lua
+
+context # `$ dim
+/context
+
+context " " alt
+/context
+
+rule - brightdiff
+rule : brightdiff
+rule [ bright
+rule ] bright
+
