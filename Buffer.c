@@ -115,7 +115,8 @@ struct Buffer_ {
       chars selectXto;
       int selectYto;
       bool selecting;
-      int lineLen;
+      int xLen;
+      int yLen;
    } cursors[100];
    // Lua state
    ScriptState script;
@@ -744,14 +745,16 @@ void Buffer_breakLine(Buffer* this) {
       Buffer_defaultKeyHandler(this, '\015', false);
    }
 
-   /* Hack to disable auto-indent when pasting through X11, part 2 */
-   struct timeval tv;
-   gettimeofday(&tv, NULL);
-   double now = tv.tv_sec * 1000000 + tv.tv_usec;
    bool doIndent = true;
-   if (now - this->lastTime < 10000)
-      doIndent = false;
-   this->lastTime = now;
+   if (this->nCursors == 1) {
+      /* Hack to disable auto-indent when pasting through X11, part 2 */
+      struct timeval tv;
+      gettimeofday(&tv, NULL);
+      double now = tv.tv_sec * 1000000 + tv.tv_usec;
+      if (now - this->lastTime < 10000)
+         doIndent = false;
+      this->lastTime = now;
+   }
 
    int indent = Line_breakAt(this->line, this->x, doIndent);
    Undo_breakAt(this->undo, this->x, this->y, indent);

@@ -477,7 +477,8 @@ static void moveIfFound(Buffer* buffer, TabManager* tabs, int len, Coords found,
 static void saveCursor(Buffer* buffer, int c) {
    buffer->cursors[c].x = buffer->x;
    buffer->cursors[c].y = buffer->y;
-   buffer->cursors[c].lineLen = Buffer_getLineLength(buffer, buffer->y);
+   buffer->cursors[c].xLen = Buffer_getLineLength(buffer, buffer->y);
+   buffer->cursors[c].yLen = Buffer_size(buffer);
    buffer->cursors[c].savedX = buffer->savedX;
    buffer->cursors[c].savedY = buffer->savedY;
    buffer->cursors[c].selecting = buffer->selecting;
@@ -503,26 +504,43 @@ static void restoreCursor(Buffer* buffer, int c) {
    Buffer_goto(buffer, buffer->cursors[c].x, buffer->cursors[c].y, true);
 }
 
+static void Dit_breakLine(Buffer* buffer);
+
 static void adjustOtherCursors(Buffer* buffer, int c, Dit_Action action) {
    int cx = buffer->x;
    int cy = buffer->y;
-   int lineLen = Buffer_getLineLength(buffer, buffer->y);
-   int delta = lineLen - buffer->cursors[c].lineLen;
-   if (delta) {
+
+   int xLen = Buffer_getLineLength(buffer, buffer->y);
+   int yLen = Buffer_size(buffer);
+   
+   int yDelta = yLen - buffer->cursors[c].yLen;
+   if (yDelta) {
+      for (int i = 0; i < c; i++) {
+         buffer->cursors[i].yLen += yDelta;
+      }
+      for (int i = c + 1; i < buffer->nCursors; i++) {
+         buffer->cursors[i].y += yDelta;
+         buffer->cursors[i].savedY += yDelta;
+         buffer->cursors[i].yLen += yDelta;
+      }
+   }
+   
+   int xDelta = xLen - buffer->cursors[c].xLen;
+   if (xDelta) {
       for (int i = 0; i < buffer->nCursors; i++) {
          if (i == c)
             continue;
          if (buffer->cursors[i].y == cy && buffer->cursors[i].x > cx) {
-            buffer->cursors[i].x += delta;
-            buffer->cursors[i].savedX += delta;
+            buffer->cursors[i].x += xDelta;
+            buffer->cursors[i].savedX += xDelta;
             if (buffer->cursors[i].selectYfrom == cy && buffer->cursors[i].selectXfrom > cx) {
-               buffer->cursors[i].selectXfrom += delta;
+               buffer->cursors[i].selectXfrom += xDelta;
             }
             if (buffer->cursors[i].selectYto == cy && buffer->cursors[i].selectXto > cx) {
-               buffer->cursors[i].selectXto += delta;
+               buffer->cursors[i].selectXto += xDelta;
             }
          }
-         buffer->cursors[i].lineLen = Buffer_getLineLength(buffer, buffer->cursors[i].y);
+         buffer->cursors[i].xLen = Buffer_getLineLength(buffer, buffer->cursors[i].y);
       }
    }
 }
@@ -622,7 +640,8 @@ static void Dit_multipleCursors(Buffer* buffer) {
    
    buffer->cursors[c].x = newX;
    buffer->cursors[c].y = newY;
-   buffer->cursors[c].lineLen = Buffer_getLineLength(buffer, newY);
+   buffer->cursors[c].xLen = Buffer_getLineLength(buffer, newY);
+   buffer->cursors[c].yLen = Buffer_size(buffer);
    buffer->cursors[c].savedX = newX;
    buffer->cursors[c].savedY = newY;
    buffer->cursors[c].selecting = buffer->selecting;
