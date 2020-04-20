@@ -1,5 +1,4 @@
 FILES
-name suffix .tl
 name suffix .lua
 name suffix .rockspec
 firstline suffix lua

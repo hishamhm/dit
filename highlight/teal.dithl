@@ -1,0 +1,9 @@
+FILES
+name suffix .tl
+RULES   
+script teal.lua
+
+include gitconflict.dithlinc
+
+include lua.dithlinc
+
