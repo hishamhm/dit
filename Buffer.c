@@ -746,7 +746,7 @@ void Buffer_breakLine(Buffer* this) {
    }
 
    bool doIndent = true;
-   if (this->nCursors == 1) {
+   if (this->nCursors < 2) {
       /* Hack to disable auto-indent when pasting through X11, part 2 */
       struct timeval tv;
       gettimeofday(&tv, NULL);
