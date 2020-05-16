@@ -14,42 +14,49 @@ my_dit_C_sources = dit.c Buffer.c CRT.c Clipboard.c DebugMemory.c Field.c \
 
 # find bindings terminals highlight scripts -type f -or -type l | tr '\n' ' ' | fold -s -w 70 | sed 's,$,\\,'
 nobase_dist_pkgdata_DATA = \
-bindings/default terminals/wsvt25 terminals/xterm-color \
-terminals/konsole terminals/linux terminals/rxvt terminals/xterm-1002 \
-highlight/conf.dithl highlight/xml.dithl highlight/ltp.dithl \
-highlight/shell.dithlinc highlight/lhs.dithl highlight/html.dithl \
-highlight/yats.dithl highlight/diff.dithlinc highlight/c.dithl \
-highlight/c.dithlinc highlight/yacc.dithl highlight/java.dithl \
-highlight/gitcommit.dithl highlight/shellbacktick.dithlinc \
-highlight/make.dithl highlight/haskell.dithlinc \
-highlight/nestedm4.dithlinc highlight/css.dithl \
-highlight/markdown.dithl highlight/haskell.dithl \
-highlight/lpeg_re.dithlinc highlight/markdown.dithlinc \
-highlight/lua.dithl highlight/shell.dithl \
-highlight/javascript.dithlinc highlight/diff.dithl \
-highlight/css.dithlinc highlight/autoconf.dithl highlight/php.dithl \
-highlight/html.dithlinc highlight/python.dithl highlight/latex.dithl \
-highlight/ldoc.dithlinc highlight/latex.dithlinc \
-highlight/lua.dithlinc highlight/gitconflict.dithlinc \
-highlight/dithl.dithl highlight/lex.dithl highlight/javascript.dithl \
-highlight/etlua.dithl highlight/perl.dithl highlight/ruby.dithl \
-scripts/cscope.lua scripts/java.lua scripts/c.lua scripts/latex.lua \
-scripts/cmd.lua scripts/luacheck/main.lua scripts/luacheck/lexer.lua \
-scripts/luacheck/core_utils.lua scripts/luacheck/cache.lua \
-scripts/luacheck/whitespace.lua scripts/luacheck/check.lua \
-scripts/luacheck/globbing.lua scripts/luacheck/init.lua \
-scripts/luacheck/config.lua scripts/luacheck/multithreading.lua \
-scripts/luacheck/detect_globals.lua scripts/luacheck/linearize.lua \
-scripts/luacheck/reachability.lua scripts/luacheck/utils.lua \
-scripts/luacheck/standards.lua scripts/luacheck/expand_rockspec.lua \
-scripts/luacheck/inline_options.lua scripts/luacheck/analyze.lua \
-scripts/luacheck/options.lua scripts/luacheck/format.lua \
-scripts/luacheck/argparse.lua scripts/luacheck/builtin_standards.lua \
-scripts/luacheck/filter.lua scripts/luacheck/stds.lua \
-scripts/luacheck/parser.lua scripts/luacheck/fs.lua \
-scripts/luacheck/version.lua scripts/dit/line_commit.lua \
-scripts/dit/code.lua scripts/dit/tab_complete.lua scripts/shell.lua \
-scripts/haskell.lua scripts/tmux.lua scripts/lua.lua scripts/dit/global.lua
+bindings/default terminals/xterm-1002 terminals/konsole \
+terminals/rxvt terminals/xterm-color terminals/wsvt25 terminals/linux \
+highlight/t.dithl highlight/perl.dithl highlight/lua.dithl \
+highlight/dithl.dithl highlight/ltp.dithl \
+highlight/javascript.dithlinc highlight/javascript.dithl \
+highlight/java.dithl highlight/make.dithl highlight/lhs.dithl \
+highlight/html.dithlinc highlight/gitconflict.dithlinc \
+highlight/haskell.dithlinc highlight/haskell.dithl \
+highlight/nestedm4.dithlinc highlight/ldoc.dithlinc \
+highlight/shellbacktick.dithlinc highlight/lex.dithl \
+highlight/css.dithlinc highlight/ruby.dithl highlight/shell.dithlinc \
+highlight/diff.dithl highlight/lua.dithlinc highlight/titan.dithl \
+highlight/yats.dithl highlight/c.dithl highlight/css.dithl \
+highlight/markdown.dithl highlight/moonscript.dithl \
+highlight/yaml.dithl highlight/markdown.dithlinc \
+highlight/diff.dithlinc highlight/shell.dithl highlight/html.dithl \
+highlight/gitcommit.dithl highlight/c.dithlinc highlight/latex.dithl \
+highlight/json.dithl highlight/python.dithl highlight/latex.dithlinc \
+highlight/xml.dithl highlight/teal.dithl highlight/conf.dithl \
+highlight/lp.dithl highlight/etlua.dithl highlight/lpeg_re.dithlinc \
+highlight/fun.dithl highlight/php.dithl highlight/yacc.dithl \
+highlight/go.dithl highlight/autoconf.dithl scripts/c.lua \
+scripts/compat53/module.lua scripts/compat53/init.lua \
+scripts/java.lua scripts/teal.lua scripts/haskell.lua scripts/cmd.lua \
+scripts/shell.lua scripts/latex.lua scripts/dit/code.lua \
+scripts/dit/line_commit.lua scripts/dit/tab_complete.lua \
+scripts/dit/lua/mobdebug.lua scripts/dit/global.lua scripts/go.lua \
+scripts/lua.lua scripts/cscope.lua scripts/json.lua \
+scripts/compat53.lua scripts/luacheck/inline_options.lua \
+scripts/luacheck/fs.lua scripts/luacheck/config.lua \
+scripts/luacheck/standards.lua scripts/luacheck/detect_globals.lua \
+scripts/luacheck/reachability.lua \
+scripts/luacheck/builtin_standards.lua scripts/luacheck/lexer.lua \
+scripts/luacheck/whitespace.lua scripts/luacheck/multithreading.lua \
+scripts/luacheck/check.lua scripts/luacheck/main.lua \
+scripts/luacheck/init.lua scripts/luacheck/globbing.lua \
+scripts/luacheck/core_utils.lua scripts/luacheck/linearize.lua \
+scripts/luacheck/argparse.lua scripts/luacheck/stds.lua \
+scripts/luacheck/utils.lua scripts/luacheck/filter.lua \
+scripts/luacheck/expand_rockspec.lua scripts/luacheck/version.lua \
+scripts/luacheck/format.lua scripts/luacheck/parser.lua \
+scripts/luacheck/analyze.lua scripts/luacheck/cache.lua \
+scripts/luacheck/options.lua scripts/tmux.lua
 
 EXTRA_DIST = tools/GenHeaders extras/dit.keytab \
    lua-$(DIT_LUA_VERSION)/src/*.[ch] \
