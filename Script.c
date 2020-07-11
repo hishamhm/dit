@@ -62,26 +62,35 @@ STATIC int Script_Buffer_goto(lua_State* L) {
    return 0;
 }
 
+static void emitKey(Buffer* buffer, char ch) {
+   if (ch == '\n') {
+      usleep(20000);
+      Buffer_breakLine(buffer);
+      buffer->selecting = false;
+   } else if (ch == '\t') {
+      Buffer_indent(buffer);
+   } else if (ch == '\v') {
+      Buffer_unindent(buffer);
+   } else if (ch == '\b') {
+      Buffer_backwardDeleteChar(buffer);
+   } else {
+      Buffer_defaultKeyHandler(buffer, ch, false);
+   }
+}
+
 STATIC int Script_Buffer_emit(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
-   const char* s = luaL_checkstring(L, 2);
-   Buffer_beginUndoGroup(buffer);
-   for (; *s; s++) {
-      if (*s == '\n') {
-         usleep(20000);
-         Buffer_breakLine(buffer);
-         buffer->selecting = false;
-      } else if (*s == '\t') {
-         Buffer_indent(buffer);
-      } else if (*s == '\v') {
-         Buffer_unindent(buffer);
-      } else if (*s == '\b') {
-         Buffer_backwardDeleteChar(buffer);
-      } else {
-         Buffer_defaultKeyHandler(buffer, *s, false);
+   if (lua_type(L, 2) == LUA_TNUMBER) {
+      int ch = lua_tointeger(L, 2);
+      emitKey(buffer, ch);
+   } else {
+      const char* s = luaL_checkstring(L, 2);
+      Buffer_beginUndoGroup(buffer);
+      for (; *s; s++) {
+         emitKey(buffer, *s);
       }
+      Buffer_endUndoGroup(buffer);
    }
-   Buffer_endUndoGroup(buffer);
    return 0;
 }
 
