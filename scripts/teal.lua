@@ -46,7 +46,13 @@ function highlight_line(line, y)
 
    for note, fchar, lchar in each_note(y) do
       for i = fchar, lchar do
-         ret[i] = "*"
+         if note.what == "error" then
+            ret[i] = "*"
+         elseif note.what == "warning" then
+            if ret[i] ~= "*" then
+               ret[i] = "S"
+            end
+         end
       end
    end
    if ret == nil then
@@ -69,7 +75,13 @@ end
 function on_save(filename)
    local pd = io.popen("tl check " .. filename .. " 2>&1")
    lines = {}
+   local state = "error"
    for line in pd:lines() do
+      if line:match("^%d+ warning") then
+         state = "warning"
+      elseif line:match("^%d+ error") then
+         state = "error"
+      end
       local file, y, x, err = line:match("([^:]*):(%d*):(%d*): (.*)")
       if file and filename:sub(-#file) == file then
          y = tonumber(y)
@@ -78,6 +90,7 @@ function on_save(filename)
          table.insert(lines[y], {
             column = x,
             text = err,
+            what = state,
          })
       end
    end
@@ -104,10 +117,12 @@ function on_ctrl(key)
       end
    elseif key == "D" then
       local x, y = buffer:xy()
+      local what = nil
+      local out = {}
       for note in each_note(y, x) do
-         buffer:draw_popup({note.text}) -- lines[y][x].description)
-         return true
+         table.insert(out, note.text)
       end
+      buffer:draw_popup(out) -- lines[y][x].description)
    end
    return true
 end
