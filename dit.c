@@ -1306,33 +1306,45 @@ void Dit_checkFileAccess(char** argv, char* name, int* jump, int* column) {
       exit(0);
    }
    bool exists = (access(name, F_OK) == 0);
+   if (exists)
+      return;
+
    int len = strlen(name);
-   if (!exists && len > 2 && name[len - 1] == ':') {
-       name[len - 1] = '\0';
-       char* line = strrchr(name, ':');
-       if (line) {
-          *line = '\0';
-          line++;
-          char* line2 = strrchr(name, ':');
-          char* colon2 = line;
-          if (line2) {
-             *line2 = '\0';
-             line2++;
-             *column = atoi(line);
-             line = line2;
-          }
-          *jump = atoi(line);
-          exists = (access(name, F_OK) == 0);
-          if (!exists) {
-             name[len - 1] = ':';
-             line--;
-             *line = ':';
-             *colon2 = ':';
-             return;
-          }
-       } else {
-          name[len - 1] = ':';
-       }
+   if (len < 2)
+      return;
+
+   char* at = name + len - 1;
+   // drop last colon if present
+   if (*at == ':')
+      at--;
+
+   // has a colon?
+   for (; at > name && *at != ':'; at--);
+   if (at == name)
+      return;
+
+   char* token1 = at + 1;
+   char* token2 = NULL;
+   
+   // has another colon?
+   for (at--; at > name && *at != ':'; at--);
+   if (*at == ':') {
+      token2 = token1;
+      token1 = at + 1;
+   }
+   
+   if (token1) {
+      *jump = atoi(token1);
+      if (jump) {
+         *(token1 - 1) = '\0';
+         exists = (access(name, F_OK) == 0);
+         if (!exists) {
+            *(token1 - 1) = ':';
+            return;
+         }
+      }
+      if (token2)
+         *column = atoi(token2);
    }
 }
 
