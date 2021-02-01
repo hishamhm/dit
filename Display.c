@@ -229,7 +229,8 @@ void Display_getScreenSize(int* w, int* h) {
 }
 
 void Display_setWindowTitle(const char* title) {
-   fprintf(stderr, "\033]2;%s\033\\", title);
+   fprintf(stdout, "\033]2;%s\033\\", title);
+   fflush(stdout);
 }
 
 #if HAVE_CURSES
