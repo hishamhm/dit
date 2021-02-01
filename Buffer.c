@@ -125,6 +125,7 @@ struct Buffer_ {
    bool skipOnCtrl;
    bool skipOnFKey;
    bool skipOnSave;
+   bool skipAfterKey;
 };
 
 struct Coords_ {

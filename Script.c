@@ -529,6 +529,32 @@ bool Script_onKey(Buffer* this, int key) {
    return ok;
 }
 
+bool Script_afterKey(Buffer* this, int key) {
+   lua_State* L = this->script.L;
+   if (this->skipAfterKey) return false;
+
+   lua_pushcfunction(L, errorHandler);
+   int errFunc = lua_gettop(L);
+   lua_getglobal(L, "after_key");
+   if (!lua_isfunction(L, -1)) {
+      this->skipAfterKey = true;
+      lua_settop(L, 0);
+      return false;
+   }
+   lua_pushinteger(L, key);
+   int err = lua_pcall(L, 1, 1, errFunc);
+   bool ok = true;
+   if (err) {
+      this->skipAfterKey = true;
+      error(L);
+      ok = false;
+   } else {
+      ok = lua_toboolean(L, -1);
+   }
+   lua_settop(L, 0);
+   return ok;
+}
+
 void Script_onCtrl(Buffer* this, int key) {
    if (this->skipOnCtrl) return;
    

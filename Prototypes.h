@@ -123,6 +123,7 @@ bool Script_load(ScriptState* this, const char* scriptName);
 bool Script_highlightFile(Highlight* this, const char* fileName);
 void Script_highlightLine(Highlight* this, const char* buffer, int* attrs, int len, int y);
 bool Script_onKey(Buffer* this, int key);
+bool Script_afterKey(Buffer* this, int key);
 void Script_onCtrl(Buffer* this, int key);
 void Script_onFKey(Buffer* this, int key);
 void Script_onSave(Buffer* this, const char* fileName);
