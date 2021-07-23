@@ -2,10 +2,12 @@
 local code = require("dit.code")
 local tab_complete = require("dit.tab_complete")
 local mobdebug = require("dit.lua.mobdebug")
+local json = require("cjson")
 
 local lines
 local commented_lines = {}
 local controlled_change = false
+local type_report
 
 local function each_note(y, x)
    return coroutine.wrap(function()
@@ -73,28 +75,86 @@ function on_change()
 end
 
 function on_save(filename)
-   local pd = io.popen("tl check " .. filename .. " 2>&1")
+   local pd = io.popen("tl types " .. filename .. " 2>&1")
    lines = {}
-   local state = "error"
+   local state = "start"
+   local buf = {}
    for line in pd:lines() do
-      if line:match("^%d+ warning") then
-         state = "warning"
-      elseif line:match("^%d+ error") then
-         state = "error"
+      if state == "start" then
+         if line == "" then
+            state = "skip"
+         elseif line:match("^========") then
+            state = "error"
+         else
+            state = "json"
+         end
+      elseif state == "error" then
+         if line == "" then
+            state = "skip"
+         elseif line:match("^%d+ warning") then
+            state = "warning"
+         end
+      elseif state == "warning" then
+         if line == "" then
+            state = "skip"
+         elseif line:match("^========") then
+            state = "error"
+         end
       end
-      local file, y, x, err = line:match("([^:]*):(%d*):(%d*): (.*)")
-      if file and filename:sub(-#file) == file then
-         y = tonumber(y)
-         x = tonumber(x)
-         lines[y] = lines[y] or {}
-         table.insert(lines[y], {
-            column = x,
-            text = err,
-            what = state,
-         })
+      
+      if state == "json" then
+         table.insert(buf, line)
+      elseif state == "skip" then
+         state = "json"
+      elseif state == "error" or state == "warning" then
+         local file, y, x, err = line:match("([^:]*):(%d*):(%d*): (.*)")
+         if file and filename:sub(-#file) == file then
+            y = tonumber(y)
+            x = tonumber(x)
+            lines[y] = lines[y] or {}
+            table.insert(lines[y], {
+               column = x,
+               text = err,
+               what = state,
+            })
+         end
+      end
+   end
+   if #buf > 0 then
+      local input = table.concat(buf)
+      local pok, data = pcall(json.decode, input)
+      if not pok then
+         error("Error decoding JSON: " .. data .. "\n" .. input:sub(1, 100))
+      else
+         type_report = data
       end
    end
    pd:close()
+end
+
+local function type_at(px, py)
+   if not type_report then
+      return
+   end
+   local ty = type_report.by_pos[buffer:filename()][tostring(py)]
+   if not ty then
+      return
+   end
+   local xs = {}
+   local ts = {}
+   for x, t in pairs(ty) do
+      x = tonumber(x)
+      xs[#xs + 1] = math.floor(x)
+      ts[x] = math.floor(t)
+   end
+   table.sort(xs)
+
+   for i = #xs, 1, -1 do
+      local x = xs[i]
+      if px >= x then
+         return type_report.types[tostring(ts[x])]
+      end
+   end
 end
 
 function on_ctrl(key)
@@ -103,26 +163,31 @@ function on_ctrl(key)
       code.comment_block("--", "%-%-", lines, commented_lines)
       controlled_change = false
    elseif key == "O" then
-      local str = buffer:selection()
-      if str == "" then
-         str = buffer:token()
-      end
-      if str and str ~= "" then
-         local out = mobdebug.command("eval " .. str)
-         if type(out) == "table" then
-            buffer:draw_popup(out)
-         end
-      else
-         buffer:draw_popup({ "Select a token to evaluate" })
-      end
+--      local str = buffer:selection()
+--      if str == "" then
+--         str = buffer:token()
+--      end
+--      if str and str ~= "" then
+--         local out = mobdebug.command("eval " .. str)
+--         if type(out) == "table" then
+--            buffer:draw_popup(out)
+--         end
+--      else
+--         buffer:draw_popup({ "Select a token to evaluate" })
+--      end
    elseif key == "D" then
       local x, y = buffer:xy()
-      local what = nil
-      local out = {}
-      for note in each_note(y, x) do
-         table.insert(out, note.text)
+      local t = type_at(x, y)
+      if t and t.x then
+         tabs:mark_jump()
+         if t.file and t.file ~= buffer:filename() then
+            local page = tabs:open(t.file)
+            tabs:set_page(page)
+         end
+         if t.x then
+            buffer:go_to(t.x, t.y)
+         end
       end
-      buffer:draw_popup(out) -- lines[y][x].description)
    end
    return true
 end
@@ -149,10 +214,11 @@ function on_fkey(key)
          buffer:draw_popup({err})
       end
    elseif key == "F4" then
-      local ok, err = mobdebug.command("over")
-      if err then
-         buffer:draw_popup({err})
-      end
+
+--      local ok, err = mobdebug.command("over")
+--      if err then
+--         buffer:draw_popup({err})
+--      end
    elseif key == "F11" then
       local ok, err = mobdebug.command("run")
       if err then
@@ -176,6 +242,7 @@ end
 
 function on_key(code)
    local handled = false
+
    local selection, startx, starty, stopx, stopy = buffer:selection()
    if selection == "" then
       if code == 13 then
@@ -206,4 +273,30 @@ function on_key(code)
       tab_handled = tab_complete.on_key(code)
    end
    return tab_handled or handled
+end
+
+function after_key(code)
+   local x, y = buffer:xy()
+
+   local out
+   
+   local has_note = false
+   for note in each_note(y, x) do
+      out = out or {}
+      table.insert(out, note.text)
+      has_note = true
+   end
+   
+   if not has_note then
+      local t = type_at(x, y)
+      if t then
+         out = out or {}
+         table.insert(out, t.str)
+         has_note = true
+      end
+   end
+   
+   if has_note then
+      buffer:draw_popup(out) -- lines[y][x].description)
+   end
 end

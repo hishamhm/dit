@@ -55,14 +55,17 @@ context function ) bright bright brightdiff
    context ( ) bright bright normal
       handover_rule ) bright
       rule , bright
-      context : `[,)`] brightdiff bright diff
+      context : `[,)`] brightspecialdiff bright brightspecialdiff
          handover_rule ) bright
-         context < > diff diff alt
-            rule , diff
+         context { } brightspecialdiff
+            context { } brightspecialdiff
+               context { } brightspecialdiff
+               /context
+            /context
          /context
-         context ( ) diff
-            context ( ) diff
-               context ( ) diff
+         context ( ) brightspecialdiff
+            context ( ) brightspecialdiff
+               context ( ) brightspecialdiff
                /context
             /context
          /context

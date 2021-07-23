@@ -1,5 +1,6 @@
 FILES
 name suffix .tl
+firstline regex ^#!.*tl.run.*
 RULES   
 script teal.lua
 
@@ -7,3 +8,39 @@ include gitconflict.dithlinc
 
 include lua.dithlinc
 
+rule local`s`+type bright
+rule global`s`+type bright
+
+context function ) bright bright brightdiff
+   context ( ) bright bright normal
+      handover_rule ) bright
+      rule , bright
+      context : `[,)`] brightdiff bright diff
+         handover_rule ) bright
+         context < > diff diff alt
+            rule , diff
+         /context
+         context ( ) diff
+            context ( ) diff
+               context ( ) diff
+               /context
+            /context
+         /context
+         context { } diff
+            context { } diff
+               context { } diff
+               /context
+            /context
+         /context
+      /context
+   /context
+/context
+
+context record `$ bright bright brightdiff
+/context
+
+context enum `$ bright bright brightdiff
+/context
+
+rule as bright
+rule is bright

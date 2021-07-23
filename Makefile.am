@@ -25,7 +25,7 @@ highlight/haskell.dithlinc highlight/haskell.dithl \
 highlight/nestedm4.dithlinc highlight/ldoc.dithlinc \
 highlight/shellbacktick.dithlinc highlight/lex.dithl \
 highlight/css.dithlinc highlight/ruby.dithl highlight/shell.dithlinc \
-highlight/diff.dithl highlight/lua.dithlinc highlight/titan.dithl \
+highlight/diff.dithl highlight/lua.dithlinc \
 highlight/yats.dithl highlight/c.dithl highlight/css.dithl \
 highlight/markdown.dithl highlight/moonscript.dithl \
 highlight/yaml.dithl highlight/markdown.dithlinc \
