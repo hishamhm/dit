@@ -70,7 +70,7 @@ EXTRA_DIST = tools/GenHeaders extras/dit.keytab \
 dit_SOURCES = $(my_dit_C_sources) config.h debug.h md5.c md5.h
 dit_CFLAGS = -std=c99  -DPKGDATADIR=\"$(pkgdatadir)\" -DSYSCONFDIR=\"$(sysconfdir)\" $(LUA_INCLUDE) -rdynamic  -Ieditorconfig/include
 dit_LDADD = $(LUA_LIB) libeditorconfig.a
-dit_DEPENDENCIES = $(LUA_DEP)
+dit_DEPENDENCIES = $(LUA_DEP) libeditorconfig.a
 
 lua-$(DIT_LUA_VERSION)/src/liblua.a:
 	cd lua-$(DIT_LUA_VERSION)/src && make CC="$(CC)" MYCFLAGS="$(LUA_FLAGS)" MYLIBS="-Wl,-E -ldl" liblua.a 
