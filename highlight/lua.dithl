@@ -10,4 +10,3 @@ script lua.lua
 include gitconflict.dithlinc
 
 include lua.dithlinc
-

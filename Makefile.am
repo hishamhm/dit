@@ -17,7 +17,7 @@ nobase_dist_pkgdata_DATA = \
 bindings/default terminals/xterm-1002 terminals/konsole \
 terminals/rxvt terminals/xterm-color terminals/wsvt25 terminals/linux \
 highlight/t.dithl highlight/perl.dithl highlight/lua.dithl \
-highlight/dithl.dithl highlight/ltp.dithl \
+highlight/dithl.dithl highlight/ltp.dithl highlight/rust.dithl \
 highlight/javascript.dithlinc highlight/javascript.dithl \
 highlight/java.dithl highlight/make.dithl highlight/lhs.dithl \
 highlight/html.dithlinc highlight/gitconflict.dithlinc \
@@ -34,7 +34,7 @@ highlight/gitcommit.dithl highlight/c.dithlinc highlight/latex.dithl \
 highlight/json.dithl highlight/python.dithl highlight/latex.dithlinc \
 highlight/xml.dithl highlight/teal.dithl highlight/conf.dithl \
 highlight/lp.dithl highlight/etlua.dithl highlight/lpeg_re.dithlinc \
-highlight/fun.dithl highlight/php.dithl highlight/yacc.dithl \
+highlight/php.dithl highlight/yacc.dithl \
 highlight/go.dithl highlight/autoconf.dithl scripts/c.lua \
 scripts/compat53/module.lua scripts/compat53/init.lua \
 scripts/java.lua scripts/teal.lua scripts/haskell.lua scripts/cmd.lua \

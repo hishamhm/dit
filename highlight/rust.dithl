@@ -1,0 +1,116 @@
+FILES
+name suffix .rs
+RULES
+
+include gitconflict.dithlinc
+
+rule as diff
+rule break diff
+rule const diff
+rule continue diff
+rule crate diff
+rule else diff
+rule enum diff
+rule extern diff
+rule false diff
+rule fn diff
+rule for diff
+rule if diff
+rule impl diff
+rule in diff
+rule let diff
+rule loop diff
+rule match diff
+rule mod diff
+rule move diff
+rule mut diff
+rule pub diff
+rule ref diff
+rule return diff
+rule self diff
+rule Self diff
+rule static diff
+rule struct diff
+rule super diff
+rule trait diff
+rule true diff
+rule type diff
+rule unsafe diff
+rule use diff
+rule where diff
+rule while diff
+rule async diff
+rule await diff
+rule dyn diff
+
+rule abstract diff
+rule become diff
+rule box diff
+rule do diff
+rule final diff
+rule macro diff
+rule override diff
+rule priv diff
+rule typeof diff
+rule unsized diff
+rule virtual diff
+rule yield diff
+rule try diff
+rule union diff
+rule 'static diff
+
+rule self brightalt
+
+rule -> symbol
+rule ! brightsymbol
+rule < brightsymbol
+rule > brightsymbol
+rule = brightsymbol
+rule + brightsymbol
+rule - brightsymbol
+rule * brightsymbol
+rule / brightsymbol
+rule [ symbol
+rule ] symbol
+rule { symbol
+rule } symbol
+rule ( symbol
+rule ) symbol
+rule : symbol
+rule , symbol
+rule | symbol
+rule & symbol
+rule ; brightsymbol
+rule TODO veryspecial
+rule XXX veryspecial
+rule FIXME veryspecial
+
+context < > brightspecial brightspecial special
+   rule 'static diff
+/context
+
+context /* */ dim
+   rule TODO veryspecial
+   rule XXX veryspecial
+   rule FIXME veryspecial
+/context
+context // `$ dim
+   rule TODO veryspecial
+   rule XXX veryspecial
+   rule FIXME veryspecial
+/context
+context " " alt
+   eager_rule \\ brightalt
+   eager_rule \" brightalt
+   eager_rule \`[abcfnrtv`] brightalt
+   eager_rule \`[0`-3`]`[0`-7`]`[0`-7`] brightalt
+/context
+context r#" "# alt
+/context
+# context ' ' brightalt
+#    eager_rule \\ brightalt
+#    eager_rule \' brightalt
+# /context
+context # `$ brightspecial
+   ### rule \`$ veryspecial ### need to handle these special breaks later
+/context

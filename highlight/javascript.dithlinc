@@ -43,6 +43,10 @@ context ' ' alt
    rule \\ brightalt
    rule \' brightalt
 /context
+context /^ / alt
+   rule \/ alt
+/context
+
 context /* */ dim
 /context
 context // `$ dim
