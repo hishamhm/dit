@@ -27,10 +27,13 @@ then
    LDFLAGS="$LDFLAGS -L/usr/local/lib"
 fi
 
-AC_CHECK_LIB([tinfo], [keypad], [], [])
-
 AC_ARG_ENABLE(unicode, [AC_HELP_STRING([--enable-unicode], [enable Unicode support])], ,enable_unicode="yes")
 if test "x$enable_unicode" = xyes; then
+   AC_CHECK_LIB([tinfow], [keypad], [], [
+      AC_CHECK_LIB([tinfo], [keypad], [], [
+      ])
+   ])
+
    AC_CHECK_LIB([ncursesw6], [refresh], [
       AC_DEFINE(HAVE_LIBNCURSESW, 1, [])
       LIBS="-lncursesw6 $LIBS "
@@ -57,6 +60,8 @@ if test "x$enable_unicode" = xyes; then
      ])
    ])
 else
+   AC_CHECK_LIB([tinfo], [keypad], [], [])
+
    AC_CHECK_LIB([ncurses], [refresh], [], [missing_libraries="$missing_libraries libncurses"])
    AC_CHECK_HEADERS([curses.h],[:],
       [AC_CHECK_HEADERS([ncurses/curses.h],[:],
