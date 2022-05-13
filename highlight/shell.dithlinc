@@ -170,3 +170,6 @@ context EOF`[`s`-~`]`* EOF normal bright diff
    rule \t brightalt
 /context
 
+context "EOF"`[`s`-~`]`* EOF normal bright diff
+/context
+

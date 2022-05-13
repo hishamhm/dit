@@ -24,10 +24,10 @@ local function open_header()
 end
 
 local function popup_error()
-   local _, x, y = buffer:token()
+   local x, y = buffer:xy()
    if errors and errors[y] then
       for ex, err in pairs(errors[y]) do
-         if x == ex then
+         if x >= ex then
             buffer:draw_popup({err})
             return
          end
@@ -65,12 +65,13 @@ function highlight_line(line, y)
    if errors and errors[y] then
       local out = {}
       for i = 1, #line do out[i] = " " end
-      for x, _ in pairs(errors[y]) do
+      for x, err in pairs(errors[y]) do
+         local k = "*" -- err:match("^warning") and "S" or "*"
          if x <= #line then
-            out[x] = "*"
+            out[x] = k
             local xs = x
             while line[xs]:match("[%w_%->]") do
-               out[xs] = "*"
+               out[xs] = k
                xs = xs + 1
             end
          end
@@ -99,6 +100,12 @@ function on_save()
       ex = tonumber(ex)
       if not errors[ey] then errors[ey] = {} end
       errors[ey][ex] = err
+   end
+   for ey, ex, err in cmdout:gmatch("[^\n]*:([0-9]+):([0-9]+): warning: ([^\n]*)") do
+      ey = tonumber(ey)
+      ex = tonumber(ex)
+      if not errors[ey] then errors[ey] = {} end
+      errors[ey][ex] = "warning: " .. err
    end
    return true
 end

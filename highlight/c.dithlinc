@@ -82,7 +82,7 @@ context ' ' brightalt
    eager_rule \\ brightalt
    eager_rule \' brightalt
 /context
-context # `$ brightspecial
+context #`[`s`|`t`]`*`[a`-z`]`+ `$ brightspecial
    ### rule \`$ veryspecial ### need to handle these special breaks later
 /context
 context #include `$ brightspecial
