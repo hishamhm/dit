@@ -288,11 +288,20 @@ STATIC int Script_TabManager_getBuffer(lua_State* L) {
    return 1;
 }
 
+
+STATIC int Script_TabManager_printStatus(lua_State* L) {
+   TabManager* tabs = (TabManager*) ((Proxy*)luaL_checkudata(L, 1, "TabManager"))->ptr;
+   const char* text = luaL_checkstring(L, 2);
+   TabManager_printStatus(tabs, text);
+   return 0;
+}
+
 STATIC luaL_Reg TabManager_functions[] = {
    { "open", Script_TabManager_open },
    { "set_page", Script_TabManager_setPage },
    { "get_buffer", Script_TabManager_getBuffer },
    { "mark_jump", Script_TabManager_markJump },
+   { "print_status", Script_TabManager_printStatus },
    { NULL, NULL }
 };
 

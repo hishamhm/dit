@@ -163,6 +163,15 @@ TabPage* TabManager_current(TabManager* this) {
    return (TabPage*) Vector_get(this->items, this->currentPage);
 }
 
+void TabManager_printStatus(TabManager* this, const char* text) {
+   int lines, cols;
+   Display_getScreenSize(&cols, &lines);
+   Display_attrset(CRT_colors[CurrentTabColor]);
+   Display_mvhline(lines - 1, this->tabOffset, ' ', cols - this->tabOffset);
+   Display_printAt(lines - 1, this->tabOffset, text);
+   this->redrawBar = false;
+}
+
 static inline void TabManager_drawBar(TabManager* this, int width) {
    int lines, cols;
    Display_getScreenSize(&cols, &lines);
