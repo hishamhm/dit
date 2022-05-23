@@ -123,6 +123,7 @@ struct Buffer_ {
    bool skipOnChange;
    bool skipOnKey;
    bool skipOnCtrl;
+   bool skipOnAlt;
    bool skipOnFKey;
    bool skipOnSave;
    bool skipAfterKey;
@@ -1210,6 +1211,9 @@ void Buffer_defaultKeyHandler(Buffer* this, int ch, bool code) {
       Buffer_correctPosition(this);
    } else if (ch >= KEY_F(1) && ch <= KEY_F(20)) {
       Script_onFKey(this, ch);
+      Buffer_correctPosition(this);
+   } else if (ch >= KEY_ALT('A') && ch <= KEY_ALT('Z')) {
+      Script_onAlt(this, ch - KEY_ALT('A') + 1);
       Buffer_correctPosition(this);
    } else {
       Buffer_correctPosition(this);

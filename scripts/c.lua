@@ -40,14 +40,18 @@ function on_ctrl(key)
       cscope.go_to_definition()
    elseif key == "R" then
       popup_error()
-   elseif key == "H" then
-      open_header()
    elseif key == "O" then
       line_commit.line_commit()
    elseif key == "_" then
       code.comment_block("//")
    elseif key == "P" then
       tmux.man()
+   end
+end
+
+function on_alt(key)
+   if key == "H" then
+      open_header()
    end
 end
 

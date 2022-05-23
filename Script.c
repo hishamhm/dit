@@ -572,6 +572,14 @@ void Script_onCtrl(Buffer* this, int key) {
    callFunction(L, &(this->skipOnCtrl), "on_ctrl", ch);
 }
 
+void Script_onAlt(Buffer* this, int key) {
+   if (this->skipOnAlt) return;
+
+   lua_State* L = this->script.L;
+   char ch[2] = { 'A' + key - 1, '\0' };
+   callFunction(L, &(this->skipOnAlt), "on_alt", ch);
+}
+
 void Script_onFKey(Buffer* this, int key) {
    if (this->skipOnFKey) return;
    

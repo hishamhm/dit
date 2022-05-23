@@ -125,6 +125,7 @@ void Script_highlightLine(Highlight* this, const char* buffer, int* attrs, int l
 bool Script_onKey(Buffer* this, int key);
 bool Script_afterKey(Buffer* this, int key);
 void Script_onCtrl(Buffer* this, int key);
+void Script_onAlt(Buffer* this, int key);
 void Script_onFKey(Buffer* this, int key);
 void Script_onSave(Buffer* this, const char* fileName);
 void Script_onChange(Buffer* this);
