@@ -168,7 +168,7 @@ void TabManager_printStatus(TabManager* this, const char* text) {
    Display_getScreenSize(&cols, &lines);
    Display_attrset(CRT_colors[CurrentTabColor]);
    Display_mvhline(lines - 1, this->tabOffset, ' ', cols - this->tabOffset);
-   Display_printAt(lines - 1, this->tabOffset, text);
+   Display_printAt(lines - 1, this->tabOffset, "%s", text);
    this->redrawBar = false;
 }
 

@@ -87,12 +87,12 @@ static bool Dit_save(Buffer* buffer, TabManager* tabs) {
          if (!err) {
             int pid = fork();
             if (pid == 0) {
-               char command[1025];
+               char command[2048];
                char* shell = getenv("SHELL");
                if (!shell) {
                   shell = "sh";
                }
-               int printed = snprintf(command, 1024, "ff=\"\%s\"; "
+               int printed = snprintf(command, 2047, "ff=\"\%s\"; "
                                        "clear; "
                                        "sudo \"%s\" -c '"
                                           "touch \"'$ff'.work\"; "
@@ -106,19 +106,19 @@ static bool Dit_save(Buffer* buffer, TabManager* tabs) {
                                        "' || touch \"$ff.fail\"", fifoName, shell, buffer->fileName, BUSY_WAIT_SLEEP);
                Display_clear();
                CRT_done();
-               system(command);
+               int code = system(command);
                CRT_init();
-               exit(0);
+               exit(code);
             } else if (pid > 0) {
-               char doneName[1025];
-               char failName[1025];
-               char workName[1025];
+               char doneName[1031];
+               char failName[1031];
+               char workName[1031];
                bool done = false;
                bool fail = false;
                bool work = false;
-               snprintf(doneName, 1024, "%s.done", fifoName);
-               snprintf(failName, 1024, "%s.fail", fifoName);
-               snprintf(workName, 1024, "%s.work", fifoName);
+               snprintf(doneName, 1030, "%s.done", fifoName);
+               snprintf(failName, 1030, "%s.fail", fifoName);
+               snprintf(workName, 1030, "%s.work", fifoName);
                do {
                   if (!work) {
                      work = (access(workName, F_OK) == 0);
@@ -1084,14 +1084,19 @@ int Dit_open(TabManager* tabs, const char* name) {
          if (!Dit_dirExists(name)) {
             CRT_done();
             fprintf(stderr, "dit: directory %s does not exist.\n", name);
-            exit(0);
+            exit(1);
          }
          char* basec = strdup(name);
          char* base = basename(basec);
          char* dirc = strdup(name);
          char* dir = dirname(dirc);
          char* realdir = realpath(dir, NULL);
-         asprintf(&rpath, "%s/%s", realdir, base);
+         int bytes = asprintf(&rpath, "%s/%s", realdir, base);
+         if (bytes == -1) {
+            CRT_done();
+            fprintf(stderr, "dit: memory allocation error.\n");
+            exit(1);
+         }
          free(realdir);
          free(basec);
          free(dirc);
@@ -1359,7 +1364,10 @@ static void Dit_parseBindings(Dit_Action* keys) {
    }
    while (!feof(fd)) {
       char buffer[256];
-      fgets(buffer, 255, fd);
+      char* b = fgets(buffer, 255, fd);
+      if (!b) {
+         break;
+      }
       char** tokens = String_split(buffer, 0);
       char* key = tokens[0]; if (!key) goto nextLine;
       char* action = tokens[1]; if (!action) goto nextLine;

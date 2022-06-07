@@ -157,7 +157,10 @@ inline void Buffer_restorePosition(Buffer* this) {
       int y;
       char line[256];
       while (!feof(fd)) {
-         fscanf(fd, "%d %d %255[^\n]\n", &x, &y, line);
+         int n = fscanf(fd, "%d %d %255[^\n]\n", &x, &y, line);
+         if (n != 3) {
+            break;
+         }
          if (strcmp(line, rpath) == 0) {
             Line* line = (Line*) this->panel->items->head;
             for (int i = 0; line && i <= y; i++) {
@@ -377,7 +380,10 @@ inline void Buffer_storePosition(Buffer* this) {
          FilePosition* fp = malloc(sizeof(FilePosition));
          fp->name = malloc(4097);
          fp->next = NULL;
-         fscanf(fd, "%d %d %4096[^\n]\n", &(fp->x), &(fp->y), fp->name);
+         int n = fscanf(fd, "%d %d %4096[^\n]\n", &(fp->x), &(fp->y), fp->name);
+         if (n != 3) {
+            break;
+         }
          if (strcmp(fp->name, rpath) == 0) {
             fp->x = this->x;
             fp->y = this->y;
