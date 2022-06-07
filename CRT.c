@@ -95,11 +95,8 @@ typedef enum {
 #define KEY_CS_NPAGE  KEY_F(57)
 #define KEY_C_PPAGE   KEY_F(58)
 #define KEY_C_NPAGE   KEY_F(59)
-#define KEY_ALT(x)    (KEY_EVENT == 0633 ? \
-                       KEY_EVENT + x - 'A' + 1 : \
-                       KEY_F((x=='C'?60:(x=='J'?61:(x=='K'?62:63)))))
-
-#define KEY_CTRL(x)  (x - 'A' + 1)
+#define KEY_CTRL(x)   (x - 'A' + 1)
+#define KEY_ALT(x)    (0633 + x - 'A' + 1)
 
 #define SHIFT_MASK 1
 #define ALTR_MASK 2
