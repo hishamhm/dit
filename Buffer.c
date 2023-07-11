@@ -221,6 +221,7 @@ static void Buffer_checkEditorConfig(Buffer* this, const char* fileName) {
    int ehErr = editorconfig_parse(fileName, eh);
    if (ehErr == 0) {
       int n = editorconfig_handle_get_name_value_count(eh);
+      bool useTab = false;
       for (int i = 0; i < n; i++) {
          const char *name, *value;
          editorconfig_handle_get_name_value(eh, i, &name, &value);
@@ -228,11 +229,11 @@ static void Buffer_checkEditorConfig(Buffer* this, const char* fileName) {
          if (value) v = atoi(value);
          if (strcmp(name, "indent_style") == 0) {
             if (strcmp(value, "tab") == 0) {
-               this->tabulation = 0;
+               useTab = true;
             }
          } else if (strcmp(name, "indent_size") == 0) {
             if (strcmp(value, "tab") == 0) {
-               this->tabulation = 0;
+               useTab = true;
             } else if (v >= 1 && v <= 8) {
                this->tabulation = v;
             }
@@ -265,6 +266,9 @@ static void Buffer_checkEditorConfig(Buffer* this, const char* fileName) {
                this->insertFinalNewline = false;
             }
          }
+      }
+      if (useTab) {
+         this->tabulation = 0;
       }
    }
    editorconfig_handle_destroy(eh);
