@@ -8,7 +8,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#if HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
 #include <iconv.h>
 #include <editorconfig/editorconfig.h>
 

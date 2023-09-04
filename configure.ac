@@ -1,10 +1,10 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.59)
-AC_INIT(dit, 0.7, hisham@gobolinux.org)
+AC_PREREQ([2.71])
+AC_INIT([dit],[0.9],[hisham@gobolinux.org])
 AC_CONFIG_SRCDIR([dit.c])
-AM_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE
 
 # Checks for programs.
@@ -15,11 +15,11 @@ AC_PROG_RANLIB
 # Checks for libraries.
 AC_CHECK_LIB([m], [ceil], [], [missing_libraries="$missing_libraries libm"])
 
-AC_ARG_ENABLE(ncurses, [AC_HELP_STRING([--enable-ncurses], [use ncurses (switch to low-level hacks if disabled)])],, enable_ncurses="yes")
+AC_ARG_ENABLE(ncurses, [AS_HELP_STRING([--enable-ncurses],[use ncurses (switch to low-level hacks if disabled)])],, enable_ncurses="yes")
 
 # Checks for header files.
 AC_HEADER_DIRENT
-AC_HEADER_STDC
+AC_CHECK_INCLUDES_DEFAULT
 
 if test "`uname`" = "OpenBSD"
 then
@@ -27,7 +27,7 @@ then
    LDFLAGS="$LDFLAGS -L/usr/local/lib"
 fi
 
-AC_ARG_ENABLE(unicode, [AC_HELP_STRING([--enable-unicode], [enable Unicode support])], ,enable_unicode="yes")
+AC_ARG_ENABLE(unicode, [AS_HELP_STRING([--enable-unicode],[enable Unicode support])], ,enable_unicode="yes")
 if test "x$enable_unicode" = xyes; then
    AC_CHECK_LIB([tinfow], [keypad], [], [
       AC_CHECK_LIB([tinfo], [keypad], [], [
@@ -100,7 +100,8 @@ AC_HEADER_STDBOOL
 AC_C_CONST
 AC_C_INLINE
 AC_TYPE_SIZE_T
-AC_HEADER_TIME
+AC_CHECK_HEADERS_ONCE([sys/time.h])
+
 
 # Checks for library functions.
 AC_FUNC_CLOSEDIR_VOID
@@ -108,13 +109,12 @@ AC_PROG_GCC_TRADITIONAL
 AC_FUNC_MALLOC
 AC_FUNC_MEMCMP
 AC_FUNC_REALLOC
-AC_TYPE_SIGNAL
 AC_FUNC_STAT
 AC_CHECK_FUNCS([gettimeofday memchr memmove memset mkdir putenv realpath regcomp strchr strdup strncasecmp strrchr strstr])
 
 DIT_LUA_VERSION=5.3.0
 
-AC_ARG_ENABLE(bundled-lua, [AC_HELP_STRING([--enable-bundled-lua], [compile bundled copy of Lua])],, enable_bundled_lua="default")
+AC_ARG_ENABLE(bundled-lua, [AS_HELP_STRING([--enable-bundled-lua],[compile bundled copy of Lua])],, enable_bundled_lua="default")
 
 if test x"$enable_bundled_lua" = x"no"
 then
