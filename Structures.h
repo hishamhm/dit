@@ -938,7 +938,7 @@ struct TabManager_ {
    int tabOffset;
    int currentPage;
    int width;
-   int defaultTabSize;
+   int forceTabSize;
    bool redrawBar;
    bool bufferModified;
 };

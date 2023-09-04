@@ -222,6 +222,8 @@ static void Buffer_checkEditorConfig(Buffer* this, const char* fileName) {
    if (ehErr == 0) {
       int n = editorconfig_handle_get_name_value_count(eh);
       bool useTab = false;
+      int indentSize = 0;
+      int tabWidth = 0;
       for (int i = 0; i < n; i++) {
          const char *name, *value;
          editorconfig_handle_get_name_value(eh, i, &name, &value);
@@ -235,11 +237,11 @@ static void Buffer_checkEditorConfig(Buffer* this, const char* fileName) {
             if (strcmp(value, "tab") == 0) {
                useTab = true;
             } else if (v >= 1 && v <= 8) {
-               this->tabulation = v;
+               indentSize = v;
             }
          } else if (strcmp(name, "tab_width") == 0) {
             if (v >= 1 && v <= 8) {
-               this->tabSize = v;
+               tabWidth = v;
             }
          } else if (strcmp(name, "end_of_line") == 0) {
             if (strcmp(value, "crlf") == 0) {
@@ -267,8 +269,18 @@ static void Buffer_checkEditorConfig(Buffer* this, const char* fileName) {
             }
          }
       }
+      if (tabWidth > 0) {
+         this->tabSize = tabWidth;
+      }
       if (useTab) {
          this->tabulation = 0;
+         if (indentSize > 0) {
+            this->tabSize = indentSize;
+         }
+      } else {
+         if (indentSize > 0) {
+            this->tabulation = indentSize;
+         }
       }
    }
    editorconfig_handle_destroy(eh);

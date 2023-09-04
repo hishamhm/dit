@@ -1394,7 +1394,7 @@ int main(int argc, char** argv) {
 
    int jump = 0;
    int column = 1;
-   int tabSize = 8;
+   int forceTabSize = 0;
    
    if (!isatty(fileno(stdout))) {
       fprintf(stderr, "Error: trying to run dit through a pipe!\n");
@@ -1408,7 +1408,7 @@ int main(int argc, char** argv) {
       if (String_eq(argv[1], "--version")) {
          printVersionFlag();
       } else if (String_eq(argv[1], "-t")) {
-         tabSize = atoi(argv[2]);
+         forceTabSize = atoi(argv[2]);
          name = argv[3];
       } else if (argv[1][0] == '+') {
          argv[1]++;
@@ -1451,7 +1451,7 @@ int main(int argc, char** argv) {
    Display_getScreenSize(&cols, &lines);
    
    tabs = TabManager_new(0, 0, cols, lines, 20);
-   if (tabSize > 0) tabs->defaultTabSize = tabSize;
+   if (forceTabSize > 0) tabs->forceTabSize = forceTabSize;
 
    signal(11, panic);
    signal(1, panic);
