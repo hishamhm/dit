@@ -2,6 +2,8 @@ FILES
 name suffix .rs
 RULES
 
+script rust.lua
+
 include gitconflict.dithlinc
 
 rule as diff
@@ -61,7 +63,6 @@ rule 'static diff
 
 rule self brightalt
 
-rule -> symbol
 rule ! brightsymbol
 rule < brightsymbol
 rule > brightsymbol
@@ -85,8 +86,40 @@ rule TODO veryspecial
 rule XXX veryspecial
 rule FIXME veryspecial
 
-context < > brightspecial brightspecial special
+context <' > special
    rule 'static diff
+
+   context < > special
+      rule 'static diff
+
+      context < > special
+         rule 'static diff
+      /context
+   /context
+/context
+
+context <`[A`-Za`-z&(`]`+ > special
+   rule 'static diff
+
+   context < > special
+      rule 'static diff
+
+      context < > special
+         rule 'static diff
+      /context
+   /context
+/context
+
+context ::< > special
+   rule 'static diff
+
+   context < > special
+      rule 'static diff
+
+      context < > special
+         rule 'static diff
+      /context
+   /context
 /context
 
 context /* */ dim
@@ -107,10 +140,10 @@ context " " alt
 /context
 context r#" "# alt
 /context
-# context ' ' brightalt
-#    eager_rule \\ brightalt
-#    eager_rule \' brightalt
-# /context
+
+rule '`[`s`-~`]' brightalt
+rule '\`[`s`-~`]' brightalt
+
 context # `$ brightspecial
    ### rule \`$ veryspecial ### need to handle these special breaks later
 /context
