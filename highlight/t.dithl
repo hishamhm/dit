@@ -151,6 +151,146 @@ context access_by_lua_block`s`*{ } brightspecial brightspecial normal
    rule } brightspecial
 /context
 
+context rewrite_by_lua_block`s`*{ } brightspecial brightspecial normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   rule } brightspecial
+/context
+
+context header_filter_by_lua_block`s`*{ } brightspecial brightspecial normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   rule } brightspecial
+/context
+
+context body_filter_by_lua_block`s`*{ } brightspecial brightspecial normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   rule } brightspecial
+/context
+
+context log_by_lua_block`s`*{ } brightspecial brightspecial normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   context { } bright bright normal
+   include lua.dithlinc
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   /context
+   rule } brightspecial
+/context
+
 context balancer_by_lua_block`s`*{ } brightspecial brightspecial normal
    include lua.dithlinc
    context { } bright bright normal
