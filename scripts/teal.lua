@@ -132,6 +132,10 @@ function on_save(filename)
    pd:close()
 end
 
+function highlight_file(filename)
+   on_save(filename)
+end
+
 local function type_at(px, py)
    if not type_report then
       return
@@ -179,13 +183,38 @@ function on_ctrl(key)
       local x, y = buffer:xy()
       local t = type_at(x, y)
       if t and t.x then
+         local tx, ty = t.x, t.y
+         local name = buffer[ty]:match("local%s*([A-Za-z_][A-Za-z0-9_]*)%s*:")
+         if not name then
+            name = buffer[ty]:match("global%s*([A-Za-z_][A-Za-z0-9_]*)%s*:")
+         end
+         if not name then
+            return true
+         end
+         if tx == x and ty == y then
+            local l = y + 1
+            while true do
+               local line = buffer[l]
+               if not line then
+                  return true
+               end
+               local found = line:match("^%s*()" .. name .. "%s*=%s*")
+               if found then
+                  tx = found
+                  ty = l
+                  break
+               end
+               l = l + 1
+            end
+         end
+
          tabs:mark_jump()
          if t.file and t.file ~= buffer:filename() then
             local page = tabs:open(t.file)
             tabs:set_page(page)
          end
-         if t.x then
-            buffer:go_to(t.x, t.y)
+         if tx then
+            buffer:go_to(tx, ty)
          end
       end
    end
