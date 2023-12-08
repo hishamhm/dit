@@ -184,14 +184,14 @@ function on_ctrl(key)
       local t = type_at(x, y)
       if t and t.x then
          local tx, ty = t.x, t.y
-         local name = buffer[ty]:match("local%s*([A-Za-z_][A-Za-z0-9_]*)%s*:")
-         if not name then
-            name = buffer[ty]:match("global%s*([A-Za-z_][A-Za-z0-9_]*)%s*:")
-         end
-         if not name then
-            return true
-         end
          if tx == x and ty == y then
+            local name = buffer[ty]:match("local%s*([A-Za-z_][A-Za-z0-9_]*)%s*:")
+            if not name then
+               name = buffer[ty]:match("global%s*([A-Za-z_][A-Za-z0-9_]*)%s*:")
+            end
+            if not name then
+               return true
+            end
             local l = y + 1
             while true do
                local line = buffer[l]
