@@ -1060,7 +1060,6 @@ void Buffer_deleteChar(Buffer* this) {
          Undo_joinNext(this->undo, this->x, this->y, false);
          Line_joinNext(this->line);
          this->line = (Line*) Panel_getSelected(this->panel);
-         this->y--;
       }
       if (this->dosLineBreaks) {
          Undo_endGroup(this->undo, this->x, this->y);
