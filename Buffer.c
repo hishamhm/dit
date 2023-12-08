@@ -119,7 +119,7 @@ struct Buffer_ {
       bool selecting;
       int xLen;
       int yLen;
-   } cursors[100];
+   } cursors[999];
    // Lua state
    ScriptState script;
    bool skipOnChange;

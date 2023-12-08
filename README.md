@@ -71,6 +71,9 @@ Quick reference
   * ...tab - Type text to go to the open tab that matches that substring.
 * Ctrl+B - back (to previous location, before last find, go-to-line, tab-switch, etc.)
   * You can press Ctrl+B multiple times to go back various levels.
+* F5 - multiple cursors
+  * if you press F5 with a selection, the next cursor will appear at the next occurrence of the selection.
+* F6 - find all occurrences of a selection and apply multiple cursors
 * Tabs of open files:
   * Ctrl+J - previous tab
   * Ctrl+K - next tab

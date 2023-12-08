@@ -198,7 +198,7 @@ static bool confirmClose(Buffer* buffer, TabManager* tabs, char* question) {
 
 static Clipboard* Dit_clipboard = NULL;
 
-static Clipboard* Dit_multipleClipboards[100] = { NULL };
+static Clipboard* Dit_multipleClipboards[999] = { NULL };
 
 static int xclipOk = 1;
 
@@ -588,7 +588,7 @@ static void Dit_decreaseMultipleCursors(Buffer* buffer) {
 }
 
 static void Dit_multipleCursors(Buffer* buffer) {
-   if (buffer->nCursors == 100) {
+   if (buffer->nCursors == 999) {
       return;
    }
    int c = buffer->nCursors;
@@ -662,6 +662,50 @@ static void Dit_multipleCursors(Buffer* buffer) {
    }
    buffer->nCursors++;
    Buffer_goto(buffer, newX, newY, true);
+}
+
+static void Dit_findAllCursors(Buffer* buffer) {
+   if (buffer->nCursors == 999) {
+      return;
+   }
+   if (!buffer->selecting) {
+      return;
+   }
+   if (buffer->selectYfrom != buffer->selectYto) {
+      return;
+   }
+   if (buffer->nCursors == 0) {
+      Dit_multipleCursors(buffer);
+   }
+
+   Coords found = { .x = NOT_A_COORD, .y = NOT_A_COORD };
+
+   int blockLen;
+   char* block = Buffer_copyBlock(buffer, &blockLen);
+   if (!block) {
+      return;
+   }
+   Text text = Text_new(block);
+
+   int firstX = buffer->cursors[buffer->nCursors - 1].selectXfrom;
+   int firstY = buffer->cursors[buffer->nCursors - 1].selectYfrom;
+
+   for (;;) {
+      if (buffer->nCursors == 999) {
+         break;
+      }
+      found = Buffer_find(buffer, text, true, true, false, true);
+      if (found.x == NOT_A_COORD) {
+         break;
+      }
+      if (found.x == firstX && found.y == firstY) {
+         break;
+      }
+
+      Dit_multipleCursors(buffer);
+   }
+
+   free(block);
 }
 
 static bool canKeyDoMultiple(int ch, int limit, Dit_Action* keys) {
@@ -1219,6 +1263,7 @@ static void Dit_registerActions() {
    Hashtable_putString(Dit_actions, "Dit_wordWrap", (void*)(long) Dit_wordWrap);
    Hashtable_putString(Dit_actions, "Dit_multipleCursors", (void*)(long) Dit_multipleCursors);
    Hashtable_putString(Dit_actions, "Dit_decreaseMultipleCursors", (void*)(long) Dit_decreaseMultipleCursors);
+   Hashtable_putString(Dit_actions, "Dit_findAllCursors", (void*)(long) Dit_findAllCursors);
 }
 
 static void Dit_loadHardcodedBindings(Dit_Action* keys) {
@@ -1254,6 +1299,7 @@ static void Dit_loadHardcodedBindings(Dit_Action* keys) {
    keys[KEY_CS_INSERT] = (Dit_Action) Dit_paste;
    keys[KEY_SDC]       = (Dit_Action) Dit_cut;
    keys[KEY_F(5)]      = (Dit_Action) Dit_multipleCursors;
+   keys[KEY_F(6)]      = (Dit_Action) Dit_findAllCursors;
    keys[KEY_F(8)]      = (Dit_Action) Dit_deleteLine;
    keys[KEY_F(10)]     = (Dit_Action) Dit_quit;
    keys[0x0d]          = (Dit_Action) Dit_breakLine;
