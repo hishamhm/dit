@@ -575,6 +575,14 @@ static void checkCollapseCursors(Buffer* buffer) {
    }
 }
 
+static void Dit_cancelSelection(Buffer* buffer) {
+   if (!buffer->selecting) {
+      return;
+   }
+   Buffer_goto(buffer, buffer->selectXfrom, buffer->selectYfrom, true);
+   buffer->selecting = false;
+}
+
 static void Dit_decreaseMultipleCursors(Buffer* buffer) {
    if (buffer->nCursors == 0) {
       return;
@@ -1264,6 +1272,7 @@ static void Dit_registerActions() {
    Hashtable_putString(Dit_actions, "Dit_multipleCursors", (void*)(long) Dit_multipleCursors);
    Hashtable_putString(Dit_actions, "Dit_decreaseMultipleCursors", (void*)(long) Dit_decreaseMultipleCursors);
    Hashtable_putString(Dit_actions, "Dit_findAllCursors", (void*)(long) Dit_findAllCursors);
+   Hashtable_putString(Dit_actions, "Dit_cancelSelection", (void*)(long) Dit_cancelSelection);
 }
 
 static void Dit_loadHardcodedBindings(Dit_Action* keys) {
@@ -1339,6 +1348,7 @@ static void Dit_loadHardcodedBindings(Dit_Action* keys) {
    keys[KEY_BACKSPACE] = (Dit_Action) Buffer_backwardDeleteChar;
    keys[KEY_SF]        = (Dit_Action) Dit_selectDownLine;
    keys[KEY_SR]        = (Dit_Action) Dit_selectUpLine;
+   keys[27]            = (Dit_Action) Dit_cancelSelection;
 
    keys[KEY_ALT('C')] = (Dit_Action) Dit_x11copy;
    keys[KEY_ALT('J')] = (Dit_Action) Dit_moveTabPageLeft;
@@ -1617,11 +1627,10 @@ int main(int argc, char** argv) {
 
       if (keyDisablesMultiple(ch, limit, keys)) {
          buffer->panel->needsRedraw = true;
-         buffer->selecting = false;
-         buffer->nCursors = 0;
-         if (ch == 27) {
-            continue;
+         if (ch != 27) {
+            buffer->selecting = false;
          }
+         buffer->nCursors = 0;
       }
       if (buffer->nCursors > 0 && canKeyDoMultiple(ch, limit, keys)) {
          buffer->panel->needsRedraw = true;

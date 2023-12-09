@@ -76,3 +76,4 @@ ALT_C Dit_selectForwardChar
 ALT_D Dit_selectBackwardChar
 WHEELUP Dit_scrollDown
 WHEELDOWN Dit_scrollUp
+ESC Dit_cancelSelection
