@@ -7,7 +7,6 @@ CTRL_G Dit_goto
 CTRL_J Dit_previousTabPage
 CTRL_K Dit_nextTabPage
 CTRL_L Dit_refresh
-CTRL_N Dit_wordWrap
 CTRL_Q Dit_quit
 CTRL_S Dit_save
 CTRL_T Buffer_toggleTabCharacters
@@ -74,6 +73,7 @@ ALT_A Dit_selectUpLine
 ALT_B Dit_selectDownLine
 ALT_C Dit_selectForwardChar
 ALT_D Dit_selectBackwardChar
+ALT_N Dit_wordWrap
 WHEELUP Dit_scrollDown
 WHEELDOWN Dit_scrollUp
 ESC Dit_cancelSelection

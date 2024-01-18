@@ -5,6 +5,7 @@ local mobdebug = require("dit.lua.mobdebug")
 local json = require("cjson")
 
 local lines
+local last_line = 0
 local commented_lines = {}
 local controlled_change = false
 local type_report
@@ -79,6 +80,7 @@ function on_save(filename)
    lines = {}
    local state = "start"
    local buf = {}
+   last_line = 0
    for line in pd:lines() do
       if state == "start" then
          if line == "" then
@@ -117,6 +119,9 @@ function on_save(filename)
                text = err,
                what = state,
             })
+            if y > last_line then
+               last_line = y
+            end
          end
       end
    end
@@ -161,24 +166,40 @@ local function type_at(px, py)
    end
 end
 
+function on_alt(key)
+   if key == 'L' then
+      local filename = buffer:filename()
+      local x, y = buffer:xy()
+      local page = tabs:open(filename:gsub("%.tl$", ".lua"))
+      tabs:set_page(page)
+      tabs:get_buffer(page):go_to(x, y)
+   end
+end
+
 function on_ctrl(key)
    if key == '_' then
       controlled_change = true
       code.comment_block("--", "%-%-", lines, commented_lines)
       controlled_change = false
-   elseif key == "O" then
---      local str = buffer:selection()
---      if str == "" then
---         str = buffer:token()
---      end
---      if str and str ~= "" then
---         local out = mobdebug.command("eval " .. str)
---         if type(out) == "table" then
---            buffer:draw_popup(out)
---         end
---      else
---         buffer:draw_popup({ "Select a token to evaluate" })
---      end
+   elseif key == "N" then
+      if not lines then
+         return
+      end
+      local x, y = buffer:xy()
+      if lines[y] then
+         for _, note in ipairs(lines[y]) do
+            if note.column > x then
+               buffer:go_to(note.column, y)
+               return
+            end
+         end
+      end
+      for line = y+1, last_line do
+         if lines[line] then
+            buffer:go_to(lines[line][1].column, line)
+            return
+         end
+      end
    elseif key == "D" then
       local x, y = buffer:xy()
       local t = type_at(x, y)

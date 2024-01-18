@@ -345,3 +345,13 @@ function on_key(code)
    end
    return tab_handled or handled
 end
+
+function on_alt(key)
+   if key == 'L' then
+      local filename = buffer:filename()
+      local x, y = buffer:xy()
+      local page = tabs:open(filename:gsub("%.lua$", ".tl"))
+      tabs:set_page(page)
+      tabs:get_buffer(page):go_to(x, y)
+   end
+end
