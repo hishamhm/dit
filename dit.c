@@ -1028,7 +1028,7 @@ static void Dit_find(Buffer* buffer, TabManager* tabs) {
 
 static void Dit_wordWrap(Buffer* buffer) {
    buffer->selecting = false;
-   Buffer_wordWrap(buffer, 78);
+   Buffer_wordWrap(buffer, 78, -1);
 }
 
 static void Dit_undo(Buffer* buffer, TabManager* tabs) {

@@ -902,7 +902,18 @@ void Buffer_nextPage(Buffer* this) {
    this->selecting = false;
 }
 
-void Buffer_wordWrap(Buffer* this, int wrap) {
+void Buffer_wordWrap(Buffer* this, int wrap, int indent) {
+   if (indent == -1) {
+      indent = 0;
+      for (int i = 0; i < last_x(this); i++) {
+         int ch = Line_charAt(this->line, i);
+         if (ch == ' ' || ch == '*') {
+            indent++;
+         } else {
+            break;
+         }
+      }
+   }
    Undo_beginGroup(this->undo, this->x, this->y);
    int minLen = this->dosLineBreaks ? 1 : 0;
    while (this->line->super.next && Line_chars((Line*)this->line->super.next) > minLen) {
@@ -919,7 +930,7 @@ void Buffer_wordWrap(Buffer* this, int wrap) {
          Buffer_deleteChar(this);
       }
       this->line = (Line*) Panel_getSelected(this->panel);
-      Buffer_wordWrap(this, wrap);
+      Buffer_wordWrap(this, wrap, indent);
    }
    while (last_x(this) > wrap) {
       Line* oldLine = this->line;
@@ -928,6 +939,11 @@ void Buffer_wordWrap(Buffer* this, int wrap) {
             this->x = i;
             Buffer_deleteChar(this);
             Buffer_breakLine(this);
+            if (indent > 0) {
+               for (int j = 0; j < indent; j++) {
+                  Buffer_defaultKeyHandler(this, ' ', false);
+               }
+            }
             break;
          }
       }

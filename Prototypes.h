@@ -167,7 +167,7 @@ void Buffer_endOfFile(Buffer* this);
 int Buffer_size(Buffer* this);
 void Buffer_previousPage(Buffer* this);
 void Buffer_nextPage(Buffer* this);
-void Buffer_wordWrap(Buffer* this, int wrap);
+void Buffer_wordWrap(Buffer* this, int wrap, int indent);
 void Buffer_deleteBlock(Buffer* this);
 char* Buffer_copyBlock(Buffer* this, int *len);
 void Buffer_pasteBlock(Buffer* this, Text block);
