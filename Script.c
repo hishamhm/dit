@@ -269,6 +269,23 @@ STATIC int Script_TabManager_setPage(lua_State* L) {
    return 0;
 }
 
+STATIC int Script_TabManager_getPageName(lua_State* L) {
+   TabManager* tabs = (TabManager*) ((Proxy*)luaL_checkudata(L, 1, "TabManager"))->ptr;
+   int page = luaL_checkinteger(L, 2);
+   
+   char* name = TabManager_getPageName(tabs, page);
+   
+   lua_pushstring(L, name);
+   return 1;
+}
+
+STATIC int Script_TabManager_getPage(lua_State* L) {
+   TabManager* tabs = (TabManager*) ((Proxy*)luaL_checkudata(L, 1, "TabManager"))->ptr;
+
+   lua_pushinteger(L, tabs->currentPage);
+   return 1;
+}
+
 STATIC int Script_TabManager_markJump(lua_State* L) {
    TabManager* tabs = (TabManager*) ((Proxy*)luaL_checkudata(L, 1, "TabManager"))->ptr;
    
@@ -299,6 +316,8 @@ STATIC int Script_TabManager_printStatus(lua_State* L) {
 STATIC luaL_Reg TabManager_functions[] = {
    { "open", Script_TabManager_open },
    { "set_page", Script_TabManager_setPage },
+   { "get_page", Script_TabManager_getPage },
+   { "get_page_name", Script_TabManager_getPageName },
    { "get_buffer", Script_TabManager_getBuffer },
    { "mark_jump", Script_TabManager_markJump },
    { "print_status", Script_TabManager_printStatus },
