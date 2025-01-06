@@ -402,6 +402,8 @@ static int handleMouse(MouseState* mstate, TabManager* tabs) {
    }
    Buffer* buf = TabManager_getBuffer(tabs, tabs->currentPage);
    int bx = Buffer_scrollH(buf) + mevent.x;
+   int lx = Line_widthUntil(buf->line, bx, buf->tabSize);
+   bx = bx - (lx - bx);
    int by = Buffer_scrollV(buf) + mevent.y;
    if (mevent.bstate & REPORT_MOUSE_POSITION) {
       if (mstate->fromX != NOT_A_COORD && (mstate->fromX != bx || mstate->fromY != by)) {
