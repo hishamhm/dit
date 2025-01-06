@@ -169,8 +169,10 @@ void Line_display(Object* cast, RichString* str) {
          }
          if (buffer->cursors[i].y == y) {
             int cx = buffer->cursors[i].x;
-            attrs[cx] = CRT_colors[AlertColor];
-            if (cx == UTF8_chars(out)) {
+            int px = Line_widthUntil(this, cx, buffer->tabSize);
+         
+            attrs[px] = CRT_colors[AlertColor];
+            if (px == UTF8_chars(out)) {
                out[outIdx++] = ' ';
                out[outIdx] = '\0';
             }
