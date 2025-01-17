@@ -43,7 +43,7 @@ like this
   * You may want to customize your installation path using `--prefix`
 * `make`
 * `sudo make install`
-  * If you are installing to a custom path where super-user privileges are not needed, use `sudo make install`
+  * If you are installing to a custom path where super-user privileges are not needed, use `make install`
 
 Quick reference
 ---------------
