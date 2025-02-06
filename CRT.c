@@ -173,10 +173,7 @@ void CRT_init() {
    
    char* term = getenv("TERM");
 
-   if (strcmp(term, "xterm") == 0 || strcmp(term, "xterm-color") == 0 || strcmp(term, "xterm-256color") == 0) {
-      putenv("TERM=xterm-1002");
-      term = "xterm-1002";
-   } else if (strcmp(term, "linux") == 0) {
+   if (strcmp(term, "linux") == 0) {
       CRT_linuxConsole = true;
    }
 
