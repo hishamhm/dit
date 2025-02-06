@@ -240,7 +240,7 @@ void Display_bkgdset(int color);
 void Display_beep();
 int Display_getmouse(MEVENT* mevent);
 void Display_refresh();
-bool Display_init(char* term);
+bool Display_init();
 void Display_done();
 void Dit_saveAs(Buffer* buffer, TabManager* tabs);
 int Dit_open(TabManager* tabs, const char* name);

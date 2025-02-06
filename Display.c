@@ -375,7 +375,7 @@ void Display_clear() {
 #if HAVE_CURSES
 #else
 void Display_manualWriteChstrAtn(int y, int x, CharType* chstr, int n) {
-   printf("\033[%d;%df", y+1, x+1, y, x, n);
+   printf("\033[%d;%df", y+1, x+1);
 /*
    char str[n];
    for (int i = 0; i < n; i++) {
@@ -546,8 +546,8 @@ void Display_refresh() {
 #endif
 
 #if HAVE_CURSES
-bool Display_init(char* term) {
-   CRT_term = newterm(term, stdout, stdin);
+bool Display_init() {
+   CRT_term = newterm(NULL, stdout, stdin);
    raw();
    noecho();
    if (CRT_delay)
@@ -574,7 +574,7 @@ bool Display_init(char* term) {
    return false;
 }
 #else
-bool Display_init(char* term) {
+bool Display_init() {
 
    tcgetattr(0, &stdoutSettings);
    struct termios rawTerm = stdoutSettings;

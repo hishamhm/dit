@@ -179,12 +179,12 @@ void CRT_init() {
 
    CRT_delay = 0;
    
-   CRT_hasColors = Display_init(term);
+   CRT_hasColors = Display_init();
    if (CRT_hasColors) {
       CRT_scrollHandle = strdup("█");
       CRT_scrollHandleTop = strdup("▀");
       CRT_scrollHandleBottom = strdup("▄");
-      CRT_scrollBar = strdup(" ");
+      CRT_scrollBar = strdup("\xC2\xA0");
    } else {
       CRT_scrollHandle = strdup("*");
       CRT_scrollHandleTop = strdup("*");
