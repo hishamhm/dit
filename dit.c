@@ -1664,7 +1664,9 @@ int main(int argc, char** argv) {
             }
          }
       }
-      Script_afterKey(buffer, ch);
+      if (buffer == TabManager_currentBuffer(tabs)) {
+         Script_afterKey(buffer, ch);
+      }
    }
 
    Display_attrset(CRT_colors[NormalColor]);

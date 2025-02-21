@@ -266,6 +266,10 @@ Buffer* TabManager_draw(TabManager* this, int width) {
    return buffer;
 }
 
+Buffer* TabManager_currentBuffer(TabManager* this) {
+   return TabManager_getBuffer(this, this->currentPage);
+}
+
 /**
  * This is like TabManager_draw, but it never loads new files,
  * it only shows what's already loaded. This is used in the

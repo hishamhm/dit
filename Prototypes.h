@@ -402,6 +402,7 @@ void TabManager_removeCurrent(TabManager* this);
 TabPage* TabManager_current(TabManager* this);
 void TabManager_printStatus(TabManager* this, const char* text);
 Buffer* TabManager_getBuffer(TabManager* this, int pageNr);
+Buffer* TabManager_currentBuffer(TabManager* this);
 Buffer* TabManager_draw(TabManager* this, int width);
 void TabManager_redraw(TabManager* this, int width);
 bool TabManager_checkLock(TabManager* this, char* fileName);
