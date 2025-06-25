@@ -109,6 +109,36 @@ static bool allSpace(char* s) {
    return true;
 }
 
+static void highlightAllOccurrences(Buffer* buffer, int y, Text outText, int* attrs) {
+   int minX = MIN(buffer->selectXto, buffer->selectXfrom);
+   int blockLen;
+   char* block = Buffer_copyBlock(buffer, &blockLen);
+   if (!block) {
+      return;
+   }
+
+   if (allSpace(block)) {
+      free(block);
+      return;
+   }
+
+   Text selText = Text_new(block);
+   int from = 0;
+   for (;;) {
+      int found = Text_indexOfFrom(outText, selText, from);
+      if (found == -1) {
+         break;
+      }
+      if (!(y == buffer->selectYfrom && found == minX)) {
+         for (int i = 0; i < Text_chars(selText); i++) {
+            attrs[found + i] = CRT_colors[HighlightColor];
+         }
+      }
+      from = found + 1;
+   }
+   free(block);
+}
+
 void Line_display(Object* cast, RichString* str) {
    Line* this = (Line*) cast;
    Buffer* buffer = (Buffer*)(this->super.list->data);
@@ -182,26 +212,7 @@ void Line_display(Object* cast, RichString* str) {
       if (buffer->selecting) {
          paintSelection(this, y, out, &outIdx, attrs, tabSize, buffer->selectXfrom, buffer->selectYfrom, buffer->selectXto, buffer->selectYto);
          if (buffer->selectYfrom == buffer->selectYto && buffer->selectXto != buffer->selectXfrom) {
-            int minX = MIN(buffer->selectXto, buffer->selectXfrom);
-            int blockLen;
-            char* block = Buffer_copyBlock(buffer, &blockLen);
-            
-            if (block && !allSpace(block)) {
-               Text selText = Text_new(block);
-               int from = 0;
-               for (;;) {
-                  int found = Text_indexOfFrom(outText, selText, from);
-                  if (found != -1 && !(y == buffer->selectYfrom && found == minX)) {
-                     for (int i = 0; i < Text_chars(selText); i++) {
-                        attrs[found + i] = CRT_colors[HighlightColor];
-                     }
-                     from = found + 1;
-                  } else {
-                     break;
-                  }                  
-               }
-               free(block);
-            }
+            highlightAllOccurrences(buffer, y, outText, attrs);
          }
       }
    }
