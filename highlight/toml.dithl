@@ -1,0 +1,32 @@
+FILES
+name suffix .toml
+RULES
+
+include gitconflict.dithlinc
+
+context # `$ dim
+/context
+
+context " " alt
+/context
+
+context [[ ]] brightalt brightalt brightdiff
+   context ' ' diff
+   /context
+/context
+
+context `^[ ] diff diff brightdiff
+   context ' ' diff
+   /context
+/context
+
+rule = bright
+rule { brightalt
+rule , bright
+rule } brightalt
+rule [ brightalt
+rule ] brightalt
+rule . brightdiff
+
+rule true alt
+rule false alt

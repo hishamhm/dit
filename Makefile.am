@@ -34,7 +34,7 @@ highlight/gitcommit.dithl highlight/c.dithlinc highlight/latex.dithl \
 highlight/json.dithl highlight/python.dithl highlight/latex.dithlinc \
 highlight/xml.dithl highlight/teal.dithl highlight/conf.dithl \
 highlight/lp.dithl highlight/etlua.dithl highlight/lpeg_re.dithlinc \
-highlight/php.dithl highlight/yacc.dithl \
+highlight/php.dithl highlight/yacc.dithl highlight/toml.dithl \
 highlight/go.dithl highlight/autoconf.dithl scripts/c.lua \
 scripts/compat53/module.lua scripts/compat53/init.lua \
 scripts/java.lua scripts/teal.lua scripts/haskell.lua scripts/cmd.lua \
