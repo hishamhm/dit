@@ -18,7 +18,6 @@ CTRL_Y Dit_redo
 CTRL_Z Dit_undo
 CTRL_INSERT Dit_copy
 F3 Dit_find
-F12 Buffer_selectAll
 F5 Dit_multipleCursors
 SHIFT_F5 Dit_decreaseMultipleCursors
 F6 Dit_findAllCursors

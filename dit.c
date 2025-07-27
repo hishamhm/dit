@@ -1568,23 +1568,6 @@ int main(int argc, char** argv) {
       
       Buffer_autosave(buffer, ch == ERR);
       
-      if (dumpCodes) {
-         if (ch == KEY_F(12)) {
-            dumpCodes = false;
-            continue;
-         }
-         char* c = malloc(100);
-         snprintf(c, 99, "(%d,%d)", ch, code);
-         Text t = Text_new(c);
-         Buffer_pasteBlock(buffer, t);
-         Text_prune(&t);
-         continue;
-      } else {
-         if (ch == KEY_F(12)) {
-            dumpCodes = true;
-            continue;
-         }
-      }
       int limit = 32;
       if (code) {
          limit = KEY_MAX;
