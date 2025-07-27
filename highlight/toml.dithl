@@ -4,6 +4,8 @@ RULES
 
 include gitconflict.dithlinc
 
+script toml.lua
+
 context # `$ dim
 /context
 
