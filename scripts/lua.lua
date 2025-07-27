@@ -68,16 +68,6 @@ function highlight_line(line, y)
    local ret = {}
    for i = 1, #line do ret[i] = " " end
 
---   if mobdebug.is_debugging() then
---      local filename = buffer:filename()
---      if mobdebug.is_breakpoint(filename, y) then
---         ret[1] = "*"
---      end
---      if mobdebug.file == filename and mobdebug.line == y then
---         return ("*"):rep(#line)
---      end
---   end
-
    for note, fchar, lchar in notes.each_note(y) do
       local key = "*"
       if note.code == "111" then
