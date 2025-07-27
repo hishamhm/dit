@@ -196,6 +196,7 @@ void Buffer_refresh(Buffer* this);
 void Buffer_toggleMarking(Buffer* this);
 void Buffer_toggleTabCharacters(Buffer* this);
 void Buffer_toggleDosLineBreaks(Buffer* this);
+void Buffer_setAlert(Buffer* this, bool enabled);
 Clipboard* Clipboard_new(bool disk);
 void Clipboard_delete(Clipboard* this);
 Text Clipboard_get(Clipboard* this);

@@ -122,6 +122,8 @@ end
 function on_save(filename)
    local fn = dir.normalize(fs.absolute_name(buffer:filename()))
 
+   code.alert_if_has_conflict()
+
    local d = dir.dir_name(fn)
    while not (fs.exists(d .. "/tlconfig.lua") or fs.exists(d .. "/.git")) do
       d = dir.dir_name(d)
@@ -406,6 +408,7 @@ local key_handlers = {
    ["F7"] = code.expand_selection,
    -- ["F8"] = delete_line,
    ["F9"] = code.pick_merge_conflict_branch,
+   ["SHIFT_F9"] = code.go_to_conflict,
    -- ["F10"] = quit
    -- ["F12"] = debug_keyboard_codes,
 }

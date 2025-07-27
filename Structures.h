@@ -252,6 +252,7 @@ struct Buffer_ {
       int xLen;
       int yLen;
    } cursors[999];
+   bool alert;
    // Lua state
    ScriptState script;
    bool skipOnChange;

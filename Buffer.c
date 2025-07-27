@@ -120,6 +120,7 @@ struct Buffer_ {
       int xLen;
       int yLen;
    } cursors[999];
+   bool alert;
    // Lua state
    ScriptState script;
    bool skipOnChange;
@@ -1528,4 +1529,8 @@ void Buffer_toggleTabCharacters(Buffer* this) {
 
 void Buffer_toggleDosLineBreaks(Buffer* this) {
    this->dosLineBreaks = !this->dosLineBreaks;
+}
+
+void Buffer_setAlert(Buffer* this, bool enabled) {
+   this->alert = enabled;
 }

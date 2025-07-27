@@ -146,11 +146,79 @@ local function find_divider(y, direction, topmatch, bottommatch)
          return nil
       end
       if line:match(topmatch) then
-         return at - direction, true
+         return at - direction, true, false
       elseif bottommatch and line:match(bottommatch) then
-         return at - direction, false
+         return at - direction, false, true
       end
       at = at + direction
+   end
+end
+
+function code.alert_if_has_conflict()
+   local chunkfrom = find_divider(1, 1, "^<<<<", "^====")
+   if chunkfrom then
+      buffer:set_alert(true)
+      return chunkfrom + 1
+   else
+      buffer:set_alert(false)
+   end
+end
+
+function code.go_to_conflict()
+   local line, x, y = buffer:line()
+   local action = nil
+   if line:match("^<<<<") then
+      action = "descend"
+   elseif line:match("^>>>>") then
+      action = "ascend"
+   end
+
+   if not action then
+      local found, above_top, in_top = find_divider(y, 1, "^<<<<", "^====")
+      if above_top then
+         buffer:go_to(1, found + 1)
+         buffer:set_alert(true)
+         return
+      end
+      if in_top then
+         action = "descend"
+      end
+   end
+
+   if not action then
+      local found, in_bottom, below_bottom = find_divider(y, -1, "^====", "^>>>>")
+      if below_bottom then
+         buffer:go_to(1, found - 1)
+         buffer:set_alert(true)
+         return
+      end
+      if in_bottom then
+         action = "ascend"
+      end
+   end
+
+   if action == "ascend" then
+      buffer:set_alert(true)
+      local at = find_divider(y, -1, "^====")
+      if at then
+         at = find_divider(at - 1, -1, "^<<<<")
+      end
+      if at then
+         buffer:go_to(1, at - 1)
+      end
+      return
+   elseif action == "descend" then
+      buffer:set_alert(true)
+      local at = find_divider(y, 1, "^====")
+      if at then
+         at = find_divider(at + 1, 1, "^>>>>")
+      end
+      if at then
+         buffer:go_to(1, at)
+      end
+      return
+   else
+      buffer:set_alert(false)
    end
 end
 
@@ -172,12 +240,20 @@ function code.pick_merge_conflict_branch()
    if chunkfrom == nil then
       chunkfrom, is_top_chunk = find_divider(y, -1, "^<<<<", "^====")
       if chunkfrom == nil then
+         local conflict = code.alert_if_has_conflict()
+         if conflict then
+            buffer:go_to(1, conflict)
+         end
          return nil
       end
    end
    if chunkto == nil then
       chunkto = find_divider(y, 1, "^====", "^>>>>")
       if chunkto == nil then
+         local conflict = code.alert_if_has_conflict()
+         if conflict then
+            buffer:go_to(1, conflict)
+         end
          return nil
       end
    end
@@ -204,6 +280,7 @@ function code.pick_merge_conflict_branch()
    end
    buffer:go_to(1, endy, false)
    buffer:end_undo()
+   code.alert_if_has_conflict()
 end
 
 return code

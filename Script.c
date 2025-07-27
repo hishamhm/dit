@@ -125,6 +125,14 @@ STATIC int Script_Buffer_select(lua_State* L) {
    return 0;
 }
 
+STATIC int Script_Buffer_setAlert(lua_State* L) {
+   Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
+   luaL_checktype(L, 2, LUA_TBOOLEAN);
+   bool alert = lua_toboolean(L, 2);
+   Buffer_setAlert(buffer, alert);
+   return 0;
+}
+
 STATIC int Script_Buffer_selection(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
    if (!buffer->selecting) {
@@ -385,6 +393,7 @@ STATIC luaL_Reg Buffer_functions[] = {
    { "begin_undo", Script_Buffer_beginUndoGroup },
    { "end_undo", Script_Buffer_endUndoGroup },
    { "draw_popup", Script_Buffer_drawPopup },
+   { "set_alert", Script_Buffer_setAlert },
    { NULL, NULL }
 };
 

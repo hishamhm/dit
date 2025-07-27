@@ -309,6 +309,8 @@ function on_fkey(key)
       buffer:go_to(1, y+1)
    elseif key == "F9" then
       code.pick_merge_conflict_branch()
+   elseif key == "SHIFT_F9" then
+      code.go_to_conflict()
    end
 end
 

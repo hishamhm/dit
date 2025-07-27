@@ -1533,14 +1533,17 @@ int main(int argc, char** argv) {
    bool dumpCodes = false;
    while (!quit) {
       int y, x;
-
-      Display_attrset(CRT_colors[TabColor]);
-      Display_mvhline(lines - 1, 0, ' ', tabs->tabOffset);
-
+      
       Buffer* buffer = TabManager_draw(tabs, cols);
+      
+      unsigned long barColor = buffer->alert ? CRT_colors[AlertColor] : CRT_colors[TabColor];
+
       Display_getyx(&y, &x);
 
-      Display_attrset(CRT_colors[TabColor]);
+      Display_attrset(barColor);
+      Display_mvhline(lines - 1, 0, ' ', tabs->tabOffset);
+
+      Display_attrset(barColor);
       Display_printAt(lines - 1, 0, "L:%d C:%d", buffer->y + 1, buffer->x + 1);
 
       if (!buffer->isUTF8) {
