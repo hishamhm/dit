@@ -1,14 +1,60 @@
 
 local code = require("dit.code")
 local tab_complete = require("dit.tab_complete")
-local mobdebug = require("dit.lua.mobdebug")
+local sort_selection = require("dit.sort_selection")
 local json = require("cjson")
+
+local lfs = require("lfs")
+
+local cfg = require("luarocks.core.cfg")
+cfg.init()
+local fs = require("luarocks.fs")
+local dir = require("luarocks.dir")
+fs.init()
+
+local filename = dir.normalize(fs.absolute_name(buffer:filename()))
+local filename_code = 0
+
+local trace
+local locals
+local trace_at = 0
+
+local function tracing_this_file(info)
+   return info[1] == filename_code
+end
+
+local function load_trace()
+   if lfs.attributes(filename .. ".trace") then
+      local cbor = require("cbor")
+      local fd = io.open(filename .. ".trace", "r")
+      if fd then
+         trace = cbor.decode(fd:read("*a"))
+         fd:close()
+      end
+      for i, f in ipairs(trace.filenames) do
+         if f == filename then
+            filename_code = i
+            break
+         end
+      end
+      if trace then
+         trace_at = 1
+         for i, t in ipairs(trace.trace) do
+            if tracing_this_file(t) then
+               trace_at = i
+               break
+            end
+         end
+      end
+   end
+end
 
 local lines
 local last_line = 0
 local commented_lines = {}
 local controlled_change = false
 local type_report
+local name_map = {}
 
 local function each_note(y, x)
    return coroutine.wrap(function()
@@ -36,14 +82,12 @@ end
 function highlight_line(line, y)
    local ret = {}
    for i = 1, #line do ret[i] = " " end
-
-   if mobdebug.is_debugging() then
-      local filename = buffer:filename()
-      if mobdebug.is_breakpoint(filename, y) then
-         ret[1] = "*"
-      end
-      if mobdebug.file == filename and mobdebug.line == y then
-         return ("*"):rep(#line)
+   
+   if trace_at > 0 then
+      local info = trace.trace[trace_at]
+      if tracing_this_file(info) and info[2] == y then
+         for i = 1, #line do ret[i] = "*" end
+         return table.concat(ret)
       end
    end
 
@@ -76,7 +120,17 @@ function on_change()
 end
 
 function on_save(filename)
-   local pd = io.popen("tl types " .. filename .. " 2>&1")
+   local fn = dir.normalize(fs.absolute_name(buffer:filename()))
+
+   local d = dir.dir_name(fn)
+   while not (fs.exists(d .. "/tlconfig.lua") or fs.exists(d .. "/.git")) do
+      d = dir.dir_name(d)
+   end
+   local filename = fn:sub(#d + 2)
+   name_map[buffer:filename()] = filename
+   local cmd = "cd " .. d .. "; tl types " .. filename .. " 2>&1"
+   
+   local pd = io.popen(cmd)
    lines = {}
    local state = "start"
    local buf = {}
@@ -145,7 +199,7 @@ local function type_at(px, py)
    if not type_report then
       return
    end
-   local ty = type_report.by_pos[buffer:filename()][tostring(py)]
+   local ty = type_report.by_pos[name_map[buffer:filename()]][tostring(py)]
    if not ty then
       return
    end
@@ -238,55 +292,127 @@ function on_ctrl(key)
             buffer:go_to(tx, ty)
          end
       end
+   elseif key == "O" then
+      sort_selection()
    end
    return true
 end
 
-function on_fkey(key)
-   if key == "F7" then
-      code.expand_selection()
-   elseif key == "F2" then
-      local ok, err = mobdebug.listen()
-      if ok then
-         buffer:draw_popup({
-            "Now debbuging. Press:",
-            "F4 to step-over",
-            "Shift-F4 to step-into",
-            "F6 to toggle breakpoint",
-            "F11 to run until breakpoint",
-         })
-      else
-         buffer:draw_popup({err})
+local function show_trace_location()
+   if trace_at > 0 then
+      local info = trace.trace[trace_at]
+      if not info then
+         return
       end
-   elseif key == "SHIFT_F4" then
-      local ok, err = mobdebug.command("step")
-      if err then
-         buffer:draw_popup({err})
+      local out = {}
+      table.insert(out, "#: " .. trace_at)
+      table.insert(out, "filename: " .. trace.filenames[info[1]])
+      table.insert(out, "line: " .. info[2])
+      buffer:go_to(1, info[2])
+      locals = {}
+      for k, v in pairs(info[3]) do
+         locals[trace.strings[k]] = trace.strings[v]
       end
-   elseif key == "F4" then
+      buffer:draw_popup(out)
+   end
+end
 
---      local ok, err = mobdebug.command("over")
---      if err then
---         buffer:draw_popup({err})
---      end
-   elseif key == "F11" then
-      local ok, err = mobdebug.command("run")
-      if err then
-         buffer:draw_popup({err})
+local function trace_forward(y)
+   local found
+   for i = trace_at + 1, #trace.trace do
+      local t = trace.trace[i]
+      if tracing_this_file(t) and ((not y) or t[2] == y) then
+         found = i
+         break
       end
-   elseif key == "F6" then
-      local filename = buffer:filename()
+   end
+   if not found then
+      for i = 1, trace_at - 1 do
+         local t = trace.trace[i]
+         if tracing_this_file(t) and ((not y) or t[2] == y) then
+            found = i
+            break
+         end
+      end
+   end
+   if found then
+      trace_at = found
+   end
+end
+
+local function trace_backward(y)
+   local found
+   for i = trace_at - 1, 1, -1 do
+      local t = trace.trace[i]
+      if tracing_this_file(t) and ((not y) or t[2] == y) then
+         found = i
+         break
+      end
+   end
+   if not found then
+      for i = #trace.trace, trace_at + 1, -1 do
+         local t = trace.trace[i]
+         if tracing_this_file(t) and ((not y) or t[2] == y) then
+            found = i
+            break
+         end
+      end
+   end
+   if found then
+      trace_at = found
+   end
+end
+
+local key_handlers = {
+   ["F1"] = function()
+      if not trace then
+         load_trace()
+      end
+
+      trace_backward()
+      show_trace_location()
+   end,
+   ["F2"] = function()
+      if not trace then
+         load_trace()
+      end
+      
       local x, y = buffer:xy()
-      if mobdebug.is_breakpoint(filename, y) then
-         mobdebug.command("delb " .. filename .. " " .. y)
-         mobdebug.set_breakpoint(filename, y, nil)
-      else
-         mobdebug.command("setb " .. filename .. " " .. y)
-         mobdebug.set_breakpoint(filename, y, true)
+      trace_forward(y)
+
+      show_trace_location()
+   end,
+   ["F12"] = function()
+      if not trace then
+         load_trace()
       end
-      buffer:go_to(1, y+1)
-   elseif key == "F9" then
-      code.pick_merge_conflict_branch()
+
+      -- search trace history backwards for current line
+      local x, y = buffer:xy()
+      trace_backward(y)
+
+      show_trace_location()
+   end,
+   ["F4"] = function()
+      if not trace then
+         load_trace()
+      end
+
+      trace_forward()
+      show_trace_location()
+   end,
+   -- ["F3"] = find,
+   -- ["F5"] = multiple_cursors,
+   ["F7"] = code.expand_selection,
+   -- ["F8"] = delete_line,
+   ["F9"] = code.pick_merge_conflict_branch,
+   -- ["F10"] = quit
+   -- ["F12"] = debug_keyboard_codes,
+}
+
+function on_fkey(key)
+   if key_handlers[key] then
+      key_handlers[key]()
    end
 end
 
@@ -330,23 +456,28 @@ function after_key(code)
 
    local out
    
-   local has_note = false
    for note in each_note(y, x) do
       out = out or {}
       table.insert(out, note.text)
-      has_note = true
    end
    
-   if not has_note then
+   if not out then
       local t = type_at(x, y)
       if t then
          out = out or {}
          table.insert(out, t.str)
-         has_note = true
       end
    end
    
-   if has_note then
+   if trace then
+      local tk = buffer:token()
+      out = out or {}
+      if locals[tk] then
+         table.insert(out, "= " .. locals[tk])
+      end
+   end
+   
+   if out then
       buffer:draw_popup(out) -- lines[y][x].description)
    end
 end
