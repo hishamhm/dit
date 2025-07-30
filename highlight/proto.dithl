@@ -1,0 +1,92 @@
+FILES
+name suffix .proto
+RULES
+
+include gitconflict.dithlinc
+
+rule true brightalt
+rule false brightalt
+
+rule syntax bright
+rule optional bright
+rule required bright
+
+rule edition bright
+rule import bright
+rule weak bright
+rule public bright
+rule package bright
+rule option bright
+rule repeated bright
+rule double diff
+rule float diff
+rule int32 diff
+rule int64 diff
+rule uint32 diff
+rule uint6 diff
+rule sint32 diff
+rule sint64 diff
+rule fixed32 diff
+rule fixed64 diff
+rule sfixed32 diff
+rule sfixed6 diff
+rule bool diff
+rule string diff
+rule bytes diff
+rule oneof bright
+rule map diff
+rule extensions bright
+rule reserved bright
+rule enum bright
+rule message bright
+rule extend bright
+rule service bright
+rule rpc bright
+
+rule `[0`-9`]`+ alt
+rule 0x`[0`-9`|a`-f`|A`-F`]`+ brightalt
+
+rule ! brightsymbol
+rule < brightsymbol
+rule > brightsymbol
+rule = brightsymbol
+rule + brightsymbol
+rule - brightsymbol
+rule * brightsymbol
+rule / brightsymbol
+rule [ symbol
+rule ] symbol
+rule { symbol
+rule } symbol
+rule ( symbol
+rule ) symbol
+rule : symbol
+rule , symbol
+rule | symbol
+rule & symbol
+rule ; brightsymbol
+
+rule TODO veryspecial
+rule XXX veryspecial
+rule FIXME veryspecial
+context /* */ dim
+   rule TODO veryspecial
+   rule XXX veryspecial
+   rule FIXME veryspecial
+/context
+context // `$ dim
+   rule TODO veryspecial
+   rule XXX veryspecial
+   rule FIXME veryspecial
+/context
+context " " alt
+   eager_rule \`[xX`]`[0`-9`|a`-f`|A`-F`]`[0`-9`|a`-f`|A`-F`]` brightalt
+   eager_rule \`[abfnrtv\'"`] brightalt
+   eager_rule \`[0`-3`]`[0`-7`]`[0`-7`] brightalt
+/context
+context ' ' brightalt
+   eager_rule \`[xX`]`[0`-9`|a`-f`|A`-F`]`[0`-9`|a`-f`|A`-F`]` brightalt
+   eager_rule \`[abfnrtv\'"`] brightalt
+   eager_rule \`[0`-3`]`[0`-7`]`[0`-7`] brightalt
+/context
+
