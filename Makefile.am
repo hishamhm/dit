@@ -54,11 +54,9 @@ scripts/luacheck/init.lua scripts/luacheck/reachability.lua \
 scripts/luacheck/lexer.lua scripts/teal.lua scripts/compat53.lua \
 scripts/lua.lua scripts/haskell.lua scripts/json.lua \
 scripts/dit/code.lua scripts/dit/notes.lua scripts/dit/config.lua \
-scripts/dit/notes.lua~ scripts/dit/cmd.lua \
-scripts/dit/tab_complete.lua scripts/dit/tmux.lua \
+scripts/dit/cmd.lua scripts/dit/tab_complete.lua scripts/dit/tmux.lua \
 scripts/dit/smart_enter.lua scripts/dit/teal/ttd.lua \
-scripts/dit/lua/mobdebug.lua scripts/dit/global.lua \
-scripts/dit/line_commit.lua scripts/shell.lua \
+scripts/dit/global.lua scripts/dit/line_commit.lua scripts/shell.lua \
 scripts/git_conflict.lua scripts/rust.lua scripts/java.lua \
 scripts/go.lua scripts/toml.lua scripts/cscope.lua scripts/latex.lua
 
@@ -98,3 +96,4 @@ install-data-local:
 
 debug:
 	$(MAKE) CFLAGS="-g -O0 $(LUA_FLAGS)"
+
