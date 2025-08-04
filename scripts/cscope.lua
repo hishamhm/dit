@@ -1,7 +1,7 @@
 
 local cscope = {}
 
-local cmd = require("cmd")
+local cmd = require("dit.cmd")
 
 local cscope_files_cache = {}
 

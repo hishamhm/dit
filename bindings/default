@@ -17,16 +17,18 @@ CTRL_X Dit_cut
 CTRL_Y Dit_redo
 CTRL_Z Dit_undo
 CTRL_INSERT Dit_copy
-F3 Dit_find
-F5 Dit_multipleCursors
-SHIFT_F5 Dit_decreaseMultipleCursors
-F6 Dit_findAllCursors
 SHIFT_IC Dit_paste
 SHIFT_INSERT Dit_paste
 CTRL_SHIFT_INSERT Dit_paste
 SDC Dit_cut
 SHIFT_DELETE Dit_cut
+
+F3 Dit_find
+F5 Dit_multipleCursors
+SHIFT_F5 Dit_decreaseMultipleCursors
+F6 Dit_findAllCursors
 F10 Dit_quit
+
 RETURN Dit_breakLine
 ENTER Dit_breakLine
 TAB Buffer_indent
@@ -65,7 +67,6 @@ BACKSPACE Buffer_backwardDeleteChar
 NPAGE Buffer_nextPage
 PPAGE Buffer_previousPage
 BACK_TAB Buffer_unindent
-F8 Dit_deleteLine
 ALT_J Dit_moveTabPageLeft
 ALT_K Dit_moveTabPageRight
 ALT_A Dit_selectUpLine

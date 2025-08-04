@@ -1,10 +1,11 @@
 FILES
 name suffix .toml
+name suffix Cargo.lock
 RULES
 
-include gitconflict.dithlinc
+script diff.lua
 
-script toml.lua
+include gitconflict.dithlinc
 
 context # `$ dim
 /context

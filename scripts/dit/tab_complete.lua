@@ -1,4 +1,6 @@
 
+local config = require("dit.config")
+
 local tab_complete = {}
 
 local words = {}
@@ -124,52 +126,54 @@ function tab_complete.suggest(word)
    set_matching({ word }, tx, x, y, true)
 end
 
-function tab_complete.on_key(code)
-   if matching then
-      local x, y = buffer:xy()
-      if x ~= matching.lx then
-         matching = nil
-      elseif code == TAB then
-         matching.i = matching.i + 1
-         if matching.i > #matching.matches then
-            matching.i = 1
+function tab_complete.activate()
+   config.add("on_key", function(code)
+      if matching then
+         local x, y = buffer:xy()
+         if x ~= matching.lx then
+            matching = nil
+         elseif code == TAB then
+            matching.i = matching.i + 1
+            if matching.i > #matching.matches then
+               matching.i = 1
+            end
+            display_match()
+            return true
+         elseif code == SHIFT_TAB then
+            matching.i = matching.i - 1
+            if matching.i < 1 then
+               matching.i = #matching.matches
+            end
+            display_match()
+            return true
+         elseif code >= 32 and code <= 255 and code ~= 128 or code == 13 then
+            if matching.suggestion then
+               if (code >= 65 and code <= 90) or (code >= 97 and code <= 122) then
+                  matching = nil
+                  return false
+               end
+            end
+            local curr = matching.matches[matching.i]
+            buffer:select(matching.tx + #curr, matching.y, matching.tx + #curr, matching.y)
+            matching = nil
+         else
+            matching = nil
          end
-         display_match()
-         return true
-      elseif code == SHIFT_TAB then
-         matching.i = matching.i - 1
-         if matching.i < 1 then
-            matching.i = #matching.matches
-         end
-         display_match()
-         return true
-      elseif code >= 32 and code <= 255 and code ~= 128 or code == 13 then
-         if matching.suggestion then
-            if (code >= 65 and code <= 90) or (code >= 97 and code <= 122) then
-               matching = nil
+      else
+         if code == ("\t"):byte() then
+            local token, tx, x, y = get_token()
+            if not token then
                return false
             end
-         end
-         local curr = matching.matches[matching.i]
-         buffer:select(matching.tx + #curr, matching.y, matching.tx + #curr, matching.y)
-         matching = nil
-      else
-         matching = nil
-      end
-   else
-      if code == ("\t"):byte() then
-         local token, tx, x, y = get_token()
-         if not token then
-            return false
-         end
-         populate_word_tree()
-         local matches = match_words(token)
-         if set_matching(matches, tx, x, y, false) then
-            return true
+            populate_word_tree()
+            local matches = match_words(token)
+            if set_matching(matches, tx, x, y, false) then
+               return true
+            end
          end
       end
-   end
-   return false
+      return false
+   end)
 end
 
 return tab_complete

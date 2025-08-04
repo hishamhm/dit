@@ -1,5 +1,6 @@
 local dit_lua_mobdebug = {}
 
+local config = require("dit.config")
 local mobdebug_ok, mobdebug = pcall(require, "mobdebug")
 
 local server
@@ -108,4 +109,69 @@ function dit_lua_mobdebug.command(command)
    return out
 end
 
+config.add_handlers("on_ctrl", {
+   ["O"] = function()
+      local str = buffer:selection()
+      if str == "" then
+         str = buffer:token()
+      end
+      if str and str ~= "" then
+         local out = mobdebug.command("eval " .. str)
+         if type(out) == "table" then
+            buffer:draw_popup(out)
+         end
+      else
+         buffer:draw_popup({ "Select a token to evaluate" })
+      end
+   end,
+})
+
+config.add_handlers("on_fkey", {
+   ["F2"] = function()
+      local ok, err = mobdebug.listen()
+      if ok then
+         buffer:draw_popup({
+            "Now debbuging. Press:",
+            "F4 to step-over",
+            "Shift-F4 to step-into",
+            "F6 to toggle breakpoint",
+            "F11 to run until breakpoint",
+         })
+      else
+         buffer:draw_popup({err})
+      end
+   end,
+   ["SHIFT_F4"] = function()
+      local ok, err = mobdebug.command("step")
+      if err then
+         buffer:draw_popup({err})
+      end
+   end,
+   ["F4"] = function()
+      local ok, err = mobdebug.command("over")
+      if err then
+         buffer:draw_popup({err})
+      end
+   end,
+   ["F6"] = function()
+      local filename = buffer:filename()
+      local x, y = buffer:xy()
+      if mobdebug.is_breakpoint(filename, y) then
+         mobdebug.command("delb " .. filename .. " " .. y)
+         mobdebug.set_breakpoint(filename, y, nil)
+      else
+         mobdebug.command("setb " .. filename .. " " .. y)
+         mobdebug.set_breakpoint(filename, y, true)
+      end
+      buffer:go_to(1, y+1)
+   end,
+   ["F11"] = function()
+      local ok, err = mobdebug.command("run")
+      if err then
+         buffer:draw_popup({err})
+      end
+   end,
+})
+
 return dit_lua_mobdebug
+

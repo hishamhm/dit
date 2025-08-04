@@ -1,4 +1,6 @@
 
+script git_conflict.lua
+
 context `^<<<<<<< `$ veryspecial 
 /context
 context `^======= `$ veryspecial 

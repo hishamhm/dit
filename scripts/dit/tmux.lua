@@ -1,6 +1,6 @@
 local tmux = {}
 
-local cmd = require("cmd")
+local cmd = require("dit.cmd")
 
 local function get_context()
    local token, x, y, len = buffer:token()

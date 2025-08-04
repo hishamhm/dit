@@ -1,7 +1,7 @@
 require("compat53")
 
 local cscope = require("cscope")
-local tmux = require("tmux")
+local tmux = require("dit.tmux")
 local code = require("dit.code")
 local tab_complete = require("dit.tab_complete")
 local line_commit = require("dit.line_commit")
@@ -21,25 +21,17 @@ local function popup_error()
    end
 end
 
-function on_ctrl(key)
-   if key == "D" then
-      cscope.go_to_definition()
-   elseif key == "R" then
-      popup_error()
-   elseif key == "O" then
-      line_commit.line_commit()
-   elseif key == "_" then
-      code.comment_block("//")
-   elseif key == "P" then
-      tmux.man()
-   end
-end
+config.add_handlers("on_ctrl", {
+   ["D"] = cscope.go_to_definition,
+   ["R"] = popup_error,
+   ["O"] = line_commit.line_commit,
+   ["_"] = function() code.comment_block("//") end,
+   ["P"] = tmux.man,
+})
 
-function on_fkey(key)
-   if key == "F7" then
-      code.expand_selection()
-   end
-end
+config.add_handlers("on_fkey", {
+   ["F7"] = code.expand_selection,
+})
 
 function highlight_file(filename)
    current_file = filename
@@ -65,12 +57,12 @@ function highlight_line(line, y)
    end
 end
 
-function on_change()
+config.add("on_change", function()
    errors = nil
    return true
-end
+end)
 
-function on_save()
+config.add("on_save", function()
    if not current_file then
       return true
    end
@@ -85,8 +77,6 @@ function on_save()
       errors[ey][ex] = err
    end
    return true
-end
+end)
 
-function on_key(code)
-   return tab_complete.on_key(code)
-end
+tab_complete.activate()

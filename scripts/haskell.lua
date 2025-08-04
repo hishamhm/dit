@@ -122,22 +122,23 @@ local function find_definition()
    return found, line, i
 end
 
-function on_ctrl(key)
-   if key == "_" then
+config.add_handlers("on_ctrl", {
+   ["_"] = function()
       if current_file:match("%.lhs$") then
          code.comment_block("%", "%%")
       else
          code.comment_block("--", "%-%-")
       end
-   elseif key == "]" then
-      code.expand_selection()
-   elseif key == "R" then
+   end,
+   ["]"] = code.expand_selection,
+   ["R"] = function()
       local found, line, i = find_definition()
       if found then
          tabs:mark_jump()
          buffer:go_to(1, i)
       end
-   elseif key == "D" then
+   end,
+   ["D"] = function()
       local x, y = buffer:xy()
       if errors and errors[y] and errors[y][x] then
          buffer:draw_popup(errors[y][x])
@@ -172,8 +173,8 @@ function on_ctrl(key)
          end
          buffer:draw_popup({ typ })
       end
-   end
-end
+   end,
+})
 
 function on_save()
    local cmd = io.popen("LANG=C ghc -fno-code -i. -c "..current_file.." 2>&1")
@@ -198,6 +199,5 @@ function on_save()
    cmd:close()
 end
 
-function on_key(code)
-   return tab_complete.on_key(code)
-end
+tab_complete.activate()
+

@@ -1,10 +1,10 @@
 
+local config = require("dit.config")
 local code = require("dit.code")
+local smart_enter = require("dit.smart_enter")
 local tab_complete = require("dit.tab_complete")
-local sort_selection = require("dit.sort_selection")
+--local sort_selection = require("dit.sort_selection")
 local json = require("cjson")
-
-local lfs = require("lfs")
 
 local cfg = require("luarocks.core.cfg")
 cfg.init()
@@ -12,86 +12,25 @@ local fs = require("luarocks.fs")
 local dir = require("luarocks.dir")
 fs.init()
 
-local filename = dir.normalize(fs.absolute_name(buffer:filename()))
-local filename_code = 0
+local notes = require("dit.notes")
+local ttd = require("dit.teal.ttd")
 
-local trace
-local locals
-local trace_at = 0
-
-local function tracing_this_file(info)
-   return info[1] == filename_code
-end
-
-local function load_trace()
-   if lfs.attributes(filename .. ".trace") then
-      local cbor = require("cbor")
-      local fd = io.open(filename .. ".trace", "r")
-      if fd then
-         trace = cbor.decode(fd:read("*a"))
-         fd:close()
-      end
-      for i, f in ipairs(trace.filenames) do
-         if f == filename then
-            filename_code = i
-            break
-         end
-      end
-      if trace then
-         trace_at = 1
-         for i, t in ipairs(trace.trace) do
-            if tracing_this_file(t) then
-               trace_at = i
-               break
-            end
-         end
-      end
-   end
-end
-
-local lines
-local last_line = 0
 local commented_lines = {}
 local controlled_change = false
 local type_report
 local name_map = {}
 
-local function each_note(y, x)
-   return coroutine.wrap(function()
-      if not lines then return end
-      local curr = lines[y]
-      local line = buffer[y]
-      if not curr then return end
-      for _, note in ipairs(curr) do
-         local fchar = note.column
-         local lchar = fchar
-         if note.name then
-            lchar = fchar + #note.name - 1
-         else
-            while line[lchar+1]:match("[A-Za-z0-9_]") do
-               lchar = lchar + 1
-            end
-         end
-         if not x or (x >= fchar and x <= lchar) then
-            coroutine.yield(note, fchar, lchar)
-         end
-      end
-   end)
-end
 
 function highlight_line(line, y)
    local ret = {}
    for i = 1, #line do ret[i] = " " end
    
-   if trace_at > 0 then
-      local info = trace.trace[trace_at]
-      if tracing_this_file(info) and info[2] == y then
-         for i = 1, #line do ret[i] = "*" end
-         return table.concat(ret)
-      end
+   local hl = ttd.highlight_line(line, y)
+   if hl then
+      return hl
    end
-
-   for note, fchar, lchar in each_note(y) do
+   
+   for note, fchar, lchar in notes.each_note(y) do
       for i = fchar, lchar do
          if note.what == "error" then
             ret[i] = "*"
@@ -133,10 +72,9 @@ function on_save(filename)
    local cmd = "cd " .. d .. "; tl types " .. filename .. " 2>&1"
    
    local pd = io.popen(cmd)
-   lines = {}
+   notes.reset()
    local state = "start"
    local buf = {}
-   last_line = 0
    for line in pd:lines() do
       if state == "start" then
          if line == "" then
@@ -169,15 +107,10 @@ function on_save(filename)
          if file and filename:sub(-#file) == file then
             y = tonumber(y)
             x = tonumber(x)
-            lines[y] = lines[y] or {}
-            table.insert(lines[y], {
-               column = x,
+            notes.add(y, x, {
                text = err,
                what = state,
             })
-            if y > last_line then
-               last_line = y
-            end
          end
       end
    end
@@ -222,41 +155,23 @@ local function type_at(px, py)
    end
 end
 
-function on_alt(key)
-   if key == 'L' then
+config.add_handlers("on_alt", {
+   ["L"] = function()
       local filename = buffer:filename()
       local x, y = buffer:xy()
       local page = tabs:open(filename:gsub("%.tl$", ".lua"))
       tabs:set_page(page)
       tabs:get_buffer(page):go_to(x, y)
    end
-end
+})
 
-function on_ctrl(key)
-   if key == '_' then
+config.add_handlers("on_ctrl", {
+   ["_"] = function()
       controlled_change = true
       code.comment_block("--", "%-%-", lines, commented_lines)
       controlled_change = false
-   elseif key == "N" then
-      if not lines then
-         return
-      end
-      local x, y = buffer:xy()
-      if lines[y] then
-         for _, note in ipairs(lines[y]) do
-            if note.column > x then
-               buffer:go_to(note.column, y)
-               return
-            end
-         end
-      end
-      for line = y+1, last_line do
-         if lines[line] then
-            buffer:go_to(lines[line][1].column, line)
-            return
-         end
-      end
-   elseif key == "D" then
+   end,
+   ["D"] = function()
       local x, y = buffer:xy()
       local t = type_at(x, y)
       if t and t.x then
@@ -294,167 +209,13 @@ function on_ctrl(key)
             buffer:go_to(tx, ty)
          end
       end
-   elseif key == "O" then
-      sort_selection()
-   end
-   return true
-end
-
-local function show_trace_location()
-   if trace_at > 0 then
-      local info = trace.trace[trace_at]
-      if not info then
-         return
-      end
-      local out = {}
-      table.insert(out, "#: " .. trace_at)
-      table.insert(out, "filename: " .. trace.filenames[info[1]])
-      table.insert(out, "line: " .. info[2])
-      buffer:go_to(1, info[2])
-      locals = {}
-      for k, v in pairs(info[3]) do
-         locals[trace.strings[k]] = trace.strings[v]
-      end
-      buffer:draw_popup(out)
-   end
-end
-
-local function trace_forward(y)
-   local found
-   for i = trace_at + 1, #trace.trace do
-      local t = trace.trace[i]
-      if tracing_this_file(t) and ((not y) or t[2] == y) then
-         found = i
-         break
-      end
-   end
-   if not found then
-      for i = 1, trace_at - 1 do
-         local t = trace.trace[i]
-         if tracing_this_file(t) and ((not y) or t[2] == y) then
-            found = i
-            break
-         end
-      end
-   end
-   if found then
-      trace_at = found
-   end
-end
-
-local function trace_backward(y)
-   local found
-   for i = trace_at - 1, 1, -1 do
-      local t = trace.trace[i]
-      if tracing_this_file(t) and ((not y) or t[2] == y) then
-         found = i
-         break
-      end
-   end
-   if not found then
-      for i = #trace.trace, trace_at + 1, -1 do
-         local t = trace.trace[i]
-         if tracing_this_file(t) and ((not y) or t[2] == y) then
-            found = i
-            break
-         end
-      end
-   end
-   if found then
-      trace_at = found
-   end
-end
-
-local key_handlers = {
-   ["F1"] = function()
-      if not trace then
-         load_trace()
-      end
-
-      trace_backward()
-      show_trace_location()
    end,
-   ["F2"] = function()
-      if not trace then
-         load_trace()
-      end
-      
-      local x, y = buffer:xy()
-      trace_forward(y)
+--   ["O"] = function()
+--      sort_selection()
+--   end,
+})
 
-      show_trace_location()
-   end,
-   ["F12"] = function()
-      if not trace then
-         load_trace()
-      end
-
-      -- search trace history backwards for current line
-      local x, y = buffer:xy()
-      trace_backward(y)
-
-      show_trace_location()
-   end,
-   ["F4"] = function()
-      if not trace then
-         load_trace()
-      end
-
-      trace_forward()
-      show_trace_location()
-   end,
-   -- ["F3"] = find,
-   -- ["F5"] = multiple_cursors,
-   ["F7"] = code.expand_selection,
-   -- ["F8"] = delete_line,
-   ["F9"] = code.pick_merge_conflict_branch,
-   ["SHIFT_F9"] = code.go_to_conflict,
-   -- ["F10"] = quit
-   -- ["F12"] = debug_keyboard_codes,
-}
-
-function on_fkey(key)
-   if key_handlers[key] then
-      key_handlers[key]()
-   end
-end
-
-function on_key(code)
-   local handled = false
-
-   local selection, startx, starty, stopx, stopy = buffer:selection()
-   if selection == "" then
-      if code == 13 then
-         local x, y = buffer:xy()
-         local line = buffer[y]
-         if line:sub(1, x - 1):match("^%s*$") and line:sub(x):match("^[^%s]") then
-            buffer:begin_undo()
-            buffer:emit("\n")
-            buffer:go_to(x, y, false)
-            buffer:end_undo()
-            handled = true
-         end
-      elseif code == 330 then
-         local x, y = buffer:xy()
-         local line = buffer[y]
-         local nextline = buffer[y+1]
-         if x == #line + 1 and line:match("^%s*$") and nextline:match("^"..line) then
-            buffer:begin_undo()
-            buffer:select(x, y, x, y + 1)
-            buffer:emit("\8")
-            buffer:end_undo()
-            handled = true
-         end
-      end
-   end
-   local tab_handled = false
-   if not handled and starty == stopy then
-      tab_handled = tab_complete.on_key(code)
-   end
-   return tab_handled or handled
-end
-
-function after_key(code)
+function after_key()
    local x, y = buffer:xy()
 
    local out
@@ -472,15 +233,12 @@ function after_key(code)
       end
    end
    
-   if trace then
-      local tk = buffer:token()
-      out = out or {}
-      if locals[tk] then
-         table.insert(out, "= " .. locals[tk])
-      end
-   end
-   
+   out = ttd.after_key(out)
+      
    if out then
       buffer:draw_popup(out) -- lines[y][x].description)
    end
 end
+
+smart_enter.activate()
+tab_complete.activate()

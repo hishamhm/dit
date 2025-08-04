@@ -1,7 +1,9 @@
+local config = require("dit.config")
 
 local code = require("dit.code")
+local smart_enter = require("dit.smart_enter")
 local tab_complete = require("dit.tab_complete")
-local mobdebug = require("dit.lua.mobdebug")
+local notes = require("dit.notes")
 
 local check = require "luacheck.check"
 local filter = require "luacheck.filter"
@@ -11,7 +13,6 @@ if not ok then
    picotyped = nil
 end
 
-local lines
 local commented_lines = {}
 local controlled_change = false
 
@@ -25,8 +26,18 @@ local function run_luacheck(src)
    return filter.filter({ report })
 end
 
+local function maybe_note(note)
+   if note.secondary
+   or note.code == "421"
+   or (note.code == "411" and note.name == "err")
+   or note.code:sub(1,1) == "6" then -- cosmetic notes
+      return nil
+   end
+   return note
+end
+
 function highlight_file()
-   lines = {}
+   notes.reset()
    local src = table.concat(buffer, "\n")
    local report, err = run_luacheck(src)
    if not report then 
@@ -37,65 +48,40 @@ function highlight_file()
       if err then
          local nr = err:match("^[^:]*:([%d]+):.*")
          local errmsg = err:match("^[^:]*:[%d]+: (.*)")
+         local y = tonumber(nr)
          if nr then 
-            lines[tonumber(nr)] = {{ column = 1, name = (" "):rep(255), code = 0, message = errmsg }}
+            notes.add(y, 1, { name = (" "):rep(255), code = 0, message = errmsg })
          end
       end
       return
    end
-   for _, note in ipairs(report[1]) do
-      local t = lines[note.line] or {}
-      t[#t+1] = note
-      lines[note.line] = t
-   end
-end
-
-local function each_note(y, x)
-   return coroutine.wrap(function()
-      if not lines then return end
-      local curr = lines[y]
-      local line = buffer[y]
-      if not curr then return end
-      for _, note in ipairs(curr) do
-         local fchar = note.column
-         local lchar = fchar
-         if note.name then
-            lchar = fchar + #note.name - 1
-         else
-            while line[lchar+1]:match("[A-Za-z0-9_]") do
-               lchar = lchar + 1
-            end
-         end
-         if not x or (x >= fchar and x <= lchar) then
-            coroutine.yield(note, fchar, lchar)
-         end
+   for _, n in ipairs(report[1]) do
+      local note = maybe_note(n)
+      if note then
+         local y = note.line
+         notes.add(y, note.column, note)
       end
-   end)
+   end
 end
 
 function highlight_line(line, y)
    local ret = {}
    for i = 1, #line do ret[i] = " " end
 
-   if mobdebug.is_debugging() then
-      local filename = buffer:filename()
-      if mobdebug.is_breakpoint(filename, y) then
-         ret[1] = "*"
-      end
-      if mobdebug.file == filename and mobdebug.line == y then
-         return ("*"):rep(#line)
-      end
-   end
+--   if mobdebug.is_debugging() then
+--      local filename = buffer:filename()
+--      if mobdebug.is_breakpoint(filename, y) then
+--         ret[1] = "*"
+--      end
+--      if mobdebug.file == filename and mobdebug.line == y then
+--         return ("*"):rep(#line)
+--      end
+--   end
 
-   for note, fchar, lchar in each_note(y) do
+   for note, fchar, lchar in notes.each_note(y) do
       local key = "*"
       if note.code == "111" then
          key = "D"
-      -- For error numbers, see http://luacheck.readthedocs.org/en/0.11.0/warnings.html
-      elseif note.secondary or note.code == "421" or (note.code == "411" and note.name == "err") then
-         key = " "
-      elseif note.code:sub(1,1) == "6" then -- cosmetic notes
-         key = " "
       end
       for i = fchar, lchar do
          ret[i] = key
@@ -114,7 +100,7 @@ end
 
 function on_change()
    if not controlled_change then
-      lines = nil
+      notes.reset()
    end
 end
 
@@ -236,124 +222,32 @@ local function substitute(string_format, values)
    end))
 end
 
-function on_ctrl(key)
-   if key == '_' then
+config.add_handlers("on_ctrl", {
+   ["_"] = function()
       controlled_change = true
       code.comment_block("--", "%-%-", lines, commented_lines)
       controlled_change = false
-   elseif key == "O" then
-      local str = buffer:selection()
-      if str == "" then
-         str = buffer:token()
-      end
-      if str and str ~= "" then
-         local out = mobdebug.command("eval " .. str)
-         if type(out) == "table" then
-            buffer:draw_popup(out)
-         end
-      else
-         buffer:draw_popup({ "Select a token to evaluate" })
-      end
-   elseif key == "D" then
+   end,
+   ["D"] = function()
       local x, y = buffer:xy()
-      for note in each_note(y, x) do
+      for note in notes.each_note(y, x) do
          local message = substitute(get_message_format(note), note)
          buffer:draw_popup({message}) -- lines[y][x].description)
          return true
       end
-   end
-   return true
-end
+   end,
+})
 
-function on_fkey(key)
-   if key == "F7" then
-      code.expand_selection()
-   elseif key == "F2" then
-      local ok, err = mobdebug.listen()
-      if ok then
-         buffer:draw_popup({
-            "Now debbuging. Press:",
-            "F4 to step-over",
-            "Shift-F4 to step-into",
-            "F6 to toggle breakpoint",
-            "F11 to run until breakpoint",
-         })
-      else
-         buffer:draw_popup({err})
-      end
-   elseif key == "SHIFT_F4" then
-      local ok, err = mobdebug.command("step")
-      if err then
-         buffer:draw_popup({err})
-      end
-   elseif key == "F4" then
-      local ok, err = mobdebug.command("over")
-      if err then
-         buffer:draw_popup({err})
-      end
-   elseif key == "F11" then
-      local ok, err = mobdebug.command("run")
-      if err then
-         buffer:draw_popup({err})
-      end
-   elseif key == "F6" then
-      local filename = buffer:filename()
-      local x, y = buffer:xy()
-      if mobdebug.is_breakpoint(filename, y) then
-         mobdebug.command("delb " .. filename .. " " .. y)
-         mobdebug.set_breakpoint(filename, y, nil)
-      else
-         mobdebug.command("setb " .. filename .. " " .. y)
-         mobdebug.set_breakpoint(filename, y, true)
-      end
-      buffer:go_to(1, y+1)
-   elseif key == "F9" then
-      code.pick_merge_conflict_branch()
-   elseif key == "SHIFT_F9" then
-      code.go_to_conflict()
-   end
-end
-
-function on_key(code)
-   local handled = false
-   local selection, startx, starty, stopx, stopy = buffer:selection()
-   if selection == "" then
-      if code == 13 then
-         local x, y = buffer:xy()
-         local line = buffer[y]
-         if line:sub(1, x - 1):match("^%s*$") and line:sub(x):match("^[^%s]") then
-            buffer:begin_undo()
-            buffer:emit("\n")
-            buffer:go_to(x, y, false)
-            buffer:end_undo()
-            handled = true
-         end
-      elseif code == 330 then
-         local x, y = buffer:xy()
-         local line = buffer[y]
-         local nextline = buffer[y+1]
-         if x == #line + 1 and line:match("^%s*$") and nextline:match("^"..line) then
-            buffer:begin_undo()
-            buffer:select(x, y, x, y + 1)
-            buffer:emit("\8")
-            buffer:end_undo()
-            handled = true
-         end
-      end
-   end
-   local tab_handled = false
-   if not handled and starty == stopy then
-      tab_handled = tab_complete.on_key(code)
-   end
-   return tab_handled or handled
-end
-
-function on_alt(key)
-   if key == 'L' then
+config.add_handlers("on_alt", {
+   ["L"] = function()
       local filename = buffer:filename()
       local x, y = buffer:xy()
       local page = tabs:open(filename:gsub("%.lua$", ".tl"))
       tabs:set_page(page)
       tabs:get_buffer(page):go_to(x, y)
-   end
-end
+   end,
+})
+
+smart_enter.activate()
+tab_complete.activate()
+notes.activate()

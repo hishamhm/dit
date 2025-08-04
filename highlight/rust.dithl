@@ -132,6 +132,11 @@ context // `$ dim
    rule XXX veryspecial
    rule FIXME veryspecial
 /context
+context ' ' brightalt
+/context
+context b' ' brightalt
+/context
+
 context " " alt
    eager_rule \\ brightalt
    eager_rule \" brightalt
