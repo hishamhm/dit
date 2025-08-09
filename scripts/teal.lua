@@ -220,7 +220,7 @@ function after_key()
 
    local out
    
-   for note in each_note(y, x) do
+   for note in notes.each_note(y, x) do
       out = out or {}
       table.insert(out, note.text)
    end
