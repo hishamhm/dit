@@ -182,7 +182,9 @@ STATIC int Script_Buffer_dir(lua_State* L) {
 
 STATIC int Script_Buffer_filename(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
-   lua_pushstring(L, buffer->fileName);
+   char* rpath = realpath(buffer->fileName, NULL);
+   lua_pushstring(L, rpath);
+   free(rpath);
    return 1;
 }
 

@@ -4,13 +4,7 @@ local config = require("dit.config")
 
 local lfs = require("lfs")
 
-local cfg = require("luarocks.core.cfg")
-cfg.init()
-local fs = require("luarocks.fs")
-local dir = require("luarocks.dir")
-fs.init()
-
-local filename = dir.normalize(fs.absolute_name(buffer:filename()))
+local filename = buffer:filename()
 local filename_code = 0
 
 local trace

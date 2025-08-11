@@ -6,12 +6,6 @@ local tab_complete = require("dit.tab_complete")
 --local sort_selection = require("dit.sort_selection")
 local json = require("cjson")
 
-local cfg = require("luarocks.core.cfg")
-cfg.init()
-local fs = require("luarocks.fs")
-local dir = require("luarocks.dir")
-fs.init()
-
 local notes = require("dit.notes")
 local ttd = require("dit.teal.ttd")
 
@@ -59,7 +53,7 @@ function on_change()
 end
 
 function on_save(filename)
-   local fn = dir.normalize(fs.absolute_name(buffer:filename()))
+   local fn = buffer:filename()
 
    code.alert_if_has_conflict()
 
