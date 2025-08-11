@@ -1,5 +1,6 @@
 require("compat53")
 
+local config = require('dit.config')
 local cscope = require("cscope")
 local tmux = require("dit.tmux")
 local code = require("dit.code")
