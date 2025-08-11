@@ -52,14 +52,35 @@ function on_change()
    end
 end
 
+local function dir_name(pathname)
+   local dn = pathname:match("^(.*)/([^/]+)$")
+   return dn or pathname
+end
+
+local function exists(pathname)
+   local fd = io.open(pathname)
+   if fd then
+      fd:close()
+      return true
+   end
+   return false
+end
+
 function on_save(filename)
    local fn = buffer:filename()
 
    code.alert_if_has_conflict()
 
-   local d = dir.dir_name(fn)
-   while not (fs.exists(d .. "/tlconfig.lua") or fs.exists(d .. "/.git")) do
-      d = dir.dir_name(d)
+   local d = dir_name(fn)
+   for i = 1, 20 do
+      if exists(d .. "/tlconfig.lua") or exists(d .. "/.git") then
+         break
+      end
+      local prev = d
+      d = dir_name(d)
+      if d == prev then
+         break
+      end
    end
    local filename = fn:sub(#d + 2)
    name_map[buffer:filename()] = filename
