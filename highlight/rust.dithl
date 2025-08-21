@@ -81,6 +81,7 @@ rule : symbol
 rule , symbol
 rule | symbol
 rule & symbol
+rule &' symbol
 rule ; brightsymbol
 rule TODO veryspecial
 rule XXX veryspecial
