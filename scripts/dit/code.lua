@@ -160,6 +160,7 @@ function code.alert_if_has_conflict()
       buffer:set_alert(true)
       return chunkfrom + 1
    else
+      buffer:draw_popup({"no git conflicts in this file"})
       buffer:set_alert(false)
    end
 end

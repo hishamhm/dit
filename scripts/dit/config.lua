@@ -7,7 +7,7 @@ local global_handlers = {}
 
 function config.add(callback, fn)
    local g = _G[callback]
-   if g and g ~= main_handlers[callback] then
+   if g and g ~= main_handlers[callback] or not g then
       global_handlers[callback] = g
       local m = main_handlers[callback] or function(...)
          for _, handler in ipairs(local_handlers[callback]) do
