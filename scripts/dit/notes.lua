@@ -11,7 +11,7 @@ function notes.reset()
 end
 
 function notes.add(y, x, note)
-   note.x = x
+   note.column = x
    lines[y] = lines[y] or {}
    table.insert(lines[y], note)
    if y > last_line then

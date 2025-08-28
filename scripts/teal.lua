@@ -53,8 +53,12 @@ function on_change()
 end
 
 local function dir_name(pathname)
-   local dn = pathname:match("^(.*)/([^/]+)$")
-   return dn or pathname
+   local dn, rest = pathname:match("^(.+)/([^/]+)$")
+   if dn then
+      return dn, rest
+   else
+      return ".", pathname
+   end
 end
 
 local function exists(pathname)
@@ -71,20 +75,20 @@ function on_save(filename)
 
    code.alert_if_has_conflict()
 
-   local d = dir_name(fn)
+   local dn, fn = dir_name(fn)
    for i = 1, 20 do
-      if exists(d .. "/tlconfig.lua") or exists(d .. "/.git") then
+      if exists(dn .. "/tlconfig.lua") or exists(dn .. "/.git") then
          break
       end
-      local prev = d
-      d = dir_name(d)
-      if d == prev then
+      local dn2, fn2 = dir_name(dn)
+      if dn2 == "." then
          break
       end
+      dn = dn2
+      fn = fn2 .. "/" .. fn
    end
-   local filename = fn:sub(#d + 2)
-   name_map[buffer:filename()] = filename
-   local cmd = "cd " .. d .. "; tl types " .. filename .. " 2>&1"
+   name_map[buffer:filename()] = fn
+   local cmd = "cd " .. dn .. "; tl types " .. fn .. " 2>&1"
    
    local pd = io.popen(cmd)
    notes.reset()
@@ -119,7 +123,7 @@ function on_save(filename)
          state = "json"
       elseif state == "error" or state == "warning" then
          local file, y, x, err = line:match("([^:]*):(%d*):(%d*): (.*)")
-         if file and filename:sub(-#file) == file then
+         if file and fn:sub(-#file) == file then
             y = tonumber(y)
             x = tonumber(x)
             notes.add(y, x, {
