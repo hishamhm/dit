@@ -13,5 +13,15 @@ config.add_handlers("on_ctrl", "rust", {
    end,
 })
 
+config.add("on_save", "rust", function()
+   local name = buffer:filename()
+   local x, y = buffer:xy()
+   local dn, fn = name:match("^(.*)/([^/]*)$")
+   os.execute("( cd " .. dn .. "; rustfmt --edition=2024 " .. fn .. " &>/dev/null )")
+   buffer:reload()
+   buffer:go_to(x, y)
+   return true
+end)
+
 smart_enter.activate()
 tab_complete.activate()

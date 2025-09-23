@@ -138,6 +138,9 @@ context ' ' brightalt
 context b' ' brightalt
 /context
 
+context r" " brightalt brightalt alt
+/context
+
 context " " alt
    eager_rule \\ brightalt
    eager_rule \" brightalt
