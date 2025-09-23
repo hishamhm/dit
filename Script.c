@@ -115,6 +115,12 @@ STATIC int Script_Buffer_line(lua_State* L) {
    }
 }
 
+STATIC int Script_Buffer_reload(lua_State* L) {
+   Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
+   Buffer_reload(buffer);
+   return 0;
+}
+
 STATIC int Script_Buffer_select(lua_State* L) {
    Buffer* buffer = (Buffer*) ((Proxy*)luaL_checkudata(L, 1, "Buffer"))->ptr;
    int xFrom = luaL_checkinteger(L, 2) - 1;
@@ -396,6 +402,7 @@ STATIC luaL_Reg Buffer_functions[] = {
    { "end_undo", Script_Buffer_endUndoGroup },
    { "draw_popup", Script_Buffer_drawPopup },
    { "set_alert", Script_Buffer_setAlert },
+   { "reload", Script_Buffer_reload },
    { NULL, NULL }
 };
 

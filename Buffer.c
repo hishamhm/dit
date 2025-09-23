@@ -289,7 +289,56 @@ static void Buffer_checkEditorConfig(Buffer* this, const char* fileName) {
    editorconfig_handle_destroy(eh);
 }
 
-Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, TabManager* tabs) {
+bool Buffer_load(Buffer* this) {
+   int indents[9] = { 0,0,0,0,0,0,0,0,0 };
+   this->readOnly = (access(this->fileName, R_OK) == 0 && access(this->fileName, W_OK) != 0);
+  
+   FileReader* file = FileReader_new(this->fileName, false);
+   int i = 0;
+   bool newFile = true;
+   if (file && !FileReader_eof(file)) {
+      newFile = false;
+      Text text = Text_new(FileReader_readLine(file));
+      this->isUTF8 = (this->isUTF8 && UTF8_isValid(Text_toString(text)));
+      this->hl = Highlight_new(this->fileName, text, &this->script);
+      if (Text_toString(text)[0] == '\t') indents[0] = 1;
+      if (Text_hasChar(text, '\015')) this->dosLineBreaks = true;
+      Line* line = Line_new(this->panel->items, text, this->hl->mainContext);
+      Panel_set(this->panel, i, (ListItem*) line);
+      while (!FileReader_eof(file)) {
+         i++;
+         char* t = FileReader_readLine(file);
+         if (!t)
+            continue;
+         Text text = Text_new(t);
+         this->isUTF8 = (this->isUTF8 && UTF8_isValid(t));
+         if (t[0] == '\t') {
+            indents[0]++;
+         } else {
+            int spaces = 0;
+            while (*t == ' ' && spaces < 8) { spaces++; t++; }
+            if (spaces >= 2) {
+               indents[spaces]++;
+            }
+         }
+         Line* line = Line_new(this->panel->items, text, this->hl->mainContext);
+         Panel_set(this->panel, i, (ListItem*) line);
+      }
+      FileReader_delete(file);
+      Buffer_restorePosition(this);
+      Undo_restore(this->undo, this->fileName);
+      Buffer_autoConfigureIndent(this, indents);
+   } else {
+      this->modified = true;
+   }
+   Buffer_checkEditorConfig(this, this->fileName);
+   if (!this->isUTF8) {
+      Buffer_convertToUTF8(this);
+   }
+   return newFile;
+}
+
+Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, TabManager* tabs) {
    Buffer* this = (Buffer*) calloc(sizeof(Buffer), 1);
 
    this->x = 0;
@@ -327,51 +376,8 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
    this->isUTF8 = true;
    bool newFile = true;
    if (fileName) {
-      int indents[9] = { 0,0,0,0,0,0,0,0,0 };
       this->fileName = strdup(fileName);
-      this->readOnly = (access(fileName, R_OK) == 0 && access(fileName, W_OK) != 0);
-     
-      FileReader* file = FileReader_new(fileName, command);
-      int i = 0;
-      if (file && !FileReader_eof(file)) {
-         newFile = false;
-         Text text = Text_new(FileReader_readLine(file));
-         this->isUTF8 = (this->isUTF8 && UTF8_isValid(Text_toString(text)));
-         this->hl = Highlight_new(fileName, text, &this->script);
-         if (Text_toString(text)[0] == '\t') indents[0] = 1;
-         if (Text_hasChar(text, '\015')) this->dosLineBreaks = true;
-         Line* line = Line_new(p->items, text, this->hl->mainContext);
-         Panel_set(p, i, (ListItem*) line);
-         while (!FileReader_eof(file)) {
-            i++;
-            char* t = FileReader_readLine(file);
-            if (!t)
-               continue;
-            Text text = Text_new(t);
-            this->isUTF8 = (this->isUTF8 && UTF8_isValid(t));
-            if (t[0] == '\t') {
-               indents[0]++;
-            } else {
-               int spaces = 0;
-               while (*t == ' ' && spaces < 8) { spaces++; t++; }
-               if (spaces >= 2) {
-                  indents[spaces]++;
-               }
-            }
-            Line* line = Line_new(p->items, text, this->hl->mainContext);
-            Panel_set(p, i, (ListItem*) line);
-         }
-         FileReader_delete(file);
-         Buffer_restorePosition(this);
-         Undo_restore(this->undo, fileName);
-         Buffer_autoConfigureIndent(this, indents);
-      } else {
-         this->modified = true;
-      }
-      Buffer_checkEditorConfig(this, fileName);
-      if (!this->isUTF8) {
-         Buffer_convertToUTF8(this);
-      }
+      newFile = Buffer_load(this);
    } else {
       this->readOnly = false;
    }
@@ -384,6 +390,13 @@ Buffer* Buffer_new(int x, int y, int w, int h, char* fileName, bool command, Tab
    this->savedContext = this->hl->mainContext;
 
    return this;
+}
+
+void Buffer_reload(Buffer* this) {
+   Panel_prune(this->panel);
+   Buffer_load(this);
+   Script_highlightFile(this->hl, this->fileName);
+   this->savedContext = this->hl->mainContext;
 }
 
 inline void Buffer_storePosition(Buffer* this) {
