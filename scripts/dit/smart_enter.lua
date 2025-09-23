@@ -3,7 +3,7 @@ local smart_enter = {}
 local config = require("dit.config")
 
 function smart_enter.activate()
-   config.add("on_key", function(code)
+   config.add("on_key", "dit.smart_enter", function(code)
       local handled = false
       local selection, startx, starty, stopx, stopy = buffer:selection()
       if selection == "" then

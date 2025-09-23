@@ -122,7 +122,7 @@ local function find_definition()
    return found, line, i
 end
 
-config.add_handlers("on_ctrl", {
+config.add_handlers("on_ctrl", "haskell", {
    ["_"] = function()
       if current_file:match("%.lhs$") then
          code.comment_block("%", "%%")

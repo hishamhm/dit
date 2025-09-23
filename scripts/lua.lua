@@ -212,7 +212,7 @@ local function substitute(string_format, values)
    end))
 end
 
-config.add_handlers("on_ctrl", {
+config.add_handlers("on_ctrl", "lua", {
    ["_"] = function()
       controlled_change = true
       code.comment_block("--", "%-%-", lines, commented_lines)
@@ -228,7 +228,7 @@ config.add_handlers("on_ctrl", {
    end,
 })
 
-config.add_handlers("on_alt", {
+config.add_handlers("on_alt", "lua", {
    ["L"] = function()
       local filename = buffer:filename()
       local x, y = buffer:xy()

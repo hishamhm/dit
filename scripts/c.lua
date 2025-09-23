@@ -62,7 +62,7 @@ function highlight_line(line, y)
    end
 end
 
-config.add_handlers("on_ctrl", {
+config.add_handlers("on_ctrl", "c", {
    ["D"] = cscope.go_to_definition,
    ["R"] = popup_error,
    ["O"] = line_commit.line_commit,
@@ -70,16 +70,16 @@ config.add_handlers("on_ctrl", {
    ["P"] = tmux.man,
 })
 
-config.add_handlers("on_alt", {
+config.add_handlers("on_alt", "c", {
    ["H"] = open_header,
 })
 
-config.add("on_change", function()
+config.add("on_change", "c", function()
    errors = nil
    return true
 end)
 
-config.add("on_save", function()
+config.add("on_save", "c", function()
    if not current_file then
       return true
    end

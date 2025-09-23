@@ -46,7 +46,7 @@ function notes.each_note(y, x)
 end
 
 function notes.activate()
-   config.add_handlers("on_ctrl", {
+   config.add_handlers("on_ctrl", "dit.notes", {
       ["N"] = function()
          if not lines then
             return
@@ -68,7 +68,7 @@ function notes.activate()
          end
       end,
    })
-   config.add("after_key", function()
+   config.add("after_key", "dit.notes", function()
       local x, y = buffer:xy()
       local out
       for note in notes.each_note(y, x) do

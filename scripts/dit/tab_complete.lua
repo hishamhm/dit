@@ -127,7 +127,7 @@ function tab_complete.suggest(word)
 end
 
 function tab_complete.activate()
-   config.add("on_key", function(code)
+   config.add("on_key", "dit.tab_complete", function(code)
       if matching then
          local x, y = buffer:xy()
          if x ~= matching.lx then

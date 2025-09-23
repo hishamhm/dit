@@ -6,7 +6,7 @@ local smart_enter = require("dit.smart_enter")
 local tab_complete = require("dit.tab_complete")
 local code = require("dit.code")
 
-config.add_handlers("on_ctrl", {
+config.add_handlers("on_ctrl", "rust", {
    ["O"] = line_commit.line_commit,
    ["_"] = function()
       code.comment_block("//")

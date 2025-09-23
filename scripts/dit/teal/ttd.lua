@@ -106,7 +106,7 @@ local function trace_backward(y)
    end
 end
 
-config.add_handlers("on_fkey", {
+config.add_handlers("on_fkey", "dit.teal.ttd", {
    ["F1"] = function()
       if not trace then
          load_trace()

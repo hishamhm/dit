@@ -21,7 +21,7 @@ local function popup_error()
    end
 end
 
-config.add_handlers("on_ctrl", {
+config.add_handlers("on_ctrl", "go", {
    ["D"] = cscope.go_to_definition,
    ["R"] = popup_error,
    ["O"] = line_commit.line_commit,
@@ -29,7 +29,7 @@ config.add_handlers("on_ctrl", {
    ["P"] = tmux.man,
 })
 
-config.add_handlers("on_fkey", {
+config.add_handlers("on_fkey", "go", {
    ["F7"] = code.expand_selection,
 })
 

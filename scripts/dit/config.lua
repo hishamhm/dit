@@ -2,34 +2,40 @@
 local config = {}
 
 local local_handlers = {}
+local local_handler_names = {}
 local main_handlers = {}
-local global_handlers = {}
 
-function config.add(callback, fn)
-   local g = _G[callback]
-   if g and g ~= main_handlers[callback] or not g then
-      global_handlers[callback] = g
-      local m = main_handlers[callback] or function(...)
+function config.add(callback, name, fn)
+   assert(type(name) == "string")
+   if local_handler_names[callback] and local_handler_names[callback][name] then
+      return
+   end
+
+   local_handlers[callback] = local_handlers[callback] or {}
+   table.insert(local_handlers[callback], fn)
+
+   local_handler_names[callback] = local_handler_names[callback] or {}
+   local_handler_names[callback] = name
+   
+   if not main_handlers[callback] then
+      main_handlers[callback] = function(...)
          for _, handler in ipairs(local_handlers[callback]) do
             local ok = handler(...)
             if ok then
                return ok
             end
          end
-         if global_handlers[callback] then
-            return global_handlers[callback](...)
-         end
          return false
       end
-      main_handlers[callback] = m
-      _G[callback] = m
    end
-   local_handlers[callback] = local_handlers[callback] or {}
-   table.insert(local_handlers[callback], fn)
+
+   _G[callback] = main_handlers[callback]
 end
 
-function config.add_handlers(callback, handlers)
-   config.add(callback, function(key)
+function config.add_handlers(callback, name, handlers)
+   assert(type(name) == "string")
+
+   config.add(callback, name, function(key)
       if handlers[key] then
          local res = handlers[key](key)
          if res == false then
