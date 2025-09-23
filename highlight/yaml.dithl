@@ -3,6 +3,7 @@ name suffix .yml
 name suffix .yaml
 RULES
 script shell.lua
+include gitconflict.dithlinc
 
 context # `$ dim
 /context
