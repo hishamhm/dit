@@ -7,6 +7,7 @@ script json.lua
 rule "`[!#`-~`]`+": brightalt
 
 context " " diff
+   rule \" brightdiff
 /context
 
 

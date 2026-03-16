@@ -36,6 +36,9 @@ context function ) bright bright brightdiff
    /context
 /context
 
+context interface `$ bright bright brightdiff
+/context
+
 context record `$ bright bright brightdiff
 /context
 

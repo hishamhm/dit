@@ -133,10 +133,6 @@ context // `$ dim
    rule XXX veryspecial
    rule FIXME veryspecial
 /context
-context ' ' brightalt
-/context
-context b' ' brightalt
-/context
 
 context r" " brightalt brightalt alt
 /context
