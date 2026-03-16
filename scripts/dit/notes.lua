@@ -45,6 +45,37 @@ function notes.each_note(y, x)
    end)
 end
 
+function notes.next_note(y, x)
+   assert(y)
+   assert(x)
+   if not lines then return end
+   local i = y
+   local first = true
+   while i <= last_line do
+      local curr = lines[i]
+      if curr then
+         local line = buffer[i]
+         for _, note in ipairs(curr) do
+            local fchar = note.column
+            local lchar = fchar
+            if note.name then
+               lchar = fchar + #note.name - 1
+            else
+               while line[lchar+1]:match("[A-Za-z0-9_]") do
+                  lchar = lchar + 1
+               end
+            end
+            if (not first) or x > fchar then
+               return note, i, fchar, lchar
+            end
+         end
+      end
+      first = false
+      i = i + 1
+   end
+   return notes.next_note(1, 1)
+end
+
 function notes.activate()
    config.add_handlers("on_ctrl", "dit.notes", {
       ["N"] = function()

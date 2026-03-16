@@ -138,17 +138,18 @@ function code.expand_selection()
    buffer:select(startx, starty, stopx, stopy)
 end
 
-local function find_divider(y, direction, topmatch, bottommatch)
+local function find_divider(y, direction, topmatch, bottommatch, adjust)
    local at = y
+   adjust = adjust or direction
    while true do
       local line = buffer[at]
       if line == nil then
          return nil
       end
       if line:match(topmatch) then
-         return at - direction, true, false
+         return at - adjust, true, false
       elseif bottommatch and line:match(bottommatch) then
-         return at - direction, false, true
+         return at - adjust, false, true
       end
       at = at + direction
    end
@@ -282,6 +283,75 @@ function code.pick_merge_conflict_branch()
    buffer:go_to(1, endy, false)
    buffer:end_undo()
    code.alert_if_has_conflict()
+end
+
+function code.compare_merge_conflict()
+   local line, x, y = buffer:line()
+   local top, mid, bottom, d1, d2, at
+   
+   at, d1, d2 = find_divider(y, -1, "^<<<<", "^====", 0)
+   if d1 then
+      -- below <<<
+      top = at
+      mid = find_divider(top, 1, "^====", nil, 0)
+      if mid then
+         mid = mid
+         bottom = find_divider(mid, 1, "^>>>>", nil, 0)
+      end
+   elseif d2 then
+      -- below ===
+      mid = at
+      top = find_divider(mid, -1, "^<<<<", nil, 0)
+      bottom = find_divider(mid, 1, "^>>>>", nil, 0)
+   else
+      -- below >>>
+      bottom = find_divider(y, -1, "^>>>>", nil, 0)
+      if bottom then
+         mid = find_divider(bottom, -1, "^====", nil, 0)
+         if mid then
+            top = find_divider(mid, -1, "^<<<<", nil, 0)
+         end
+      else
+         top = find_divider(y, 1, "^<<<<", nil, 0)
+         if top then
+            mid = find_divider(top, 1, "^====", nil, 0)
+            if mid then
+               bottom = find_divider(mid, 1, "^<<<<", nil, 0)
+            end
+         end
+      end
+   end
+   
+   if not (top and mid and bottom) then
+      return
+   end
+   
+   local n1 = mid-top-1
+   local n2 = bottom-mid-1
+   
+   for i = 1, math.min(n1, n2) do
+      local tn = top + i
+      local bn = mid + i
+      local tl = buffer[tn]
+      local bl = buffer[bn]
+      if tl ~= bl then
+         buffer:go_to(1, tn)
+         buffer:draw_popup({"difference in this line:", tl, bl})
+         return
+      end
+   end
+   
+   if n1 > n2 then
+      buffer:go_to(1, top + n2)
+      buffer:draw_popup({"difference in this extra line"})
+      return
+   elseif n1 < n2 then
+      buffer:go_to(1, mid + n1)
+      buffer:draw_popup({"difference in this extra line"})
+      return
+   end
+
+   buffer:draw_popup({"no differences"})
 end
 
 return code

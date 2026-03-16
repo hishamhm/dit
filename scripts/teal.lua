@@ -72,6 +72,9 @@ end
 
 function on_save(filename)
    local fn = buffer:filename()
+   if not fn then
+      return
+   end
 
    code.alert_if_has_conflict()
 
@@ -174,7 +177,7 @@ local function type_at(px, py)
    end
 end
 
-config.add_handlers("on_alt", {
+config.add_handlers("on_alt", "teal", {
    ["L"] = function()
       local filename = buffer:filename()
       local x, y = buffer:xy()
@@ -184,7 +187,7 @@ config.add_handlers("on_alt", {
    end
 })
 
-config.add_handlers("on_ctrl", {
+config.add_handlers("on_ctrl", "teal", {
    ["_"] = function()
       controlled_change = true
       code.comment_block("--", "%-%-", lines, commented_lines)
@@ -232,6 +235,19 @@ config.add_handlers("on_ctrl", {
 --   ["O"] = function()
 --      sort_selection()
 --   end,
+})
+
+local function next_error()
+   local x, y = buffer:xy()
+   local note, note_y, note_x = notes.next_note(y, x)
+   if note then
+      buffer:go_to(note_x, note_y)
+      buffer:draw_popup({ note.text })
+   end
+end
+
+config.add_handlers("on_fkey", "teal", {
+   ["F8"] = next_error,
 })
 
 function after_key()
